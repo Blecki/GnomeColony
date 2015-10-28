@@ -167,6 +167,12 @@
     <Compile Include="Gem\Render\CompiledMeshNode.cs" />
     <Compile Include="Gem\Gui\Shape.cs" />
     <Compile Include="Gnome\Actor.cs" />
+    <Compile Include="Gnome\GuiTools\MarkStorehouse.cs" />
+    <Compile Include="Gnome\GuiTools\Mine.cs" />
+    <Compile Include="Gnome\GuiTools\Build.cs" />
+    <Compile Include="Gnome\GuiTools\GuiTool.cs" />
+    <Compile Include="Gnome\Tasks\RemoveExcessResource.cs" />
+    <Compile Include="Gnome\TileNames.cs" />
     <Compile Include="Gnome\WaitAction.cs" />
     <Compile Include="Gnome\MoveAction.cs" />
     <Compile Include="Gnome\ActorAction.cs" />
@@ -180,7 +186,7 @@
     <Compile Include="Gnome\Tasks\FillResourceNeed.cs" />
     <Compile Include="Gnome\Tasks\Deposit.cs" />
     <Compile Include="Gnome\Tasks\WalkTask.cs" />
-    <Compile Include="Gnome\Task.cs" />
+    <Compile Include="Gnome\Tasks\Task.cs" />
     <Compile Include="Gnome\Tasks\Build.cs" />
     <Compile Include="Gnome\Tasks\Mine.cs" />
     <Compile Include="Gnome\TileSheet.cs" />

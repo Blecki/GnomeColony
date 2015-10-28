@@ -8,11 +8,12 @@ namespace Gnome.Tasks
 {
     class Mine : Task
     {
-        WaitAction MiningProgress = null;
+        WaitAction Progress = null;
 
         public Mine(Coordinate Location) : base(Location)
         {
-            MarkerTile = 2;
+            MarkerTile = TileNames.TaskMarkerMine;
+            GnomeIcon = TileNames.TaskIconMine;
         }
 
         public override bool QueryValidLocation(Game Game, Coordinate GnomeLocation)
@@ -22,13 +23,20 @@ namespace Gnome.Tasks
 
         public override TaskStatus QueryStatus(Game Game)
         {
-            if (Game.World.CellAt(Location).Block == null) return TaskStatus.Complete;
+            if (Game.World.CellAt(Location).Block == null)
+            {
+                if (Game.World.CellAt(Location).Resources.Count == 0) return TaskStatus.Complete;
+                else return TaskStatus.NotComplete;
+            }
+            if (!NoGnomesInArea(Game, Location)) return TaskStatus.Impossible;
+            
             return TaskStatus.NotComplete;
         }
 
         public override Task Prerequisite(Game Game, Gnome Gnome)
         {
-            if (Gnome.CarriedResource != null) return new Deposit();
+            if (Gnome.CarriedResource != 0) return new Deposit();
+            if (Game.World.CellAt(Location).Resources.Count != 0) return new RemoveExcessResource(this.Location);
             return null;
         }
 
@@ -36,23 +44,27 @@ namespace Gnome.Tasks
         {
             Gnome.FacingDirection = CellLink.DirectionFromAToB(Gnome.Location, Location);
 
-            if (MiningProgress == null)
+            if (Progress == null)
             {
-                MiningProgress = new WaitAction(2.0f);
-                Gnome.NextAction = MiningProgress;
+                Progress = new WaitAction(2.0f);
+                Gnome.NextAction = Progress;
             }
-            else if (MiningProgress.Done)
+            else if (Progress.Done)
             {
-                MiningProgress = null;
-                Gnome.CarriedResource = Game.World.CellAt(Location).Block;
-                Game.World.CellAt(Location).Block = null;
+                Progress = null;
+
+                var cell = Game.World.CellAt(Location);
+                cell.Resources = new List<int>(cell.Block.MineResources);
+                cell.Block = null;
+                
+                if (cell.Resources.Count > 0)
+                {
+                    Gnome.CarriedResource = cell.Resources[0];
+                    cell.Resources.RemoveAt(0);
+                }
+                
                 Game.SetUpdateFlag(Location);
             }
-        }
-
-        public override int GnomeIcon()
-        {
-            return 483;
         }
     }
 }

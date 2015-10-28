@@ -1,0 +1,27 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Gnome.GuiTools
+{
+    public class MarkStorehouse : GuiTool
+    {
+        public MarkStorehouse()
+        {
+            this.Icon = TileNames.TaskIconMarkStorehouse;
+            this.HiliteFaces = HiliteFace.Top;
+        }
+
+        public override void Apply(Game Game, WorldSceneNode WorldNode)
+        {
+            if (Game.World.Check(WorldNode.HoverBlock))
+            {
+                var cell = Game.World.CellAt(WorldNode.HoverBlock);
+                cell.Storehouse = true;
+                Game.SetUpdateFlag(WorldNode.HoverBlock);
+            }
+        }
+    }
+}

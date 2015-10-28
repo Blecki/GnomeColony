@@ -44,7 +44,7 @@ namespace Gnome
 
         public void UpdateGeometry()
         {
-            ChunkMesh = Generate.ChunkGeometry(World, TileSheet);
+            ChunkMesh = Generate.ChunkGeometry(World, TileSheet, BlockTemplates);
         }
 
         public override void UpdateWorldTransform(Microsoft.Xna.Framework.Matrix M)
@@ -90,6 +90,7 @@ namespace Gnome
             {
                 if (!World.check(x, y, z)) return false;
                 if (World.CellAt(x, y, z).Block == null) return false;
+                if (World.CellAt(x, y, z).Block.Solid == false) return false;
 
                 HiliteQuad = Gem.Geo.Gen.CreateQuad();
 

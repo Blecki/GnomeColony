@@ -52,5 +52,17 @@ namespace Gnome
             return Directions.North;
             throw new InvalidOperationException();
         }
+
+        public static Directions OppositeDirection(Directions D)
+        {
+            switch(D)
+            {
+                case Directions.North: return Directions.South;
+                case Directions.South: return Directions.North;
+                case Directions.East: return Directions.West;
+                case Directions.West: return Directions.East;
+                default: return Directions.North;
+            }
+        }
     }
 }

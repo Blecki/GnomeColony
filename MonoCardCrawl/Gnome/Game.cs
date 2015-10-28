@@ -59,11 +59,10 @@ namespace Gnome
         {
             if (World.Check(Task.Location))
             {
+                Task.IsTopLevelTask = true;
+
                 var cell = World.CellAt(Task.Location);
                 cell.Task = Task;
-                var requiredResource = Task.RequiredResource(this);
-                if (requiredResource != null)
-                    cell.Resource = new ResourceRequirement { BlockType = requiredResource, Filled = false };
                 Tasks.Add(Task);
                 SetUpdateFlag(Task.Location);
             }
@@ -72,6 +71,17 @@ namespace Gnome
         public Task FindTask(Gnome Gnome)
         {
             return Tasks.FirstOrDefault(t => t.AssignedGnome == null);
+        }
+
+        public void AbandonTask(Task Task)
+        {
+            Task.AssignedGnome = null;
+            
+            if (Task.IsTopLevelTask)
+            {
+                Tasks.Remove(Task);
+                Tasks.Add(Task);
+            }
         }
 
         public Game()
@@ -88,15 +98,46 @@ namespace Gnome
 
             World = new CellGrid(16, 16, 16);
 
-            var basicNavMesh = Gem.Geo.Gen.TransformCopy(Gem.Geo.Gen.CreateQuad(), Matrix.CreateTranslation(0.0f, 0.0f, 1.0f));
-            BlockTemplates.Add(1, new BlockTemplate(33, 33, 32, 34, basicNavMesh));
-            BlockTemplates.Add(2, new BlockTemplate(34, 34, 34, 34, basicNavMesh));
+            BlockTemplates.Add(BlockTypes.Scaffold, new BlockTemplate
+            {
+                Preview = TileNames.TaskMarkerBuild,
+                Top = TileNames.TaskMarkerBuild,
+                Side = TileNames.TaskMarkerBuild,
+                Bottom = TileNames.TaskMarkerBuild,
+                Shape = BlockShape.Cube,
+                Solid = false,
+                ResourceHeightOffset = -0.5f
+            });
+
+            BlockTemplates.Add(BlockTypes.Grass, new BlockTemplate
+                {
+                    Preview = TileNames.BlockGrassTop,
+                    Top = TileNames.BlockGrassTop,
+                    Side = TileNames.BlockGrassSide,
+                    Bottom = TileNames.BlockDirt,
+                    Shape = BlockShape.Cube,
+                    ConstructionResources = new int[] {  BlockTypes.Dirt, BlockTypes.Dirt },
+                    MineResources = new int[] { BlockTypes.Dirt, BlockTypes.Dirt, BlockTypes.Dirt }
+                });
+
+            BlockTemplates.Add(BlockTypes.Dirt, new BlockTemplate
+            {
+                Preview = TileNames.BlockDirt,
+                Top = TileNames.BlockDirt,
+                Side = TileNames.BlockDirt,
+                Bottom = TileNames.BlockDirt,
+                Shape = BlockShape.Cube
+            });
+
+            
 
             World.forAll((t, x, y, z) =>
                 {
-                    if (z <= 1) t.Block = BlockTemplates[1];
+                    if (z <= 1) t.Block = BlockTemplates[BlockTypes.Grass];
                     else t.Block = null;
                 });
+
+            World.CellAt(4, 4, 1).Storehouse = true;
 
             Actors = new List<Actor>();
 
@@ -128,7 +169,7 @@ namespace Gnome
 
             WorldSceneNode = new WorldSceneNode(World, new WorldSceneNodeProperties
             {
-                HiliteTexture = 4,
+                HiliteTexture = TileNames.HoverHilite,
                 TileSheet = BlockTiles,
                 BlockTemplates = BlockTemplates
             });
@@ -137,20 +178,28 @@ namespace Gnome
 
             SceneGraph.Add(new ActorSceneNode(Actors));
 
-            PushInputState(new HoverTest(BlockTemplates, BlockTiles));
+            var guiTools = new List<GuiTool>();
+            guiTools.Add(new GuiTools.Build());
+            guiTools.Add(new GuiTools.Mine());
+            guiTools.Add(new GuiTools.MarkStorehouse());
+
+            PushInputState(new HoverTest(BlockTemplates, BlockTiles, guiTools));
 
             World.PrepareNavigation();
             World.MarkDirtyChunk();
             SceneGraph.UpdateWorldTransform(Matrix.Identity);
 
-            var gnomeActor = new Gnome(BlockTiles);
-            gnomeActor.Location = new Coordinate(0, 0, 1);
-            Actors.Add(gnomeActor);
+            for (int i = 0; i < 4; ++i)
+            {
+                var gnomeActor = new Gnome(BlockTiles);
+                gnomeActor.Location = new Coordinate(0, i, 1);
+                Actors.Add(gnomeActor);
+            }
 
             Pathfinding = new Pathfinding<Cell>(
             (cell) =>
             {
-                return new List<Cell>(cell.Links.Select(c => c.Neighbor));
+                return new List<Cell>(cell.Links.Select(c => c.Neighbor).Where(c => c.CanWalk));
             },
             (cell) => 1.0f);
         }

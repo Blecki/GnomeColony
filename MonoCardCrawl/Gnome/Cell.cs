@@ -6,12 +6,6 @@ using Microsoft.Xna.Framework;
 
 namespace Gnome
 {
-    public class ResourceRequirement
-    {
-        public BlockTemplate BlockType;
-        public bool Filled;
-    }
-
     public class Cell 
     {
         public BlockTemplate Block;
@@ -23,15 +17,37 @@ namespace Gnome
         public Vector3 CenterPoint;
         public Gem.Geo.Mesh NavigationMesh;
 
+        public Actor PresentActor; // Actors are assigned only to their base cell, even though they are generally two cells tall.
+
         public bool Storehouse = false;
 
-        public ResourceRequirement Resource;
+        public List<int> Resources = new List<int>();
 
-        public bool FullfillsResourceRequirement(BlockTemplate ResourceType)
+        public bool CanPlaceResource(int ResourceType)
         {
-            if (Resource == null) return false;
-            if (Resource.Filled) return false;
-            return Object.ReferenceEquals(ResourceType, Resource.BlockType);
+            if (Storehouse && Resources.Count < 8) return true;
+            else if (Task != null) return global::Gnome.Task.FindUnfilledResourceRequirments(this, Task).Contains(ResourceType);
+            return false;
+        }
+
+        public bool IsSolid
+        {
+            get
+            {
+                if (Block == null) return false;
+                return Block.Solid;
+            }
+        }
+
+        public bool CanWalk
+        {
+            get
+            {
+                if (!Navigatable) return false; // No nav mesh for this block.
+                if (PresentActor != null) return false; // An actor is in the way.
+                if (Resources.Count > 2) return false; // More than two resources on the tile? Can't walk.
+                return true;
+            }
         }
     }
 }

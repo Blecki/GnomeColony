@@ -10,26 +10,26 @@ namespace Gnome.Tasks
     {
         public Deposit() : base(new Coordinate(0,0,0))
         {
-            MarkerTile = 2;
+            MarkerTile = 0;
         }
 
         public override bool QueryValidLocation(Game Game, Coordinate GnomeLocation)
         {
-            return EnumerateAdjacent(GnomeLocation).Count(c => Game.World.Check(c) && Game.World.CellAt(c).FullfillsResourceRequirement(AssignedGnome.CarriedResource)) > 0;
+            return EnumerateAdjacent(GnomeLocation).Count(c => Game.World.Check(c) && Game.World.CellAt(c).CanPlaceResource(AssignedGnome.CarriedResource)) > 0;
         }
 
         public override TaskStatus QueryStatus(Game Game)
         {
-            if (AssignedGnome.CarriedResource != null) return TaskStatus.NotComplete;
+            if (AssignedGnome.CarriedResource != 0) return TaskStatus.NotComplete;
             return TaskStatus.Complete;
         }
 
         public override void ExecuteTask(Game Game, Gnome Gnome)
         {
-            var dropLocation = EnumerateAdjacent(Gnome.Location).First(c => Game.World.Check(c) && Game.World.CellAt(c).FullfillsResourceRequirement(Gnome.CarriedResource));
+            var dropLocation = EnumerateAdjacent(Gnome.Location).First(c => Game.World.Check(c) && Game.World.CellAt(c).CanPlaceResource(Gnome.CarriedResource));
             var cell = Game.World.CellAt(dropLocation);
-            cell.Resource.Filled = true;
-            Gnome.CarriedResource = null;
+            cell.Resources.Add(Gnome.CarriedResource);
+            Gnome.CarriedResource = 0;
             Game.World.MarkDirtyBlock(dropLocation);
         }
     }

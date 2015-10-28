@@ -12,7 +12,7 @@ namespace Gnome
     {
         public Stack<Task> TaskStack = new Stack<Task>();
         public Gem.Render.SceneNode CarriedResourceVisual = null;
-        public BlockTemplate CarriedResource = null;
+        public int CarriedResource = 0;
 
         private Gem.Render.MeshNode GnomeNode;
         private Gem.Render.MeshNode TaskIcon;
@@ -32,15 +32,15 @@ namespace Gnome
                 var r = inV;
 
                 if (r.Normal.Z > 0.1f)
-                    r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Sheet.TileMatrix(1, 17, 1, 1));
+                    r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Sheet.TileMatrix(TileNames.GnomeBottom, 1, 1));
                 else if (r.Normal.Z < -0.1f)
-                    r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Sheet.TileMatrix(1, 17, 1, 1));
+                    r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Sheet.TileMatrix(TileNames.GnomeTop, 1, 1));
                 else if (r.Normal.Y > 0.1f)
-                    r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Sheet.TileMatrix(2, 17, 1, 2));
+                    r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Sheet.TileMatrix(TileNames.GnomeFront, 1, 2));
                 else if (r.Normal.Y < -0.1f)
-                    r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Sheet.TileMatrix(4, 17, 1, 2));
+                    r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Sheet.TileMatrix(TileNames.GnomeBack, 1, 2));
                 else
-                    r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Sheet.TileMatrix(3, 17, 1, 2));
+                    r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Sheet.TileMatrix(TileNames.GnomeSide, 1, 2));
                 return r;
             });
 
@@ -70,15 +70,15 @@ namespace Gnome
         {
             base.Update(Game);
 
-            if (CarriedResource == null && CarriedResourceVisual != null)
+            if (CarriedResource == 0 && CarriedResourceVisual != null)
             {
                 (this.Renderable as Gem.Render.BranchNode).Remove(CarriedResourceVisual);
                 CarriedResourceVisual = null;
             }
-            else if (CarriedResource != null && CarriedResourceVisual == null)
+            else if (CarriedResource != 0 && CarriedResourceVisual == null)
             {
                 CarriedResourceVisual = new Gem.Render.MeshNode(
-                    Generate.CreateResourceBlockMesh(Game.BlockTiles, CarriedResource),
+                    Generate.CreateResourceBlockMesh(Game.BlockTiles, Game.BlockTemplates[CarriedResource]),
                     Game.BlockTiles.Texture, null);
                 (this.Renderable as Gem.Render.BranchNode).Add(CarriedResourceVisual);
             }
@@ -97,10 +97,9 @@ namespace Gnome
                 // Find a new task.
                 var newTask = Game.FindTask(this);
                 if (newTask != null)
-                {
-                    newTask.AssignedGnome = this;
-                    TaskStack.Push(newTask);
-                }
+                    PushTask(newTask);
+                else
+                    if (CarriedResource != 0) PushTask(new Tasks.Deposit());
             }
             else
             {
@@ -112,7 +111,8 @@ namespace Gnome
                 else if (status == TaskStatus.Impossible)
                 {
                     // The task, or a prerequisite, is revealed to be impossible. Abandon the task stack entirely.
-                    TaskStack.Clear();
+                    while (TaskStack.Count != 0)
+                        Game.AbandonTask(TaskStack.Pop());
                 }
                 else
                 {
@@ -131,9 +131,9 @@ namespace Gnome
             }
 
             // Display correct task icon
-            var taskIconIndex = 481;
+            var taskIconIndex = TileNames.TaskIconBlank;
             if (TaskStack.Count != 0)
-                taskIconIndex = TaskStack.Peek().GnomeIcon();
+                taskIconIndex = TaskStack.Peek().GnomeIcon;
             TaskIcon.UVTransform = Sheet.TileMatrix(taskIconIndex);
             
             // Orient task icon toward camera

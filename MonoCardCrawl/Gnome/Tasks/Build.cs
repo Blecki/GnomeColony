@@ -9,11 +9,13 @@ namespace Gnome.Tasks
     class Build : Task
     {
         private BlockTemplate BlockType;
+        WaitAction Progress = null;
 
         public Build(BlockTemplate BlockType, Coordinate Location) : base(Location)
         {
             this.BlockType = BlockType;
-            MarkerTile = 1;
+            MarkerTile = TileNames.TaskIconBlank;
+            GnomeIcon = TileNames.TaskIconBuild;
         }
 
         public override bool QueryValidLocation(Game Game, Coordinate GnomeLocation)
@@ -25,32 +27,47 @@ namespace Gnome.Tasks
         {
             if (Object.ReferenceEquals(Game.World.CellAt(Location).Block, BlockType))
                 return TaskStatus.Complete;
+            if (!NoGnomesInArea(Game, Location)) return TaskStatus.Impossible;
             return TaskStatus.NotComplete;
-        }
-
-        public override BlockTemplate RequiredResource(Game Game)
-        {
-            return BlockType;
         }
 
         public override Task Prerequisite(Game Game, Gnome Gnome)
         {
             var cell = Game.World.CellAt(Location);
-            if (!cell.Resource.Filled) return new FillResourceNeed(BlockType, Location);
+            var excessResources = FindExcessResources(cell, this);
+            var unfilledResources = FindUnfilledResourceRequirments(cell, this);
+
+            // Move excess resources off this tile.
+
+            if (unfilledResources.Count > 0)
+                return new FillResourceNeed(this);
+
             return null;
+        }
+
+        public override IEnumerable<int> GetRequiredResources()
+        {
+            foreach (var resource in BlockType.ConstructionResources)
+                yield return resource;
         }
 
         public override void ExecuteTask(Game Game, Gnome Gnome)
         {
-            var cell = Game.World.CellAt(Location);
-            cell.Block = BlockType;
-            cell.Resource = null;
-            Game.World.MarkDirtyBlock(Location);
-        }
+            Gnome.FacingDirection = CellLink.DirectionFromAToB(Gnome.Location, Location);
 
-        public override int GnomeIcon()
-        {
-            return 482;
+            if (Progress == null)
+            {
+                Progress = new WaitAction(2.0f);
+                Gnome.NextAction = Progress;
+            }
+            else if (Progress.Done)
+            {
+                Progress = null;
+                var cell = Game.World.CellAt(Location);
+                cell.Block = BlockType;
+                cell.Resources.Clear();
+                Game.World.MarkDirtyBlock(Location);
+            }
         }
     }
 }

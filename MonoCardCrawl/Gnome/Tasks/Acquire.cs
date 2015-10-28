@@ -8,11 +8,11 @@ namespace Gnome.Tasks
 {
     class Acquire : Task
     {
-        private BlockTemplate ResourceType;
+        private List<int> ResourceTypes;
 
-        public Acquire(BlockTemplate ResourceType) : base(new Coordinate(0,0,0))
+        public Acquire(List<int> ResourceTypes) : base(new Coordinate(0,0,0))
         {
-            this.ResourceType = ResourceType;
+            this.ResourceTypes = ResourceTypes;
             MarkerTile = 2;
         }
 
@@ -23,7 +23,7 @@ namespace Gnome.Tasks
                 if (Game.World.Check(adjacentTile))
                 {
                     var cell = Game.World.CellAt(adjacentTile);
-                    if (cell.Storehouse && cell.Resource.Filled && Object.ReferenceEquals(cell.Resource.BlockType, ResourceType))
+                    if (cell.Storehouse && cell.Resources.Count(i => ResourceTypes.Contains(i)) > 0)
                     {
                         Location = adjacentTile;
                         return true;
@@ -36,22 +36,23 @@ namespace Gnome.Tasks
 
         public override TaskStatus QueryStatus(Game Game)
         {
-            if (Object.ReferenceEquals(AssignedGnome.CarriedResource, ResourceType)) return TaskStatus.Complete;
+            if (AssignedGnome.CarriedResource != 0 && ResourceTypes.Contains(AssignedGnome.CarriedResource)) return TaskStatus.Complete;
             return TaskStatus.NotComplete;
         }
 
         public override Task Prerequisite(Game Game, Gnome Gnome)
         {
-            if (Gnome.CarriedResource != null && !Object.ReferenceEquals(Gnome.CarriedResource, ResourceType))
+            if (Gnome.CarriedResource != 0 && !ResourceTypes.Contains(AssignedGnome.CarriedResource))
                 return new Deposit();
             return null;
         }
 
         public override void ExecuteTask(Game Game, Gnome Gnome)
         {
-           var cell = Game.World.CellAt(Location);
-            cell.Resource.Filled = false;
-            Gnome.CarriedResource = ResourceType;
+            var cell = Game.World.CellAt(Location);
+            var resourceIndex = cell.Resources.FindIndex(i => ResourceTypes.Contains(i));
+            Gnome.CarriedResource = cell.Resources[resourceIndex];
+            cell.Resources.RemoveAt(resourceIndex);
             Game.World.MarkDirtyBlock(Location);
         }
     }

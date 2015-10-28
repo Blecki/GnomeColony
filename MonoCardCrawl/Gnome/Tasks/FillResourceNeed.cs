@@ -8,12 +8,12 @@ namespace Gnome.Tasks
 {
     class FillResourceNeed : Task
     {
-        private BlockTemplate ResourceType;
+        private Task ParentTask;
 
-        public FillResourceNeed(BlockTemplate ResourceType, Coordinate Location) : base(Location)
+        public FillResourceNeed(Task ParentTask) : base(ParentTask.Location)
         {
-            this.ResourceType = ResourceType;
-            MarkerTile = 2;
+            this.ParentTask = ParentTask;
+            MarkerTile = 0;
         }
 
         public override bool QueryValidLocation(Game Game, Coordinate GnomeLocation)
@@ -25,35 +25,35 @@ namespace Gnome.Tasks
         {
             if (!Game.World.Check(Location)) return TaskStatus.Impossible;
             var cell = Game.World.CellAt(Location);
-            if (cell.Resource == null) return TaskStatus.Impossible;
-            if (cell.Resource.Filled) return TaskStatus.Complete;
+            var requiredResources = Task.FindUnfilledResourceRequirments(cell, ParentTask);
+            if (requiredResources.Count == 0) return TaskStatus.Complete;
             else return TaskStatus.NotComplete;
         }
 
         public override Task Prerequisite(Game Game, Gnome Gnome)
         {
-            if (!Object.ReferenceEquals(Gnome.CarriedResource, ResourceType))
-            {
-                if (Gnome.CarriedResource == null)
-                    return new Acquire(ResourceType);
-                else
-                    return new Deposit();
-            }
+            var cell = Game.World.CellAt(Location);
+            var requiredResources = Task.FindUnfilledResourceRequirments(cell, ParentTask);
+            if (requiredResources.Count == 0) return null;
 
+            if (Gnome.CarriedResource != 0 && !requiredResources.Contains(Gnome.CarriedResource))
+                return new Deposit();
+
+            if (Gnome.CarriedResource == 0)
+                return new Acquire(requiredResources);
+
+            // The gnome is carrying one of the required resources; let the normal mechanism move the gnome to
+            // the task site to deposite it.
             return null;
         }
 
         public override void ExecuteTask(Game Game, Gnome Gnome)
         {
             var cell = Game.World.CellAt(Location);
-            cell.Resource.Filled = true;
-            Gnome.CarriedResource = null;
+            cell.Resources.Add(Gnome.CarriedResource);
+            Gnome.CarriedResource = 0;
             Game.World.MarkDirtyBlock(Location);
         }
 
-        public override int GnomeIcon()
-        {
-            return 482;
-        }
     }
 }

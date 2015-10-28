@@ -30,6 +30,10 @@ namespace Gnome
         public Matrix TranslationMatrix(int Column, int Row) { return Matrix.CreateTranslation(TileUStep * Column, TileVStep * Row, 0.0f); }
         public Matrix TileMatrix(int Column, int Row) { return ScaleMatrix * TranslationMatrix(Column, Row); }
         public Matrix TileMatrix(int TileIndex) { return TileMatrix(Column(TileIndex), Row(TileIndex)); }
+        public Matrix TileMatrix(int TileIndex, int ColumnSpan, int RowSpan)
+        {
+            return Matrix.CreateScale(ColumnSpan, RowSpan, 1.0f) * TileMatrix(TileIndex);
+        }
         public Matrix TileMatrix(int Column, int Row, int ColumnSpan, int RowSpan)
         {
             return Matrix.CreateScale(ColumnSpan, RowSpan, 1.0f) * TileMatrix(Column, Row);

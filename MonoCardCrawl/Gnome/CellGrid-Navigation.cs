@@ -36,10 +36,11 @@ namespace Gnome
             c.Navigatable = false;
             c.Links.Clear();
             c.NavigationMesh = null;
-
-            if (c.Block != null && c.Block.NavigationMesh != null)
+            c.CenterPoint = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f);
+            
+            if (c.IsSolid)
             {
-                c.NavigationMesh = Gem.Geo.Gen.FacetCopy(c.Block.NavigationMesh);
+                c.NavigationMesh = Gem.Geo.Gen.Copy(Generate.GetNavigationMesh(c.Block.Shape));
                 Gem.Geo.Gen.Transform(c.NavigationMesh, Matrix.CreateTranslation(x + 0.5f, y + 0.5f, z));
                 Gem.Geo.Gen.CalculateTangentsAndBiNormals(c.NavigationMesh);
 
@@ -47,13 +48,15 @@ namespace Gnome
                 var hitCenter = c.NavigationMesh.RayIntersection(new Ray(centerPointRayOrigin, new Vector3(0, 0, -1)));
                 if (hitCenter.Intersects)
                     c.CenterPoint = centerPointRayOrigin + (new Vector3(0, 0, -1) * hitCenter.Distance);
-                else
-                    c.CenterPoint = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f);
-
+                
                 c.Navigatable = true;
 
+                // Block must have two clear blocks above it to be navigatable.
                 if (z != (this.depth - 1))
-                    if (CellAt(x, y, z + 1).Block != null)
+                    if (CellAt(x, y, z + 1).IsSolid)
+                        c.Navigatable = false;
+                if (z != (this.depth - 2))
+                    if (CellAt(x, y, z + 2).IsSolid)
                         c.Navigatable = false;
             }
         }
@@ -63,8 +66,6 @@ namespace Gnome
         {
             if (CX < 0 || CX >= this.width || CY < 0 || CY >= this.height) return;
             var baseMesh = From.NavigationMesh;
-            var highMesh = Gem.Geo.Gen.TransformCopy(From.NavigationMesh, Matrix.CreateTranslation(0, 0, 1));
-            var lowMesh = Gem.Geo.Gen.TransformCopy(From.NavigationMesh, Matrix.CreateTranslation(0, 0, -11));
 
             forRect(CX, CY, 0, 1, 1, this.depth, (neighbor, x, y, z) =>
                 {

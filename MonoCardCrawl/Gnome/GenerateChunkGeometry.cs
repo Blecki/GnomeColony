@@ -9,8 +9,66 @@ namespace Gnome
 {
     public static partial class Generate
     {
-        public static Gem.Geo.Mesh ChunkGeometry(CellGrid Grid, TileSheet Tiles)
+        private static Dictionary<BlockShape, BlockShapeTemplate> ShapeTemplates = null;
+        private static Dictionary<int, Vector3[]> ResourceOffsets = null;
+
+        private static void InitializeStaticData()
         {
+            if (ShapeTemplates == null)
+            {
+                ShapeTemplates = new Dictionary<BlockShape, BlockShapeTemplate>();
+
+                ShapeTemplates.Add(BlockShape.Cube,
+                    new BlockShapeTemplate
+                    {
+                        Mesh = Gem.Geo.Gen.TransformCopy(Gem.Geo.Gen.CreateTexturedFacetedCube(), Matrix.CreateTranslation(0.5f, 0.5f, 0.5f)),
+                        NavigationMesh = Gem.Geo.Gen.FacetCopy(Gem.Geo.Gen.TransformCopy(Gem.Geo.Gen.CreateQuad(), Matrix.CreateTranslation(0.0f, 0.0f, 1.0f)))
+                    });
+
+                ShapeTemplates.Add(BlockShape.Slab,
+                    new BlockShapeTemplate
+                    {
+                        Mesh = Gem.Geo.Gen.TransformCopy(
+                            Gem.Geo.Gen.TransformCopy(
+                                Gem.Geo.Gen.CreateTexturedFacetedCube(), 
+                                Matrix.CreateTranslation(0.5f, 0.5f, 0.5f)),
+                            Matrix.CreateScale(1.0f, 1.0f, 0.5f)),
+                        NavigationMesh = Gem.Geo.Gen.FacetCopy(Gem.Geo.Gen.TransformCopy(Gem.Geo.Gen.CreateQuad(), Matrix.CreateTranslation(0.0f, 0.0f, 0.5f)))
+                    });
+            }
+
+            if (ResourceOffsets == null)
+            {
+                ResourceOffsets = new Dictionary<int, Vector3[]>();
+
+                ResourceOffsets.Add(0, new Vector3[] { new Vector3(0, 0, 0.25f) });
+                ResourceOffsets.Add(1, new Vector3[] { new Vector3(0, 0, 0.25f) });
+                ResourceOffsets.Add(2, new Vector3[] { new Vector3(-0.25f, -0.25f, 0.25f), new Vector3(0.25f, 0.25f, 0.25f) });
+                ResourceOffsets.Add(3, new Vector3[] { new Vector3(-0.25f, -0.25f, 0.25f), new Vector3(0.25f, 0.25f, 0.25f), new Vector3(0.25f, -0.25f, 0.25f) });
+                ResourceOffsets.Add(4, new Vector3[] { new Vector3(-0.25f, -0.25f, 0.25f), new Vector3(0.25f, 0.25f, 0.25f), new Vector3(0.25f, -0.25f, 0.25f), new Vector3(-0.25f, 0.25f, 0.25f) });
+                ResourceOffsets.Add(5, new Vector3[] { new Vector3(-0.25f, -0.25f, 0.25f), new Vector3(0.25f, 0.25f, 0.25f), new Vector3(0.25f, -0.25f, 0.25f), new Vector3(-0.25f, 0.25f, 0.25f), new Vector3(0, 0, 0.75f) });
+                ResourceOffsets.Add(6, new Vector3[] { new Vector3(-0.25f, -0.25f, 0.25f), new Vector3(0.25f, 0.25f, 0.25f), new Vector3(0.25f, -0.25f, 0.25f), new Vector3(-0.25f, 0.25f, 0.25f), new Vector3(-0.25f, -0.25f, 0.75f), new Vector3(0.25f, 0.25f, 0.75f) });
+                ResourceOffsets.Add(7, new Vector3[] { new Vector3(-0.25f, -0.25f, 0.25f), new Vector3(0.25f, 0.25f, 0.25f), new Vector3(0.25f, -0.25f, 0.25f), new Vector3(-0.25f, 0.25f, 0.25f), new Vector3(-0.25f, -0.25f, 0.75f), new Vector3(0.25f, 0.25f, 0.75f), new Vector3(0.25f, -0.25f, 0.75f)});
+                ResourceOffsets.Add(8, new Vector3[] { new Vector3(-0.25f, -0.25f, 0.25f), new Vector3(0.25f, 0.25f, 0.25f), new Vector3(0.25f, -0.25f, 0.25f), new Vector3(-0.25f, 0.25f, 0.25f), new Vector3(-0.25f, -0.25f, 0.75f), new Vector3(0.25f, 0.25f, 0.75f), new Vector3(0.25f, -0.25f, 0.75f), new Vector3(-0.25f, 0.25f, 0.75f) });
+            }
+        }
+
+        public static Gem.Geo.Mesh GetNavigationMesh(BlockShape Shape)
+        {
+            InitializeStaticData();
+            return ShapeTemplates[Shape].NavigationMesh;
+        }
+
+        public static Gem.Geo.Mesh GetMesh(BlockShape Shape)
+        {
+            InitializeStaticData();
+            return ShapeTemplates[Shape].Mesh;
+        }
+
+        public static Gem.Geo.Mesh ChunkGeometry(CellGrid Grid, TileSheet Tiles, BlockTemplateSet Templates)
+        {
+            InitializeStaticData();
+
             var models = new List<Gem.Geo.Mesh>();
 
             Grid.forAll((cell, x, y, z) =>
@@ -29,22 +87,40 @@ namespace Gnome
                         models.Add(markerCube);
                     }
 
-                    if (cell.Navigatable && cell.NavigationMesh != null)
+                    if (cell.Storehouse && cell.Navigatable && cell.NavigationMesh != null)
                     {
                         var navMesh = Gem.Geo.Gen.TransformCopy(cell.NavigationMesh, Matrix.CreateTranslation(0.0f, 0.0f, 0.02f));
                         Gem.Geo.Gen.MorphEx(navMesh, (inV) =>
                         {
                             var r = inV;
-                            r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Tiles.TileMatrix(3));
+                            r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Tiles.TileMatrix(TileNames.Storehouse));
                             return r;
                         });
                         models.Add(navMesh);
                     }
 
-                    if (cell.Resource != null && cell.Resource.Filled)
+                    //if (cell.Navigatable && cell.NavigationMesh != null)
+                    //{
+                    //    var navMesh = Gem.Geo.Gen.TransformCopy(cell.NavigationMesh, Matrix.CreateTranslation(0.0f, 0.0f, 0.02f));
+                    //    Gem.Geo.Gen.MorphEx(navMesh, (inV) =>
+                    //    {
+                    //        var r = inV;
+                    //        r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Tiles.TileMatrix(3));
+                    //        return r;
+                    //    });
+                    //    models.Add(navMesh);
+                    //}
+
+                    var offsetsIndex = 0;
+                    if (ResourceOffsets.ContainsKey(cell.Resources.Count))
+                        offsetsIndex = cell.Resources.Count;
+
+                    for (int i = 0; i < cell.Resources.Count; ++i)
                     {
-                        var resourceCube = CreateResourceBlockMesh(Tiles, cell.Resource.BlockType);
-                        Gem.Geo.Gen.Transform(resourceCube, Matrix.CreateTranslation(x + 0.5f, y + 0.5f, z));
+                        var resourceCube = CreateResourceBlockMesh(Tiles, Templates[cell.Resources[i]]);
+                        Gem.Geo.Gen.Transform(resourceCube, Matrix.CreateTranslation(cell.CenterPoint 
+                            + ResourceOffsets[offsetsIndex][i % ResourceOffsets[offsetsIndex].Length]
+                            + new Vector3(0.0f, 0.0f, (cell.Block == null ? 0.0f : cell.Block.ResourceHeightOffset))));
                         models.Add(resourceCube);
                     }
 
@@ -55,10 +131,9 @@ namespace Gnome
 
         private static Gem.Geo.Mesh CreateNormalBlockMesh(TileSheet Tiles, BlockTemplate Template)
         {
-            var cube = Gem.Geo.Gen.CreateTexturedFacetedCube();
-            Gem.Geo.Gen.Transform(cube, Matrix.CreateTranslation(0.5f, 0.5f, 0.5f)); // re-origin cube.
-            MorphBlockTextureCoordinates(Tiles, Template, cube);
-            return cube;
+            var mesh = Gem.Geo.Gen.Copy(ShapeTemplates[Template.Shape].Mesh);
+            MorphBlockTextureCoordinates(Tiles, Template, mesh);
+            return mesh;
         }
 
         private static void MorphBlockTextureCoordinates(TileSheet Tiles, BlockTemplate Template, Gem.Geo.Mesh cube)
@@ -99,10 +174,10 @@ namespace Gnome
 
         public static Gem.Geo.Mesh CreateResourceBlockMesh(TileSheet Tiles, BlockTemplate Template)
         {
-            var cube = Gem.Geo.Gen.CreateTexturedFacetedCube();
-            MorphBlockTextureCoordinates(Tiles, Template, cube);
-            Gem.Geo.Gen.Transform(cube, Matrix.CreateScale(0.5f));
-            return cube;
+            var mesh = CreateNormalBlockMesh(Tiles, Template);
+            Gem.Geo.Gen.Transform(mesh, Matrix.CreateTranslation(-0.5f, -0.5f, -0.5f));
+            Gem.Geo.Gen.Transform(mesh, Matrix.CreateScale(0.5f));
+            return mesh;
         }
     }
 }

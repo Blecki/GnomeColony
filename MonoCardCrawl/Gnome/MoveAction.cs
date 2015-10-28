@@ -12,6 +12,7 @@ namespace Gnome
         public float TotalTime;
         public float ElapsedTime = 0.0f;
         public bool Done = false;
+        private Vector3[] SplinePoints = null;
 
         public MoveAction(CellLink.Directions Direction, float TotalTime)
         {
@@ -21,32 +22,60 @@ namespace Gnome
 
         public override bool Update(Game Game, Actor Actor, float ElapsedTime)
         {
-            if (!Game.World.check(Actor.Location.X, Actor.Location.Y, Actor.Location.Z)) return true;
-
-            var halfTime = TotalTime / 2.0f;
+            if (!Game.World.Check(Actor.Location)) return true;
 
             this.ElapsedTime += ElapsedTime;
 
-            var startCell = Game.World.CellAt(Actor.Location.X, Actor.Location.Y, Actor.Location.Z);
-            var linkIndex = startCell.Links.FindIndex(l => l.Direction == Direction);
-            if (linkIndex < 0 || linkIndex >= startCell.Links.Count) return true;
-            var link = startCell.Links[linkIndex];
-            if (link.Neighbor == null) return true;
-            var endCell = link.Neighbor;
+            if (SplinePoints == null)
+            {
+                SplinePoints = new Vector3[3];
+
+                var startCell = Game.World.CellAt(Actor.Location);
+                SplinePoints[0] = startCell.CenterPoint;
+
+                var linkIndex = startCell.Links.FindIndex(l => l.Direction == Direction);
+                
+                if (linkIndex >= 0 && linkIndex < startCell.Links.Count)
+                {
+                    var link = startCell.Links[linkIndex];
+                    SplinePoints[1] = link.EdgePoint;
+                    if (link.Neighbor == null)
+                        return true; // SplinePoints[2] = SplinePoints[0] + CellLink.DirectionOffset(Direction);
+                    else
+                    {
+                        SplinePoints[2] = link.Neighbor.CenterPoint;
+
+                        // Update cell's present actor. Update at begining of move for reasons.
+                        startCell.PresentActor = null;
+                        link.Neighbor.PresentActor = Actor;
+
+                        Actor.Location = link.Neighbor.Location;
+                    }
+                }
+                else
+                {
+                    return true;
+                    // SplinePoints[2] = SplinePoints[0] + CellLink.DirectionOffset(Direction);
+                    // SplinePoints[1] = (SplinePoints[0] + SplinePoints[2]) / 2.0f;
+                }
+            }
 
             if (this.ElapsedTime >= this.TotalTime)
             {
-                Actor.Location = endCell.Location;
                 Actor.PositionOffset = Vector3.Zero;
                 Done = true;
                 return true;
             }
 
+            var halfTime = TotalTime / 2.0f;
+
+            var realPosition = Vector3.Zero;
             if (this.ElapsedTime < halfTime)
-                Actor.PositionOffset = (link.EdgePoint - startCell.CenterPoint) * (this.ElapsedTime / halfTime);
+                realPosition = SplinePoints[0] + ((SplinePoints[1] - SplinePoints[0]) * (this.ElapsedTime / halfTime));
             else
-                Actor.PositionOffset = (link.EdgePoint - startCell.CenterPoint) +
-                    ((endCell.CenterPoint - link.EdgePoint) * ((this.ElapsedTime - halfTime) / halfTime));
+                realPosition = SplinePoints[1] + ((SplinePoints[2] - SplinePoints[1]) * ((this.ElapsedTime - halfTime) / halfTime));
+
+            Actor.PositionOffset = -(SplinePoints[2] - realPosition);
 
             return false;
         }

@@ -15,11 +15,13 @@ namespace Gnome
         public WalkTask(Task GoalTask) : base(new Coordinate(0,0,0))
         {
             this.GoalTask = GoalTask;
+            GnomeIcon = GoalTask.GnomeIcon;
         }
 
         public override TaskStatus QueryStatus(Game Game)
         {
             if (FailedToFindPath) return TaskStatus.Impossible;
+            if (Action != null && !Action.Done) return TaskStatus.NotComplete;
             if (GoalTask.QueryValidLocation(Game, AssignedGnome.Location)) return TaskStatus.Complete;
             return TaskStatus.NotComplete;
         }
@@ -56,11 +58,5 @@ namespace Gnome
                 }
             }
         }
-
-        public override int GnomeIcon()
-        {
-            return GoalTask.GnomeIcon();
-        }
-
     }
 }
