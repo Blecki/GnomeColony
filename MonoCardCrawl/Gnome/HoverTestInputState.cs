@@ -47,11 +47,10 @@ namespace Gnome
 
             Game.RenderTrees.Add(renderTree);
 
-            var guiQuad = Gem.Geo.Gen.Invert(Gem.Geo.Gen.FacetCopy(Gem.Geo.Gen.CreateQuad()));
-            Gem.Geo.Gen.Transform(guiQuad, Matrix.CreateScale(800, 600, 1.0f));
+            var guiQuad = Gem.Geo.Gen.FacetCopy(Gem.Geo.Gen.CreateQuad());
+            Gem.Geo.Gen.Transform(guiQuad, Matrix.CreateScale(800, -600, 1.0f));
             Gem.Geo.Gen.CalculateTangentsAndBiNormals(guiQuad);
-            //Gem.Geo.Gen.Transform(guiQuad, Matrix.CreateTranslation(0.0f, 0.0f, -10.0f));
-            GuiRoot = new Gem.Gui.GuiSceneNode(guiQuad, Game.Main.GraphicsDevice, 1024, 512);
+            GuiRoot = new Gem.Gui.GuiSceneNode(guiQuad, Game.Main.GraphicsDevice, 800, 600);
             GuiRoot.uiRoot.AddPropertySet(null, new Gem.Gui.GuiProperties { Transparent = true });
 
             var y = 8;
@@ -72,7 +71,6 @@ namespace Gnome
             GuiRoot.DistanceBias = float.NegativeInfinity;
 
             renderTree.SceneGraph.Add(GuiRoot);
-            //Game.RenderTrees[0].SceneGraph.Add(GuiRoot);
 
             SelectedTool = Tools[0];
         }

@@ -25,13 +25,15 @@ namespace Gnome
         public int ID;
         public int Preview = 1;
         public int Top = 1;
-        public int Side = 1;
+        public int SideA = 1;
+        public int SideB = -1;
         public int Bottom = 1;
         public BlockShape Shape;
         public bool Solid = true;
         public float ResourceHeightOffset = 0.0f;
         public int[] ConstructionResources;
         public int[] MineResources;
+        public bool Orientable = false;
     }
 
     public class BlockTemplateSet : Dictionary<int, BlockTemplate>

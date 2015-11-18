@@ -9,6 +9,7 @@ namespace Gnome
     public class Cell 
     {
         public BlockTemplate Block;
+        public CellLink.Directions BlockOrientation = CellLink.Directions.North;
         public Task Task;
         public Coordinate Location;
 

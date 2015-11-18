@@ -21,7 +21,7 @@ namespace Gnome
                 ShapeTemplates.Add(BlockShape.Cube,
                     new BlockShapeTemplate
                     {
-                        Mesh = Gem.Geo.Gen.TransformCopy(Gem.Geo.Gen.CreateTexturedFacetedCube(), Matrix.CreateTranslation(0.5f, 0.5f, 0.5f)),
+                        Mesh = Gem.Geo.Gen.CreateTexturedFacetedCube(),
                         NavigationMesh = Gem.Geo.Gen.FacetCopy(Gem.Geo.Gen.TransformCopy(Gem.Geo.Gen.CreateQuad(), Matrix.CreateTranslation(0.0f, 0.0f, 1.0f)))
                     });
 
@@ -29,9 +29,7 @@ namespace Gnome
                     new BlockShapeTemplate
                     {
                         Mesh = Gem.Geo.Gen.TransformCopy(
-                            Gem.Geo.Gen.TransformCopy(
-                                Gem.Geo.Gen.CreateTexturedFacetedCube(), 
-                                Matrix.CreateTranslation(0.5f, 0.5f, 0.5f)),
+                            Gem.Geo.Gen.CreateTexturedFacetedCube(), 
                             Matrix.CreateScale(1.0f, 1.0f, 0.5f)),
                         NavigationMesh = Gem.Geo.Gen.FacetCopy(Gem.Geo.Gen.TransformCopy(Gem.Geo.Gen.CreateQuad(), Matrix.CreateTranslation(0.0f, 0.0f, 0.5f)))
                     });
@@ -39,9 +37,7 @@ namespace Gnome
                 ShapeTemplates.Add(BlockShape.Slope,
                     new BlockShapeTemplate
                     {
-                        Mesh = Gem.Geo.Gen.TransformCopy(
-                            Gem.Geo.Gen.TextureAndFacetAsCube(Gem.Geo.Gen.CreateWedge(1.0f)),
-                            Matrix.CreateTranslation(0.5f, 0.5f, 0.5f)),
+                        Mesh = Gem.Geo.Gen.TextureAndFacetAsCube(Gem.Geo.Gen.CreateWedge(1.0f)),
                         NavigationMesh = Gem.Geo.Gen.FacetCopy(
                             Gem.Geo.Gen.CreateSlantedQuad(1.0f))
                     });
@@ -86,7 +82,13 @@ namespace Gnome
                     if (cell.Block != null)
                     {
                         var cube = CreateNormalBlockMesh(Tiles, cell.Block);
-                        Gem.Geo.Gen.Transform(cube, Matrix.CreateTranslation(x, y, z));
+
+                        if (cell.Block.Orientable)
+                            Gem.Geo.Gen.Transform(cube, Matrix.CreateRotationZ(
+                                (Gem.Math.Angle.PI / 2) * (int)cell.BlockOrientation));
+
+                        Gem.Geo.Gen.Transform(cube, Matrix.CreateTranslation(x + 0.5f, y + 0.5f, z + 0.5f));
+
                         models.Add(cube);
                     }
 
@@ -159,8 +161,18 @@ namespace Gnome
                     r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate,
                         Tiles.TileMatrix(Template.Top));
                 else
-                    r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate,
-                        Tiles.TileMatrix(Template.Side));
+                {
+                    if (Template.SideB != -1)
+                    {
+                        if (r.Normal.X != 0)
+                            r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Tiles.TileMatrix(Template.SideA));
+                        else
+                            r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Tiles.TileMatrix(Template.SideB));
+                    }
+                    else
+                        r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Tiles.TileMatrix(Template.SideA));
+                }
+
                 return r;
             });
         }

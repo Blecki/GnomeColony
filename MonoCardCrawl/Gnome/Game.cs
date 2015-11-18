@@ -19,8 +19,6 @@ namespace Gnome
         float CameraDistance = -12;
         Vector3 CameraFocus = new Vector3(8.0f, 8.0f, 3.0f);
         public RenderContext RenderContext { get; private set; }
-        //public Gem.Render.FreeCamera Camera { get; private set; }
-        //public Gem.Render.BranchNode SceneGraph { get; private set; }
         public SceneNode HoverNode { get; private set; }
 
         public class RenderTree
@@ -117,7 +115,7 @@ namespace Gnome
             {
                 Preview = TileNames.TaskMarkerBuild,
                 Top = TileNames.TaskMarkerBuild,
-                Side = TileNames.TaskMarkerBuild,
+                SideA = TileNames.TaskMarkerBuild,
                 Bottom = TileNames.TaskMarkerBuild,
                 Shape = BlockShape.Cube,
                 Solid = false,
@@ -128,7 +126,7 @@ namespace Gnome
                 {
                     Preview = TileNames.BlockGrassTop,
                     Top = TileNames.BlockGrassTop,
-                    Side = TileNames.BlockGrassSide,
+                    SideA = TileNames.BlockGrassSide,
                     Bottom = TileNames.BlockDirt,
                     Shape = BlockShape.Cube,
                     ConstructionResources = new int[] {  BlockTypes.Dirt, BlockTypes.Dirt },
@@ -139,7 +137,7 @@ namespace Gnome
             {
                 Preview = TileNames.BlockDirt,
                 Top = TileNames.BlockDirt,
-                Side = TileNames.BlockDirt,
+                SideA = TileNames.BlockDirt,
                 Bottom = TileNames.BlockDirt,
                 Shape = BlockShape.Cube
             });
@@ -147,9 +145,11 @@ namespace Gnome
             BlockTemplates.Add(BlockTypes.TestSlope, new BlockTemplate
             {
                 Preview = TileNames.BlockCrystalSide,
-                Top = TileNames.BlockCrystalTop,
-                Side = TileNames.BlockCrystalSide,
-                Bottom = TileNames.BlockCrystalTop,
+                Top = TileNames.BlockGrassTop,
+                SideA = TileNames.BlockGrassSlope,
+                SideB = TileNames.BlockGrassSide,
+                Bottom = TileNames.BlockDirt,
+                Orientable = true,
                 Shape = BlockShape.Slope,
                 ConstructionResources = new int[] { BlockTypes.Dirt, BlockTypes.Dirt },
                 MineResources = new int[] { BlockTypes.Dirt }
@@ -169,7 +169,18 @@ namespace Gnome
                 });
 
             World.CellAt(4, 4, 1).Storehouse = true;
+
             World.CellAt(1, 1, 2).Block = BlockTemplates[BlockTypes.TestSlope];
+            World.CellAt(1, 1, 2).BlockOrientation = CellLink.Directions.North;
+
+            World.CellAt(1, 2, 2).Block = BlockTemplates[BlockTypes.TestSlope];
+            World.CellAt(1, 2, 2).BlockOrientation = CellLink.Directions.East;
+            
+            World.CellAt(1, 3, 2).Block = BlockTemplates[BlockTypes.TestSlope];
+            World.CellAt(1, 3, 2).BlockOrientation = CellLink.Directions.South;
+
+            World.CellAt(1, 4, 2).Block = BlockTemplates[BlockTypes.TestSlope];
+            World.CellAt(1, 4, 2).BlockOrientation = CellLink.Directions.West;
 
             Actors = new List<Actor>();
             Tasks = new List<Task>();

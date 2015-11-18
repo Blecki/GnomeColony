@@ -20,6 +20,7 @@ namespace Gnome
         public const int BlockGrassSide = 32;
         public const int BlockGrassTop = 33;
         public const int BlockDirt = 34;
+        public const int BlockGrassSlope = 35;
         public const int BlockTreeSide = 64;
         public const int BlockTreeTop = 65;
         public const int BlockCrystalTop = 96;

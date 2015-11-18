@@ -41,6 +41,11 @@ namespace Gnome
             if (c.IsSolid)
             {
                 c.NavigationMesh = Gem.Geo.Gen.Copy(Generate.GetNavigationMesh(c.Block.Shape));
+
+                if (c.Block.Orientable)
+                    Gem.Geo.Gen.Transform(c.NavigationMesh, Matrix.CreateRotationZ(
+                        (Gem.Math.Angle.PI / 2) * (int)c.BlockOrientation));
+
                 Gem.Geo.Gen.Transform(c.NavigationMesh, Matrix.CreateTranslation(x + 0.5f, y + 0.5f, z));
                 Gem.Geo.Gen.CalculateTangentsAndBiNormals(c.NavigationMesh);
 
