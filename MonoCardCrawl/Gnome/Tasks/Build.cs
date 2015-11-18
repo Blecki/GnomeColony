@@ -47,8 +47,9 @@ namespace Gnome.Tasks
 
         public override IEnumerable<int> GetRequiredResources()
         {
-            foreach (var resource in BlockType.ConstructionResources)
-                yield return resource;
+            if (BlockType.ConstructionResources != null) 
+                foreach (var resource in BlockType.ConstructionResources)
+                    yield return resource;
         }
 
         public override void ExecuteTask(Game Game, Gnome Gnome)

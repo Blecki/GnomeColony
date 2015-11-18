@@ -137,7 +137,7 @@ namespace Gnome
             TaskIcon.UVTransform = Sheet.TileMatrix(taskIconIndex);
             
             // Orient task icon toward camera
-            var cameraPos = Game.Camera.GetPosition();
+            var cameraPos = Game.RenderTrees[0].Camera.GetPosition();
             var cameraDelta = this.Orientation.Position - cameraPos;
             var billboardAngle = Gem.Math.Vector.AngleBetweenVectors(new Vector2(0, 1), new Vector2(cameraDelta.X, cameraDelta.Y));
             TaskIcon.Orientation.Orientation = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, billboardAngle);

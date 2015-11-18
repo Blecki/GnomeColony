@@ -202,9 +202,7 @@
     <Compile Include="Gnome\Game.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Gem\Render\FreeCamera.cs" />
-    <Compile Include="Gem\Render\OrbitCamera.cs" />
     <Compile Include="Gem\Render\OrthographicCamera.cs" />
-    <Compile Include="Gem\Render\ZPlaneOrbitCamera.cs" />
     <Compile Include="Gem\Render\ICamera.cs" />
     <Compile Include="Gem\Render\ImmediateMode2d.cs" />
     <Compile Include="Gem\Render\ImmediateModeDebug.cs" />

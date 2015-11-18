@@ -35,6 +35,16 @@ namespace Gnome
                             Matrix.CreateScale(1.0f, 1.0f, 0.5f)),
                         NavigationMesh = Gem.Geo.Gen.FacetCopy(Gem.Geo.Gen.TransformCopy(Gem.Geo.Gen.CreateQuad(), Matrix.CreateTranslation(0.0f, 0.0f, 0.5f)))
                     });
+
+                ShapeTemplates.Add(BlockShape.Slope,
+                    new BlockShapeTemplate
+                    {
+                        Mesh = Gem.Geo.Gen.TransformCopy(
+                            Gem.Geo.Gen.TextureAndFacetAsCube(Gem.Geo.Gen.CreateWedge(1.0f)),
+                            Matrix.CreateTranslation(0.5f, 0.5f, 0.5f)),
+                        NavigationMesh = Gem.Geo.Gen.FacetCopy(
+                            Gem.Geo.Gen.CreateSlantedQuad(1.0f))
+                    });
             }
 
             if (ResourceOffsets == null)
@@ -99,17 +109,17 @@ namespace Gnome
                         models.Add(navMesh);
                     }
 
-                    //if (cell.Navigatable && cell.NavigationMesh != null)
-                    //{
-                    //    var navMesh = Gem.Geo.Gen.TransformCopy(cell.NavigationMesh, Matrix.CreateTranslation(0.0f, 0.0f, 0.02f));
-                    //    Gem.Geo.Gen.MorphEx(navMesh, (inV) =>
-                    //    {
-                    //        var r = inV;
-                    //        r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Tiles.TileMatrix(3));
-                    //        return r;
-                    //    });
-                    //    models.Add(navMesh);
-                    //}
+                    if (cell.Block != null && cell.NavigationMesh != null)
+                    {
+                        var navMesh = Gem.Geo.Gen.TransformCopy(cell.NavigationMesh, Matrix.CreateTranslation(0.0f, 0.0f, 0.02f));
+                        Gem.Geo.Gen.MorphEx(navMesh, (inV) =>
+                        {
+                            var r = inV;
+                            r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Tiles.TileMatrix(3));
+                            return r;
+                        });
+                        models.Add(navMesh);
+                    }
 
                     var offsetsIndex = 0;
                     if (ResourceOffsets.ContainsKey(cell.Resources.Count))

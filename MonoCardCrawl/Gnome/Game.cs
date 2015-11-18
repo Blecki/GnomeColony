@@ -17,11 +17,19 @@ namespace Gnome
 
         EpisodeContentManager Content;
         float CameraDistance = -12;
-        Vector3 CameraFocus = new Vector3(0.0f, 0.0f, 0.0f);
+        Vector3 CameraFocus = new Vector3(8.0f, 8.0f, 3.0f);
         public RenderContext RenderContext { get; private set; }
-        public Gem.Render.FreeCamera Camera { get; private set; }
-        public Gem.Render.BranchNode SceneGraph { get; private set; }
+        //public Gem.Render.FreeCamera Camera { get; private set; }
+        //public Gem.Render.BranchNode SceneGraph { get; private set; }
         public SceneNode HoverNode { get; private set; }
+
+        public class RenderTree
+        {
+            public Gem.Render.ICamera Camera;
+            public Gem.Render.BranchNode SceneGraph;
+        }
+
+        public List<RenderTree> RenderTrees = new List<RenderTree>();
 
         private List<InputState> InputStack = new List<InputState>();
         public CellGrid World { get; private set; }
@@ -38,7 +46,7 @@ namespace Gnome
             World.MarkDirtyBlock(Coordinate);
         }
 
-        private float CameraYaw = 0.0f;
+        private float CameraYaw = 0.25f;
         private float CameraPitch = 0.0f;
 
         public void PushInputState(InputState NextState)
@@ -93,10 +101,17 @@ namespace Gnome
             Content = new EpisodeContentManager(Main.EpisodeContent.ServiceProvider, "Content");
 
             RenderContext = new RenderContext(Content.Load<Effect>("draw"), Main.GraphicsDevice);
-            Camera = new Gem.Render.FreeCamera(new Vector3(0, 0, 0), Vector3.UnitY, Vector3.UnitZ, Main.GraphicsDevice.Viewport);
-            RenderContext.Camera = Camera;
 
-            World = new CellGrid(16, 16, 16);
+
+            RenderTrees.Add(new RenderTree
+            {
+                Camera = new Gem.Render.FreeCamera(new Vector3(0, 0, 0), Vector3.UnitY, Vector3.UnitZ, Main.GraphicsDevice.Viewport),
+                SceneGraph = new BranchNode()
+            });
+
+            (RenderTrees[0].Camera as FreeCamera).Position = CameraFocus + new Vector3(0, -4, 3);
+
+            #region Prepare Block Templates
 
             BlockTemplates.Add(BlockTypes.Scaffold, new BlockTemplate
             {
@@ -129,7 +144,23 @@ namespace Gnome
                 Shape = BlockShape.Cube
             });
 
-            
+            BlockTemplates.Add(BlockTypes.TestSlope, new BlockTemplate
+            {
+                Preview = TileNames.BlockCrystalSide,
+                Top = TileNames.BlockCrystalTop,
+                Side = TileNames.BlockCrystalSide,
+                Bottom = TileNames.BlockCrystalTop,
+                Shape = BlockShape.Slope,
+                ConstructionResources = new int[] { BlockTypes.Dirt, BlockTypes.Dirt },
+                MineResources = new int[] { BlockTypes.Dirt }
+            });
+
+            #endregion
+
+
+            #region Prepare World
+
+            World = new CellGrid(16, 16, 16);
 
             World.forAll((t, x, y, z) =>
                 {
@@ -138,14 +169,28 @@ namespace Gnome
                 });
 
             World.CellAt(4, 4, 1).Storehouse = true;
+            World.CellAt(1, 1, 2).Block = BlockTemplates[BlockTypes.TestSlope];
 
             Actors = new List<Actor>();
-
             Tasks = new List<Task>();
 
-            SceneGraph = new Gem.Render.BranchNode();
+            var tileTexture = Content.Load<Texture2D>("tiles");
+            BlockTiles = new TileSheet(tileTexture, 16, 16);
 
-            Camera.Position = CameraFocus + new Vector3(0, -4, 3);
+            WorldSceneNode = new WorldSceneNode(World, new WorldSceneNodeProperties
+            {
+                HiliteTexture = TileNames.HoverHilite,
+                TileSheet = BlockTiles,
+                BlockTemplates = BlockTemplates
+            });
+
+            RenderTrees[0].SceneGraph.Add(WorldSceneNode);
+
+            RenderTrees[0].SceneGraph.Add(new ActorSceneNode(Actors));
+
+            #endregion
+
+            #region Prepare Input
 
             Main.Input.ClearBindings();
             Main.Input.AddAxis("MAIN-AXIS", new MouseAxisBinding());
@@ -164,20 +209,6 @@ namespace Gnome
 
             Main.ScriptBuilder.DeriveScriptsFrom("Gnome.ScriptBase");
 
-            var tileTexture = Content.Load<Texture2D>("tiles");
-            BlockTiles = new TileSheet(tileTexture, 16, 16);
-
-            WorldSceneNode = new WorldSceneNode(World, new WorldSceneNodeProperties
-            {
-                HiliteTexture = TileNames.HoverHilite,
-                TileSheet = BlockTiles,
-                BlockTemplates = BlockTemplates
-            });
-
-            SceneGraph.Add(WorldSceneNode);
-
-            SceneGraph.Add(new ActorSceneNode(Actors));
-
             var guiTools = new List<GuiTool>();
             guiTools.Add(new GuiTools.Build());
             guiTools.Add(new GuiTools.Mine());
@@ -185,9 +216,11 @@ namespace Gnome
 
             PushInputState(new HoverTest(BlockTemplates, BlockTiles, guiTools));
 
+            #endregion
+
             World.PrepareNavigation();
             World.MarkDirtyChunk();
-            SceneGraph.UpdateWorldTransform(Matrix.Identity);
+            RenderTrees[0].SceneGraph.UpdateWorldTransform(Matrix.Identity);
 
             for (int i = 0; i < 4; ++i)
             {
@@ -202,6 +235,8 @@ namespace Gnome
                 return new List<Cell>(cell.Links.Select(c => c.Neighbor).Where(c => c.CanWalk));
             },
             (cell) => 1.0f);
+
+           
         }
 
         public void End()
@@ -244,20 +279,25 @@ namespace Gnome
             if (CameraPitch < 0.5f) CameraPitch = 0.5f;
             if (CameraPitch > 1.5f) CameraPitch = 1.5f;
 
-            Camera.Position = CameraFocus + Vector3.Transform(new Vector3(0, -CameraDistance, 0),
-                 Matrix.CreateRotationX(CameraPitch) * Matrix.CreateRotationZ(CameraYaw));
-            Camera.LookAt(CameraFocus, Vector3.UnitZ);
+            (RenderTrees[0].Camera as FreeCamera).Position = 
+                CameraFocus + 
+                Vector3.Transform(new Vector3(0, -CameraDistance, 0), 
+                    Matrix.CreateRotationX(CameraPitch) * Matrix.CreateRotationZ(CameraYaw));
+            (RenderTrees[0].Camera as FreeCamera).LookAt(CameraFocus, Vector3.UnitZ);
 
             foreach (var actor in Actors)
                 actor.Update(this);
             
             HoverNode = null;
-
-            var pickVector = Camera.Unproject(new Vector3(Main.Input.QueryAxis("MAIN-AXIS"), 0));
-            var pickRay = new Ray(Camera.Position, pickVector - Camera.Position);
             var hoverItems = new List<HoverItem>();
 
-            SceneGraph.CalculateLocalMouse(pickRay, (node, distance) => hoverItems.Add(new HoverItem { Node = node, Distance = distance }));
+            foreach (var renderTree in RenderTrees)
+            {
+                var mousePosition = Main.Input.QueryAxis("MAIN-AXIS");
+                var pickRay = renderTree.Camera.GetPickRay(mousePosition);
+
+                renderTree.SceneGraph.CalculateLocalMouse(pickRay, (node, distance) => hoverItems.Add(new HoverItem { Node = node, Distance = distance }));
+            }
 
             if (hoverItems.Count > 0)
             {
@@ -268,7 +308,8 @@ namespace Gnome
             }
 
             if (InputStack.Count > 0) InputStack.Last().Update(this);
-            SceneGraph.UpdateWorldTransform(Matrix.Identity);
+            foreach (var renderTree in RenderTrees)
+                renderTree.SceneGraph.UpdateWorldTransform(Matrix.Identity);
         }
 
         private struct HoverItem
@@ -281,36 +322,40 @@ namespace Gnome
         {
             var viewport = Main.GraphicsDevice.Viewport;
 
-            SceneGraph.PreDraw(elapsedSeconds, RenderContext);
+            foreach (var renderTree in RenderTrees)
+                renderTree.SceneGraph.PreDraw(elapsedSeconds, RenderContext);
                        
             Main.GraphicsDevice.SetRenderTarget(null);
             Main.GraphicsDevice.Viewport = viewport;
             Main.GraphicsDevice.BlendState = BlendState.NonPremultiplied;
             Main.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
             Main.GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
-
-            RenderContext.Camera = Camera;
-            RenderContext.Color = Vector3.One;
-            RenderContext.Alpha = 1.0f;
-            RenderContext.ClipAlpha = 0.2f;
-            RenderContext.LightingEnabled = true;
-            RenderContext.UVTransform = Matrix.Identity;
-            RenderContext.World = Matrix.Identity;
-            //RenderContext.SetLight(0, PlayerActor.Orientation.Position + new Vector3(0.0f, -0.2f, 2.0f), 10, new Vector3(1, 0, 0));
-            RenderContext.SetLight(1, new Vector3(-6.5f, -6.5f, 6.5f), 20, new Vector3(1, 1, 1));
-            RenderContext.SetLight(2, new Vector3(6.5f, 6.5f, 6.5f), 20, new Vector3(1, 1, 1));
-            RenderContext.ActiveLightCount = 3;
-            RenderContext.Texture = RenderContext.White;
-            RenderContext.NormalMap = RenderContext.NeutralNormals;
-            RenderContext.ApplyChanges();
-
             Main.GraphicsDevice.Clear(ClearOptions.Target, Color.CornflowerBlue, 0xFFFFFF, 0);
-            SceneGraph.Draw(RenderContext);
-            RenderContext.LightingEnabled = true;
-            
 
-            RenderContext.World = Matrix.Identity;
-            RenderContext.Texture = RenderContext.White;
+            foreach (var renderTree in RenderTrees)
+            {
+                RenderContext.Camera = renderTree.Camera;
+                RenderContext.Color = Vector3.One;
+                RenderContext.Alpha = 1.0f;
+                RenderContext.ClipAlpha = 0.2f;
+                RenderContext.LightingEnabled = true;
+                RenderContext.UVTransform = Matrix.Identity;
+                RenderContext.World = Matrix.Identity;
+                //RenderContext.SetLight(0, PlayerActor.Orientation.Position + new Vector3(0.0f, -0.2f, 2.0f), 10, new Vector3(1, 0, 0));
+                RenderContext.SetLight(1, new Vector3(-6.5f, -6.5f, 6.5f), 20, new Vector3(1, 1, 1));
+                RenderContext.SetLight(2, new Vector3(6.5f, 6.5f, 6.5f), 20, new Vector3(1, 1, 1));
+                RenderContext.ActiveLightCount = 3;
+                RenderContext.Texture = RenderContext.White;
+                RenderContext.NormalMap = RenderContext.NeutralNormals;
+                RenderContext.ApplyChanges();
+
+                renderTree.SceneGraph.Draw(RenderContext);
+                RenderContext.LightingEnabled = true;
+
+
+                RenderContext.World = Matrix.Identity;
+                RenderContext.Texture = RenderContext.White;
+            }
             
             //World.NavMesh.DebugRender(RenderContext);
             //if (HitFace != null) 

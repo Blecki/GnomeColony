@@ -109,6 +109,11 @@ namespace Gem.Render
             this.Up = Vector3.Cross(right, Forward);
         }
 
+        public Ray GetPickRay(Vector2 MousePosition)
+        {
+            var pickVector = Unproject(new Vector3(MousePosition, 0));
+            return new Ray(GetPosition(), pickVector - GetPosition());
+        }
         
     }
 }

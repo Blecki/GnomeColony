@@ -11,8 +11,12 @@ namespace Gem.Geo
     {
         public static Mesh CreateTexturedFacetedCube()
         {
-            var result = CreateCube();
-            result = FacetCopy(result);
+            return TextureAndFacetAsCube(CreateCube());
+        }
+
+        public static Mesh TextureAndFacetAsCube(Mesh In)
+        {
+            var result = FacetCopy(In);
             ProjectTextureCube(result);
 
             for (int i = 0; i < result.VertexCount; ++i)

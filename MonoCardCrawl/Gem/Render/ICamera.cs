@@ -27,5 +27,7 @@ namespace Gem.Render
         Vector3 GetPosition();
         Vector3 GetEyeVector();
 		Vector3 GetUp();
+
+        Ray GetPickRay(Vector2 MousePosition);
     }
 }

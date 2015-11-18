@@ -48,5 +48,6 @@ namespace Gnome
         public const int Scaffold = 0;
         public const int Grass = 1;
         public const int Dirt = 2;
+        public const int TestSlope = 3;
     }
 }

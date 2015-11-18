@@ -31,6 +31,28 @@ namespace Gem.Geo
             return result;
         }
 
+        public static Mesh Invert(Mesh m)
+        {
+            var result = new Mesh();
+            result.verticies = new Vertex[m.verticies.Length];
+            result.indicies = new short[m.indicies.Length];
+
+            for (short i = 0; i < m.verticies.Length; ++i)
+            {
+                result.verticies[i] = m.verticies[i];
+                result.verticies[i].Normal *= -1.0f;
+            }
+
+            for (short i = 0; i < m.indicies.Length; i += 3)
+            {
+                result.indicies[i] = m.indicies[i];
+                result.indicies[i + 1] = m.indicies[i + 2];
+                result.indicies[i + 2] = m.indicies[i + 1];
+            }
+
+            return result;
+        }
+
         public static void CalculateTangentsAndBiNormals(Mesh m)
         {
             for (short i = 0; i < m.verticies.Length; i += 3)

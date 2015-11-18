@@ -15,6 +15,7 @@ namespace Gnome
         private TileSheet TileSheet;
         private List<GuiTool> Tools;
         private GuiTool SelectedTool;
+        private Gem.Render.OrthographicCamera GUICamera;
                 
         public HoverTest(BlockTemplateSet BlockTemplates, TileSheet TileSheet, List<GuiTool> Tools)
         {
@@ -23,7 +24,7 @@ namespace Gnome
             this.Tools = Tools;
         }
 
-        private static Gem.Gui.UIItem CreateGuiSprite(Rectangle Position, int TileIndex, TileSheet TileSheet)
+        public static Gem.Gui.UIItem CreateGuiSprite(Rectangle Position, int TileIndex, TileSheet TileSheet)
         {
             return new Gem.Gui.UIItem(
                 Gem.Gui.Shape.CreateSprite(Position.X, Position.Y, Position.Width, Position.Height),
@@ -36,27 +37,33 @@ namespace Gnome
 
         public override void EnterState(Game Game)
         {
-            var guiQuad = Gem.Geo.Gen.CreateQuad();
-            Gem.Geo.Gen.Transform(guiQuad, Matrix.CreateScale(30, 15, 1));
-            Gem.Geo.Gen.Transform(guiQuad, Matrix.CreateTranslation(0, -8, 0));
+            GUICamera = new Gem.Render.OrthographicCamera(Game.Main.GraphicsDevice.Viewport);
+            var renderTree = new Game.RenderTree
+            {
+                Camera = GUICamera,
+                SceneGraph = new Gem.Render.BranchNode()
+            };
+            GUICamera.focus = Vector2.Zero;
+
+            Game.RenderTrees.Add(renderTree);
+
+            var guiQuad = Gem.Geo.Gen.Invert(Gem.Geo.Gen.FacetCopy(Gem.Geo.Gen.CreateQuad()));
+            Gem.Geo.Gen.Transform(guiQuad, Matrix.CreateScale(800, 600, 1.0f));
+            Gem.Geo.Gen.CalculateTangentsAndBiNormals(guiQuad);
+            //Gem.Geo.Gen.Transform(guiQuad, Matrix.CreateTranslation(0.0f, 0.0f, -10.0f));
             GuiRoot = new Gem.Gui.GuiSceneNode(guiQuad, Game.Main.GraphicsDevice, 1024, 512);
             GuiRoot.uiRoot.AddPropertySet(null, new Gem.Gui.GuiProperties { Transparent = true });
-
-            /*
-            var x = 0;
-            foreach (var template in BlockTemplates)
-            {
-                var child = CreateGuiSprite(new Rectangle(x, 128, 32, 32), template.Value.Preview, TileSheet);
-                GuiRoot.uiRoot.AddChild(child);
-                x += 32;
-            }
-            */
 
             var y = 8;
             foreach (var tool in Tools)
             {
                 var child = CreateGuiSprite(new Rectangle(8, y, 64, 64), tool.Icon, TileSheet);
-                child.Properties[0].Values.Upsert("click-action", new Action(() => SelectedTool = tool));
+                child.Properties[0].Values.Upsert("click-action", new Action(() =>
+                    {
+                        if (SelectedTool != null) SelectedTool.Deselected(Game, GuiRoot.uiRoot);
+                        SelectedTool = tool;
+                        tool.Selected(Game, GuiRoot.uiRoot);
+                    }));
                 GuiRoot.uiRoot.AddChild(child);
                 y += 68;
             }
@@ -64,16 +71,14 @@ namespace Gnome
             GuiRoot.RenderOnTop = true;
             GuiRoot.DistanceBias = float.NegativeInfinity;
 
-            Game.SceneGraph.Add(GuiRoot);
+            renderTree.SceneGraph.Add(GuiRoot);
+            //Game.RenderTrees[0].SceneGraph.Add(GuiRoot);
 
             SelectedTool = Tools[0];
         }
     
         public override void Update(Game Game)
         {
-            GuiRoot.Orientation.SetFromMatrix(Matrix.Invert(Game.Camera.View));
-            GuiRoot.Orientation.Position = -Game.Camera.Position;
-            
             if (!Game.Main.IsActive) return;
 
             if (Game.HoverNode is WorldSceneNode)

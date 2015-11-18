@@ -107,6 +107,12 @@ namespace Gem.Render
         {
             return new BoundingFrustum(View * Projection);
         }
+
+        public Ray GetPickRay(Vector2 MousePosition)
+        {
+            var pickVector = Unproject(new Vector3(MousePosition, 0));
+            return new Ray(pickVector, -Vector3.UnitZ);
+        }
     }
 
 }
