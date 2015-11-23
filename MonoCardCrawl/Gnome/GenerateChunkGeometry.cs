@@ -99,7 +99,7 @@ namespace Gnome
                         models.Add(markerCube);
                     }
 
-                    if (cell.Storehouse && cell.Navigatable && cell.NavigationMesh != null)
+                    if (cell.HasFlag(CellFlags.Storehouse) && cell.Navigatable && cell.NavigationMesh != null)
                     {
                         var navMesh = Gem.Geo.Gen.TransformCopy(cell.NavigationMesh, Matrix.CreateTranslation(0.0f, 0.0f, 0.02f));
                         Gem.Geo.Gen.MorphEx(navMesh, (inV) =>
@@ -111,17 +111,17 @@ namespace Gnome
                         models.Add(navMesh);
                     }
 
-                    if (cell.Block != null && cell.NavigationMesh != null)
-                    {
-                        var navMesh = Gem.Geo.Gen.TransformCopy(cell.NavigationMesh, Matrix.CreateTranslation(0.0f, 0.0f, 0.02f));
-                        Gem.Geo.Gen.MorphEx(navMesh, (inV) =>
-                        {
-                            var r = inV;
-                            r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Tiles.TileMatrix(3));
-                            return r;
-                        });
-                        models.Add(navMesh);
-                    }
+                    //if (cell.Block != null && cell.NavigationMesh != null)
+                    //{
+                    //    var navMesh = Gem.Geo.Gen.TransformCopy(cell.NavigationMesh, Matrix.CreateTranslation(0.0f, 0.0f, 0.02f));
+                    //    Gem.Geo.Gen.MorphEx(navMesh, (inV) =>
+                    //    {
+                    //        var r = inV;
+                    //        r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Tiles.TileMatrix(3));
+                    //        return r;
+                    //    });
+                    //    models.Add(navMesh);
+                    //}
 
                     var offsetsIndex = 0;
                     if (ResourceOffsets.ContainsKey(cell.Resources.Count))
@@ -197,7 +197,6 @@ namespace Gnome
         public static Gem.Geo.Mesh CreateResourceBlockMesh(TileSheet Tiles, BlockTemplate Template)
         {
             var mesh = CreateNormalBlockMesh(Tiles, Template);
-            Gem.Geo.Gen.Transform(mesh, Matrix.CreateTranslation(-0.5f, -0.5f, -0.5f));
             Gem.Geo.Gen.Transform(mesh, Matrix.CreateScale(0.5f));
             return mesh;
         }

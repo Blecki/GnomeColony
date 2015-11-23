@@ -62,7 +62,15 @@ namespace Gnome.GuiTools
                 var cell = Game.World.CellAt(WorldNode.AdjacentHoverBlock);
                 if (cell.Block != null) return;
                 cell.Block = Game.BlockTemplates[BlockTypes.Scaffold];
+                cell.BlockOrientation = CellLink.Directions.North;
+
+                if (SelectedBlock.Orientable)
+                    cell.BlockOrientation = CellLink.DeriveDirectionFromNormal(WorldNode.HoverNormal);
+                
+                
                 Game.AddTask(new Tasks.Build(SelectedBlock, WorldNode.AdjacentHoverBlock));
+
+
             }
         }
     }

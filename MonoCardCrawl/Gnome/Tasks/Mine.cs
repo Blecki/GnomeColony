@@ -8,7 +8,17 @@ namespace Gnome.Tasks
 {
     class Mine : Task
     {
-        WaitAction Progress = null;
+        private float Progress = 1.0f;
+
+        private enum States
+        {
+            Mining,
+            Finalizing,
+            Done
+        }
+
+        private States State = States.Mining;
+        private WorldMutations.RemoveBlockMutation MineMutation = null;
 
         public Mine(Coordinate Location) : base(Location)
         {
@@ -23,18 +33,15 @@ namespace Gnome.Tasks
 
         public override TaskStatus QueryStatus(Game Game)
         {
-            if (Game.World.CellAt(Location).Block == null)
-            {
-                if (Game.World.CellAt(Location).Resources.Count == 0) return TaskStatus.Complete;
-                else return TaskStatus.NotComplete;
-            }
+            if (State == States.Done) return TaskStatus.Complete;
             if (!NoGnomesInArea(Game, Location)) return TaskStatus.Impossible;
-            
             return TaskStatus.NotComplete;
         }
 
         public override Task Prerequisite(Game Game, Gnome Gnome)
         {
+            if (State != States.Mining) return null;
+
             if (Gnome.CarriedResource != 0) return new Deposit();
             if (Game.World.CellAt(Location).Resources.Count != 0) return new RemoveExcessResource(this.Location);
             return null;
@@ -42,29 +49,32 @@ namespace Gnome.Tasks
 
         public override void ExecuteTask(Game Game, Gnome Gnome)
         {
-            Gnome.FacingDirection = CellLink.DirectionFromAToB(Gnome.Location, Location);
-
-            if (Progress == null)
+            switch (State)
             {
-                Progress = new WaitAction(2.0f);
-                Gnome.NextAction = Progress;
-            }
-            else if (Progress.Done)
-            {
-                Progress = null;
+                case States.Mining:
+                    Gnome.FacingDirection = CellLink.DirectionFromAToB(Gnome.Location, Location);
 
-                var cell = Game.World.CellAt(Location);
-                cell.Resources = new List<int>(cell.Block.MineResources);
-                cell.Block = null;
-                
-                if (cell.Resources.Count > 0)
-                {
-                    Gnome.CarriedResource = cell.Resources[0];
-                    cell.Resources.RemoveAt(0);
-                }
-                
-                Game.SetUpdateFlag(Location);
-            }
+                    Progress -= Game.ElapsedSeconds;
+                    if (Progress <= 0.0f)
+                    {
+                        MineMutation = new WorldMutations.RemoveBlockMutation(Location, Gnome);
+                        Game.AddWorldMutation(MineMutation);
+                        State = States.Finalizing;
+                    }
+
+                    return;
+                case States.Finalizing:
+                    if (MineMutation.Result == MutationResult.Failure)
+                        State = States.Mining;
+                    else
+                    {
+                        State = States.Done;
+                        Game.AddTask(new RemoveExcessResource(Location));
+                    }
+                    return;
+                case States.Done:
+                    throw new InvalidProgramException("Task should have been deemed completed.");
+            }            
         }
     }
 }

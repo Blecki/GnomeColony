@@ -15,6 +15,7 @@ namespace Gnome
         public Gem.PropertyBag Properties;
         public ActorAction CurrentAction { get; private set; }
         public ActorAction NextAction { private get; set; }
+        public CellLink.Directions FacingDirection = CellLink.Directions.North;
 
         public virtual void Create(Gem.PropertyBag Properties)
         {

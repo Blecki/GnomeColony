@@ -19,7 +19,7 @@ namespace Gnome.GuiTools
             if (Game.World.Check(WorldNode.HoverBlock))
             {
                 var cell = Game.World.CellAt(WorldNode.HoverBlock);
-                cell.Storehouse = true;
+                cell.SetFlag(CellFlags.Storehouse, true);
                 Game.SetUpdateFlag(WorldNode.HoverBlock);
             }
         }

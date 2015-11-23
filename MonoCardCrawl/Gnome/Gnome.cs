@@ -17,7 +17,6 @@ namespace Gnome
         private Gem.Render.MeshNode GnomeNode;
         private Gem.Render.MeshNode TaskIcon;
         private TileSheet Sheet;
-        public CellLink.Directions FacingDirection = CellLink.Directions.North;
 
         public Gnome(TileSheet Sheet)
         {
@@ -68,8 +67,6 @@ namespace Gnome
 
         public override void Update(Game Game)
         {
-            base.Update(Game);
-
             if (CarriedResource == 0 && CarriedResourceVisual != null)
             {
                 (this.Renderable as Gem.Render.BranchNode).Remove(CarriedResourceVisual);
@@ -145,6 +142,9 @@ namespace Gnome
             // Face gnome correct direction
             GnomeNode.Orientation.Orientation = Quaternion.CreateFromAxisAngle(Vector3.UnitZ,
                 (Gem.Math.Angle.PI / 2) * (int)FacingDirection);
+
+            base.Update(Game);
+
         }
     }
 }

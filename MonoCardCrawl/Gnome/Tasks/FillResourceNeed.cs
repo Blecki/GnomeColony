@@ -49,10 +49,7 @@ namespace Gnome.Tasks
 
         public override void ExecuteTask(Game Game, Gnome Gnome)
         {
-            var cell = Game.World.CellAt(Location);
-            cell.Resources.Add(Gnome.CarriedResource);
-            Gnome.CarriedResource = 0;
-            Game.World.MarkDirtyBlock(Location);
+            Game.AddWorldMutation(new WorldMutations.DropResourceMutation(Location, Gnome.CarriedResource, Gnome));
         }
 
     }

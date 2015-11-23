@@ -38,6 +38,12 @@ namespace Gnome
         private WorldSceneNode WorldSceneNode;
         public Pathfinding<Cell> Pathfinding {get; private set;}
         public float ElapsedSeconds { get; private set; }
+        private List<WorldMutation> WorldMutations = new List<WorldMutation>();
+
+        public void AddWorldMutation(WorldMutation Mutation)
+        {
+            WorldMutations.Add(Mutation);
+        }
 
         public void SetUpdateFlag(Coordinate Coordinate)
         {
@@ -144,7 +150,7 @@ namespace Gnome
 
             BlockTemplates.Add(BlockTypes.TestSlope, new BlockTemplate
             {
-                Preview = TileNames.BlockCrystalSide,
+                Preview = TileNames.BlockGrassSlope,
                 Top = TileNames.BlockGrassTop,
                 SideA = TileNames.BlockGrassSlope,
                 SideB = TileNames.BlockGrassSide,
@@ -168,7 +174,7 @@ namespace Gnome
                     else t.Block = null;
                 });
 
-            World.CellAt(4, 4, 1).Storehouse = true;
+            World.CellAt(4, 4, 1).SetFlag(CellFlags.Storehouse, true);
 
             World.CellAt(1, 1, 2).Block = BlockTemplates[BlockTypes.TestSlope];
             World.CellAt(1, 1, 2).BlockOrientation = CellLink.Directions.North;
@@ -258,6 +264,7 @@ namespace Gnome
         {
             this.ElapsedSeconds = elapsedSeconds;
 
+            // Remove completed tasks.
             for (var i = 0; i < Tasks.Count; )
             {
                 if (Tasks[i].QueryStatus(this) == TaskStatus.Complete)
@@ -270,13 +277,24 @@ namespace Gnome
                     ++i;
             }
 
-            World.UpdateDirtyBlocks();
+            // Apply world mutations.
+            foreach (var mutation in WorldMutations.Where(m => m.MutationTimeFrame == MutationTimeFrame.BeforeUpdatingConnectivity))
+                mutation.Apply(this);
+
+            World.RelinkDirtyBlocks();
+
+            foreach (var mutation in WorldMutations.Where(m => m.MutationTimeFrame == MutationTimeFrame.AfterUpdatingConnectivity))
+                mutation.Apply(this);
+
+            WorldMutations.Clear();
 
             if (World.ChunkDirty)
             {
                 WorldSceneNode.UpdateGeometry();
                 World.ClearChunkDirtyFlag();
             }
+
+            #region Handle Input
 
             if (Main.Input.Check("RIGHT")) CameraYaw += elapsedSeconds;
             if (Main.Input.Check("LEFT")) CameraYaw -= elapsedSeconds;
@@ -295,6 +313,8 @@ namespace Gnome
                 Vector3.Transform(new Vector3(0, -CameraDistance, 0), 
                     Matrix.CreateRotationX(CameraPitch) * Matrix.CreateRotationZ(CameraYaw));
             (RenderTrees[0].Camera as FreeCamera).LookAt(CameraFocus, Vector3.UnitZ);
+
+            #endregion
 
             foreach (var actor in Actors)
                 actor.Update(this);

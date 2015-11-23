@@ -9,7 +9,7 @@ namespace Gnome
     public class WalkTask : Task
     {
         public Task GoalTask;
-        private MoveAction Action = null;
+        private WorldMutations.ActorMoveMutation MoveMutation = null;
         public bool FailedToFindPath = false;
 
         public WalkTask(Task GoalTask) : base(new Coordinate(0,0,0))
@@ -21,7 +21,7 @@ namespace Gnome
         public override TaskStatus QueryStatus(Game Game)
         {
             if (FailedToFindPath) return TaskStatus.Impossible;
-            if (Action != null && !Action.Done) return TaskStatus.NotComplete;
+            if (MoveMutation != null && !MoveMutation.Done) return TaskStatus.NotComplete;
             if (GoalTask.QueryValidLocation(Game, AssignedGnome.Location)) return TaskStatus.Complete;
             return TaskStatus.NotComplete;
         }
@@ -33,7 +33,7 @@ namespace Gnome
 
         public override void ExecuteTask(Game Game, Gnome Gnome)
         {
-            if (Action == null || Action.Done)
+            if (MoveMutation == null || MoveMutation.Done)
             {
                 var pathfindingResult = Game.Pathfinding.Flood(Game.World.CellAt(AssignedGnome.Location),
                                 c => GoalTask.QueryValidLocation(Game, c.Location),
@@ -43,13 +43,8 @@ namespace Gnome
                     var path = pathfindingResult.FinalNode.ExtractPath();
                     if (path.Count > 1)
                     {
-                        var stepIndex = path[0].Links.FindIndex(l => Object.ReferenceEquals(l.Neighbor, path[1]));
-                        if (stepIndex >= 0 && stepIndex < path[0].Links.Count)
-                        {
-                            Action = new MoveAction(path[0].Links[stepIndex].Direction, 0.5f);
-                            AssignedGnome.NextAction = Action;
-                            AssignedGnome.FacingDirection = path[0].Links[stepIndex].Direction;
-                        }
+                        MoveMutation = new WorldMutations.ActorMoveMutation(AssignedGnome.Location, path[1], Gnome);
+                        Game.AddWorldMutation(MoveMutation);
                     }
                 }
                 else

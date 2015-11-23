@@ -9,7 +9,19 @@ namespace Gnome.Tasks
     class Build : Task
     {
         private BlockTemplate BlockType;
-        WaitAction Progress = null;
+        private float Progress = 1.0f;
+
+        private enum States
+        {
+            Preparing,
+            ClearingResources,
+            Constructing,
+            Finalizing
+        }
+
+        private States State = States.Preparing;
+        private WorldMutations.ClearResourcesMutation ClearResourcesMutation = null;
+        private WorldMutations.PlaceBlockMutation BuildMutation = null;
 
         public Build(BlockTemplate BlockType, Coordinate Location) : base(Location)
         {
@@ -33,42 +45,73 @@ namespace Gnome.Tasks
 
         public override Task Prerequisite(Game Game, Gnome Gnome)
         {
-            var cell = Game.World.CellAt(Location);
-            var excessResources = FindExcessResources(cell, this);
-            var unfilledResources = FindUnfilledResourceRequirments(cell, this);
+            if (State == States.Preparing)
+            {
+                var cell = Game.World.CellAt(Location);
+                var excessResources = FindExcessResources(cell, this);
+                var unfilledResources = FindUnfilledResourceRequirments(cell, this);
 
-            // Move excess resources off this tile.
+                // Move excess resources off this tile.
+                if (excessResources.Count > 0)
+                    return new RemoveExcessResource(this);
 
-            if (unfilledResources.Count > 0)
-                return new FillResourceNeed(this);
+                if (unfilledResources.Count > 0)
+                    return new FillResourceNeed(this);
+            }
 
             return null;
         }
 
         public override IEnumerable<int> GetRequiredResources()
         {
-            if (BlockType.ConstructionResources != null) 
-                foreach (var resource in BlockType.ConstructionResources)
-                    yield return resource;
+            if (State == States.Preparing)
+            {
+                if (BlockType.ConstructionResources != null)
+                    foreach (var resource in BlockType.ConstructionResources)
+                        yield return resource;
+            }
         }
 
         public override void ExecuteTask(Game Game, Gnome Gnome)
         {
             Gnome.FacingDirection = CellLink.DirectionFromAToB(Gnome.Location, Location);
+            var cell = Game.World.CellAt(Location);
 
-            if (Progress == null)
+            switch (State)
             {
-                Progress = new WaitAction(2.0f);
-                Gnome.NextAction = Progress;
+                case States.Preparing:
+                    ClearResourcesMutation = new WorldMutations.ClearResourcesMutation(Location, new List<int>(cell.Resources));
+                    Game.AddWorldMutation(ClearResourcesMutation);
+                    State = States.ClearingResources;
+                    return;
+                case States.ClearingResources:
+                    if (ClearResourcesMutation.Result != MutationResult.Success)
+                        State = States.Preparing;
+                    else
+                    {
+                        Progress = 1.0f;
+                        State = States.Constructing;
+                    }
+                    return;
+                case States.Constructing:
+                    Progress -= Game.ElapsedSeconds;
+                    if (Progress <= 0.0f)
+                    {
+                        BuildMutation = new WorldMutations.PlaceBlockMutation(Location, BlockType);
+                        Game.AddWorldMutation(BuildMutation);
+                        State = States.Finalizing;
+                    }
+                    return;
+                case States.Finalizing:
+                    if (BuildMutation.Result == MutationResult.Success)
+                        throw new InvalidProgramException("Task should have been deemed completed.");
+                    Progress = 0.0f;
+                    State = States.Constructing; // Try to build it again.
+                    return;
+                default:
+                    throw new InvalidProgramException("Uknown Case");
             }
-            else if (Progress.Done)
-            {
-                Progress = null;
-                var cell = Game.World.CellAt(Location);
-                cell.Block = BlockType;
-                cell.Resources.Clear();
-                Game.World.MarkDirtyBlock(Location);
-            }
+
         }
     }
 }

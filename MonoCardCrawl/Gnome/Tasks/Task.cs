@@ -102,9 +102,9 @@ namespace Gnome
             }
         }
 
-        protected static bool NoGnomesInArea(Game Game, Coordinate Location)
+        public static bool NoGnomesInArea(Game Game, Coordinate Location)
         {
-            for (var z = Location.Z; z <= Location.Z + 2; ++z)
+            for (var z = Location.Z - 1; z <= Location.Z + 3; ++z)
                 if (Game.World.check(Location.X, Location.Y, z) && Game.World.CellAt(Location.X, Location.Y, z).PresentActor != null) return false;
             return true;
         }

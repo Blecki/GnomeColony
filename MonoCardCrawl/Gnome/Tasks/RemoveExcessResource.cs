@@ -62,12 +62,7 @@ namespace Gnome.Tasks
             }
 
             if (resourceIndex >= 0)
-            {
-                Gnome.CarriedResource = cell.Resources[resourceIndex];
-                cell.Resources.RemoveAt(resourceIndex);
-            }
-
-            Game.World.MarkDirtyBlock(Location);
+                Game.AddWorldMutation(new WorldMutations.PickupResourceMutation(Location, cell.Resources[resourceIndex], Gnome));
         }
     }
 }

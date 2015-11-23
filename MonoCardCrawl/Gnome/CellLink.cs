@@ -64,5 +64,14 @@ namespace Gnome
                 default: return Directions.North;
             }
         }
+
+        public static Directions DeriveDirectionFromNormal(Vector3 N)
+        {
+            if (N.X < 0) return Directions.West;
+            if (N.X > 0) return Directions.East;
+            if (N.Y < 0) return Directions.North;
+            if (N.Y > 0) return Directions.South;
+            return Directions.North;
+        }
     }
 }

@@ -109,9 +109,9 @@ PixelShaderOutput PSTexturedColor(TexturedVertexShaderOutput input) : COLOR0
 	clip(texColor.a < ClipAlpha ? -1:1);
 
 	//Posterize the final output for that low-color effect.
-	output.Color.r = floor(output.Color.r * 16) / 16;
-	output.Color.g = floor(output.Color.g * 16) / 16;
-	output.Color.b = floor(output.Color.b * 16) / 16;
+	output.Color.r = floor(output.Color.r * 32) / 32;
+	output.Color.g = floor(output.Color.g * 32) / 32;
+	output.Color.b = floor(output.Color.b * 32) / 32;
 
     return output;
 }

@@ -13,11 +13,13 @@ namespace Gnome
         public float ElapsedTime = 0.0f;
         public bool Done = false;
         private Vector3[] SplinePoints = null;
+        private Cell Start;
 
-        public MoveAction(CellLink.Directions Direction, float TotalTime)
+        public MoveAction(Cell Start, CellLink.Directions Direction, float TotalTime)
         {
             this.Direction = Direction;
             this.TotalTime = TotalTime;
+            this.Start = Start;
         }
 
         public override bool Update(Game Game, Actor Actor, float ElapsedTime)
@@ -30,7 +32,7 @@ namespace Gnome
             {
                 SplinePoints = new Vector3[3];
 
-                var startCell = Game.World.CellAt(Actor.Location);
+                var startCell = Start; // Game.World.CellAt(Actor.Location);
                 SplinePoints[0] = startCell.CenterPoint;
 
                 var linkIndex = startCell.Links.FindIndex(l => l.Direction == Direction);
@@ -42,22 +44,10 @@ namespace Gnome
                     if (link.Neighbor == null)
                         return true; // SplinePoints[2] = SplinePoints[0] + CellLink.DirectionOffset(Direction);
                     else
-                    {
                         SplinePoints[2] = link.Neighbor.CenterPoint;
-
-                        // Update cell's present actor. Update at begining of move for reasons.
-                        startCell.PresentActor = null;
-                        link.Neighbor.PresentActor = Actor;
-
-                        Actor.Location = link.Neighbor.Location;
-                    }
                 }
                 else
-                {
                     return true;
-                    // SplinePoints[2] = SplinePoints[0] + CellLink.DirectionOffset(Direction);
-                    // SplinePoints[1] = (SplinePoints[0] + SplinePoints[2]) / 2.0f;
-                }
             }
 
             if (this.ElapsedTime >= this.TotalTime)

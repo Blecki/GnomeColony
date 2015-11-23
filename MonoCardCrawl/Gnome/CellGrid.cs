@@ -30,7 +30,7 @@ namespace Gnome
             DirtyBlocks.Add(Coordinate);
         }
 
-        public void UpdateDirtyBlocks()
+        public void RelinkDirtyBlocks()
         {
             if (DirtyBlocks.Count == 0) return;
 

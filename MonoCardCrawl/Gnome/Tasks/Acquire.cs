@@ -23,7 +23,7 @@ namespace Gnome.Tasks
                 if (Game.World.Check(adjacentTile))
                 {
                     var cell = Game.World.CellAt(adjacentTile);
-                    if (cell.Storehouse && cell.Resources.Count(i => ResourceTypes.Contains(i)) > 0)
+                    if (cell.HasFlag(CellFlags.Storehouse) && cell.Resources.Count(i => ResourceTypes.Contains(i)) > 0)
                     {
                         Location = adjacentTile;
                         return true;
@@ -51,9 +51,7 @@ namespace Gnome.Tasks
         {
             var cell = Game.World.CellAt(Location);
             var resourceIndex = cell.Resources.FindIndex(i => ResourceTypes.Contains(i));
-            Gnome.CarriedResource = cell.Resources[resourceIndex];
-            cell.Resources.RemoveAt(resourceIndex);
-            Game.World.MarkDirtyBlock(Location);
+            Game.AddWorldMutation(new WorldMutations.PickupResourceMutation(Location, cell.Resources[resourceIndex], Gnome));
         }
     }
 }

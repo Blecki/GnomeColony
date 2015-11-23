@@ -27,10 +27,7 @@ namespace Gnome.Tasks
         public override void ExecuteTask(Game Game, Gnome Gnome)
         {
             var dropLocation = EnumerateAdjacent(Gnome.Location).First(c => Game.World.Check(c) && Game.World.CellAt(c).CanPlaceResource(Gnome.CarriedResource));
-            var cell = Game.World.CellAt(dropLocation);
-            cell.Resources.Add(Gnome.CarriedResource);
-            Gnome.CarriedResource = 0;
-            Game.World.MarkDirtyBlock(dropLocation);
+            Game.AddWorldMutation(new WorldMutations.DropResourceMutation(dropLocation, Gnome.CarriedResource, Gnome));
         }
     }
 }

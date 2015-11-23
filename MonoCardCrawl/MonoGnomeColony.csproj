@@ -190,6 +190,13 @@
     <Compile Include="Gnome\Tasks\Build.cs" />
     <Compile Include="Gnome\Tasks\Mine.cs" />
     <Compile Include="Gnome\TileSheet.cs" />
+    <Compile Include="Gnome\WorldMutations\RemoveBlockMutation.cs" />
+    <Compile Include="Gnome\WorldMutations\DropResourceMutation.cs" />
+    <Compile Include="Gnome\WorldMutations\ActorMoveMutation.cs" />
+    <Compile Include="Gnome\WorldMutations\PickupResourceMutation.cs" />
+    <Compile Include="Gnome\WorldMutations\ClearResourcesMutation.cs" />
+    <Compile Include="Gnome\WorldMutations\PlaceBlockMutation.cs" />
+    <Compile Include="Gnome\WorldMutations\WorldMutation.cs" />
     <Compile Include="Gnome\WorldSceneNode.cs" />
     <Compile Include="Gnome\ActorSceneNode.cs" />
     <Compile Include="Gnome\Cell.cs" />
@@ -224,6 +231,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Icon.ico" />
+    <Content Include="Todo.txt" />
   </ItemGroup>
   <ItemGroup>
     <MonoGameContentReference Include="Content\Content.mgcb" />
