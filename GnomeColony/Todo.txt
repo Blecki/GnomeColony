@@ -1,0 +1,8 @@
+﻿Gnomes nudge other gnomes out of the way.
+
+Drop resources to cell below after mining.
+Gnomes names - Inuo Endo, Vlad the Implyer, Debra Entendre, Al Usion
+Clicking on gnome shows stats
+Revisit gnome sprites
+Female gnomes
+Child gnomes
