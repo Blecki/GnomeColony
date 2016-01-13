@@ -6,29 +6,10 @@ using Microsoft.Xna.Framework;
 
 namespace Game
 {
-    public enum ActorActionFlags
-    {
-        Interuptible = 1
-    }
-
     public class ActorAction
     {
-        public virtual void Begin(Game Game, Actor Actor) { }
-        public virtual bool Update(Game Game, Actor Actor, float ElapsedTime) { return true; }
-
-        private ActorActionFlags Flags = 0;
-
-        public void SetFlag(ActorActionFlags Flag, bool Value)
-        {
-            if (Value) Flags |= Flag;
-            else Flags &= ~Flag;
-        }
-
-        public bool HasFlag(ActorActionFlags Flag)
-        {
-            return Flags.HasFlag(Flag);
-        }
-
-        public bool Interuptible { get { return HasFlag(ActorActionFlags.Interuptible); } }
+        public virtual void Begin(Actor Actor) { }
+        public virtual bool Step(Actor Actor) { return true; }
+        public virtual void Update(Actor Actor, float StepPercentage) { }
     }
 }

@@ -8,74 +8,55 @@ namespace Game
 {
     public class MoveAction : ActorAction
     {
-        public CellLink.Directions Direction;
-        public float TotalTime;
-        public float ElapsedTime = 0.0f;
         public bool Done = false;
         private Vector3[] SplinePoints = null;
-        private Cell Start;
 
-        public MoveAction(Cell Start, CellLink.Directions Direction, float TotalTime)
+        public MoveAction(Cell Start, CellLink.Directions Direction)
         {
-            this.Direction = Direction;
-            this.TotalTime = TotalTime;
-            this.Start = Start;
+            SplinePoints = new Vector3[3];
 
-            SetFlag(ActorActionFlags.Interuptible, false);
-        }
+            var startCell = Start;
+            SplinePoints[0] = startCell.CenterPoint;
 
-        public override void Begin(Game Game, Actor Actor)
-        {
-            if (!Game.World.Check(Actor.Location))
-                Done = true;
-            else
+            var linkIndex = startCell.Links.FindIndex(l => l.Direction == Direction);
+
+            if (linkIndex >= 0 && linkIndex < startCell.Links.Count)
             {
-                SplinePoints = new Vector3[3];
-
-                var startCell = Start; // Game.World.CellAt(Actor.Location);
-                SplinePoints[0] = startCell.CenterPoint;
-
-                var linkIndex = startCell.Links.FindIndex(l => l.Direction == Direction);
-
-                if (linkIndex >= 0 && linkIndex < startCell.Links.Count)
-                {
-                    var link = startCell.Links[linkIndex];
-                    SplinePoints[1] = link.EdgePoint;
-                    if (link.Neighbor == null)
-                        Done = true;
-                    else
-                        SplinePoints[2] = link.Neighbor.CenterPoint;
-                }
-                else
+                var link = startCell.Links[linkIndex];
+                SplinePoints[1] = link.EdgePoint;
+                if (link.Neighbor == null)
                     Done = true;
+                else
+                    SplinePoints[2] = link.Neighbor.CenterPoint;
             }
-        }
-
-        public override bool Update(Game Game, Actor Actor, float ElapsedTime)
-        {
-            if (Done) return true;
-
-            this.ElapsedTime += ElapsedTime;
-
-            if (this.ElapsedTime >= this.TotalTime)
-            {
-                Actor.PositionOffset = Vector3.Zero;
-                Done = true;
-                return true;
-            }
-
-            var halfTime = TotalTime / 2.0f;
-
-            var realPosition = Vector3.Zero;
-            if (this.ElapsedTime < halfTime)
-                realPosition = SplinePoints[0] + ((SplinePoints[1] - SplinePoints[0]) * (this.ElapsedTime / halfTime));
             else
-                realPosition = SplinePoints[1] + ((SplinePoints[2] - SplinePoints[1]) * ((this.ElapsedTime - halfTime) / halfTime));
+                Done = true;
 
-            Actor.PositionOffset = -(SplinePoints[2] - realPosition);
-
-            return false;
         }
 
+        public override bool Step(Actor Actor)
+        {
+            Done = true;
+            return true;
+        }
+
+        public override void Update(Actor Actor, float StepPercentage)
+        {
+            if (!Done)
+            {
+                if (StepPercentage >= 1.0f)
+                    Actor.PositionOffset = Vector3.Zero;
+                else
+                {
+                    var realPosition = Vector3.Zero;
+                    if (StepPercentage < 0.5f)
+                        realPosition = SplinePoints[0] + ((SplinePoints[1] - SplinePoints[0]) * (StepPercentage / 0.5f));
+                    else
+                        realPosition = SplinePoints[1] + ((SplinePoints[2] - SplinePoints[1]) * ((StepPercentage - 0.5f) / 0.5f));
+
+                    Actor.PositionOffset = realPosition - SplinePoints[2];
+                }
+            }
+        }
     }
 }

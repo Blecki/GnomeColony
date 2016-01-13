@@ -6,3 +6,21 @@ Clicking on gnome shows stats
 Revisit gnome sprites
 Female gnomes
 Child gnomes
+
+* Run AI on constant tick rate
+	- The entire simulation now runs on a constant tick rate.
+	- This has horribly broken gnome motion.
+
+"Actor Actions" should not require access to the sim. How to reconcile this with the move action, which needs to follow the grid? 
+	- Move action takes a set of points to move along and a time frame to do it in. It does NOT know about the grid.
+	- 'Tick Time' - [0, 1] - time elapsed in current tick
+
+Block definition language
+* "Fringe" blocks - hang below existing block, things like hanging vines, bottom of ramps, etc.
+Non-solid blocks
+
+* Refactor block tiles stuff in sim into a 'block set' type
+	- Needs to be a pervasive change to all things that use the block set.
+
+
+'Decal' objects - AKA, train tracks. Applied on surface of block.

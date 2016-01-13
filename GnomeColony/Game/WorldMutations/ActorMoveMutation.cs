@@ -11,16 +11,7 @@ namespace Game.WorldMutations
         public Coordinate Location;
         public Cell Onto;
         public Actor Actor;
-        public MoveAction Action;
-        public bool Done
-        {
-            get
-            {
-                if (Action == null) return true;
-                return Action.Done;
-            }
-        }
-
+        
         public ActorMoveMutation(Coordinate Location, Cell Onto, Actor Actor)
         {
             this.MutationTimeFrame = MutationTimeFrame.AfterUpdatingConnectivity;
@@ -30,9 +21,9 @@ namespace Game.WorldMutations
             this.Actor = Actor;
         }
 
-        public override void Apply(Game Game)
+        public override void Apply(Simulation Sim)
         {
-            var cell = Game.World.CellAt(Location);
+            var cell = Sim.World.CellAt(Location);
 
             if (Onto.PresentActor != null)
             {
@@ -50,8 +41,7 @@ namespace Game.WorldMutations
             cell.PresentActor = null;
             Onto.PresentActor = Actor;
 
-            Action = new MoveAction(cell, cell.Links[stepIndex].Direction, 0.5f);
-            Actor.NextAction = Action;
+            //Actor.CurrentAction = new MoveAction(cell, cell.Links[stepIndex].Direction);
             Actor.FacingDirection = cell.Links[stepIndex].Direction;
 
             Actor.Location = Onto.Location;

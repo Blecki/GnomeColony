@@ -16,23 +16,23 @@ namespace Game.Tasks
             MarkerTile = 0;
         }
 
-        public override bool QueryValidLocation(Game Game, Coordinate GnomeLocation)
+        public override bool QueryValidLocation(Simulation Sim, Coordinate GnomeLocation)
         {
             return Adjacent(GnomeLocation, Location);
         }
 
-        public override TaskStatus QueryStatus(Game Game)
+        public override TaskStatus QueryStatus(Simulation Sim)
         {
-            if (!Game.World.Check(Location)) return TaskStatus.Impossible;
-            var cell = Game.World.CellAt(Location);
+            if (!Sim.World.Check(Location)) return TaskStatus.Impossible;
+            var cell = Sim.World.CellAt(Location);
             var requiredResources = Task.FindUnfilledResourceRequirments(cell, ParentTask);
             if (requiredResources.Count == 0) return TaskStatus.Complete;
             else return TaskStatus.NotComplete;
         }
 
-        public override Task Prerequisite(Game Game, Gnome Gnome)
+        public override Task Prerequisite(Simulation Sim, Gnome Gnome)
         {
-            var cell = Game.World.CellAt(Location);
+            var cell = Sim.World.CellAt(Location);
             var requiredResources = Task.FindUnfilledResourceRequirments(cell, ParentTask);
             if (requiredResources.Count == 0) return null;
 
@@ -47,9 +47,9 @@ namespace Game.Tasks
             return null;
         }
 
-        public override void ExecuteTask(Game Game, Gnome Gnome)
+        public override void ExecuteTask(Simulation Sim, Gnome Gnome)
         {
-            Game.AddWorldMutation(new WorldMutations.DropResourceMutation(Location, Gnome.CarriedResource, Gnome));
+            Sim.AddWorldMutation(new WorldMutations.DropResourceMutation(Location, Gnome.CarriedResource, Gnome));
         }
 
     }

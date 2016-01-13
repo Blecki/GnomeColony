@@ -28,6 +28,7 @@ namespace Game
         public int SideA = 1;
         public int SideB = -1;
         public int Bottom = 1;
+        public int Hanging = -1;
         public BlockShape Shape;
         public bool Solid = true;
         public float ResourceHeightOffset = 0.0f;
@@ -51,5 +52,6 @@ namespace Game
         public const int Grass = 1;
         public const int Dirt = 2;
         public const int TestSlope = 3;
+        public const int HangingVines = 4;
     }
 }

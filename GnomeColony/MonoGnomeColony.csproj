@@ -58,12 +58,16 @@
     <ApplicationIcon>Icon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Game\AI\GnomeMind.cs" />
+    <Compile Include="Game\GnomeNode.cs" />
+    <Compile Include="Game\BlockSet.cs" />
+    <Compile Include="Game\Simulation.cs" />
     <Compile Include="Gem\Common\Animation.cs" />
     <Compile Include="Gem\Common\AnimationTimer.cs" />
     <Compile Include="Gem\Gui\GuiProperties.cs" />
     <Compile Include="Gem\Gui\GuiRenderStack.cs" />
     <Compile Include="Gem\Gui\Shape-CreateWedge.cs" />
-    <Compile Include="Gem\Render\NormalMapMeshNode.cs" />
+    <Compile Include="Gem\Render\MeshNode.cs" />
     <Compile Include="Gem\PropertyBag.cs" />
     <Compile Include="Gem\Common\Euler.cs" />
     <Compile Include="Gem\Common\MultiDictionary.cs" />
@@ -76,8 +80,6 @@
     <Compile Include="Gem\Geo\Gen\InstanceMerge.cs" />
     <Compile Include="Gem\Geo\CoincidentEdge.cs" />
     <Compile Include="Gem\Geo\RayIntersection.cs" />
-    <Compile Include="Gem\Geo\WireframeMesh-GenGrid.cs" />
-    <Compile Include="Gem\Geo\WireframeMesh.cs" />
     <Compile Include="Gem\Geo\EdgeMesh\EdgeMesh.cs" />
     <Compile Include="Gem\Geo\EdgeMesh\RayIntersection.cs" />
     <Compile Include="Gem\Geo\EdgeMesh\SimplifyEdgeMesh.cs" />
@@ -89,7 +91,6 @@
     <Compile Include="Gem\Common\EpisodeContentManager.cs" />
     <Compile Include="Gem\Common\AddMany.cs" />
     <Compile Include="Gem\Common\Upsert.cs" />
-    <Compile Include="Gem\Geo\CompiledModel.cs" />
     <Compile Include="Gem\Geo\Gen\AlignToSpline.cs" />
     <Compile Include="Gem\Geo\Gen\Basics.cs" />
     <Compile Include="Gem\Geo\Gen\CreateCube.cs" />
@@ -135,15 +136,14 @@
     <Compile Include="Gem\Common\Pathfinding.cs" />
     <Compile Include="Gem\Program.cs" />
     <Compile Include="Gem\Render\RenderContext.cs" />
-    <Compile Include="Gem\Render\CompiledMeshNode.cs" />
     <Compile Include="Gem\Gui\Shape.cs" />
     <Compile Include="Game\Actor.cs" />
     <Compile Include="Game\GuiTools\MarkStorehouse.cs" />
     <Compile Include="Game\GuiTools\Mine.cs" />
     <Compile Include="Game\GuiTools\Build.cs" />
     <Compile Include="Game\GuiTools\GuiTool.cs" />
-    <Compile Include="Game\Tasks\RemoveExcessResource.cs" />
-    <Compile Include="Game\Tasks\NudgedTask.cs" />
+    <Compile Include="Game\AI\Tasks\RemoveExcessResource.cs" />
+    <Compile Include="Game\AI\Tasks\NudgedTask.cs" />
     <Compile Include="Game\TileNames.cs" />
     <Compile Include="Game\MoveAction.cs" />
     <Compile Include="Game\ActorAction.cs" />
@@ -153,13 +153,13 @@
     <Compile Include="Game\Coordinate.cs" />
     <Compile Include="Game\Gnome.cs" />
     <Compile Include="Game\HoverTestInputState.cs" />
-    <Compile Include="Game\Tasks\Acquire.cs" />
-    <Compile Include="Game\Tasks\FillResourceNeed.cs" />
-    <Compile Include="Game\Tasks\Deposit.cs" />
-    <Compile Include="Game\Tasks\WalkTask.cs" />
-    <Compile Include="Game\Tasks\Task.cs" />
-    <Compile Include="Game\Tasks\Build.cs" />
-    <Compile Include="Game\Tasks\Mine.cs" />
+    <Compile Include="Game\AI\Tasks\Acquire.cs" />
+    <Compile Include="Game\AI\Tasks\FillResourceNeed.cs" />
+    <Compile Include="Game\AI\Tasks\Deposit.cs" />
+    <Compile Include="Game\AI\Tasks\WalkTask.cs" />
+    <Compile Include="Game\AI\Tasks\Task.cs" />
+    <Compile Include="Game\AI\Tasks\Build.cs" />
+    <Compile Include="Game\AI\Tasks\Mine.cs" />
     <Compile Include="Game\TileSheet.cs" />
     <Compile Include="Game\WorldMutations\RemoveBlockMutation.cs" />
     <Compile Include="Game\WorldMutations\DropResourceMutation.cs" />
@@ -183,7 +183,6 @@
     <Compile Include="Gem\Render\OrthographicCamera.cs" />
     <Compile Include="Gem\Render\ICamera.cs" />
     <Compile Include="Gem\Render\ImmediateMode2d.cs" />
-    <Compile Include="Gem\Render\ImmediateModeDebug.cs" />
     <Compile Include="Gem\Gui\MatrixStack.cs" />
     <Compile Include="Gem\Render\BranchNode.cs" />
     <Compile Include="Gem\Render\SceneNode.cs" />

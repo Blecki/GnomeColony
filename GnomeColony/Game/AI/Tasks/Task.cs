@@ -28,12 +28,12 @@ namespace Game
             MarkerTile = 0;
             GnomeIcon = TileNames.TaskIconBlank;
         }
-        
-        public virtual TaskStatus QueryStatus(Game Game) { return TaskStatus.NotComplete; }
-        public virtual bool QueryValidLocation(Game Game, Coordinate GnomeLocation) { return false; }
-        public virtual Task Prerequisite(Game Game, Gnome Gnome) { return null; }
+
+        public virtual TaskStatus QueryStatus(Simulation Sim) { return TaskStatus.NotComplete; }
+        public virtual bool QueryValidLocation(Simulation Sim, Coordinate GnomeLocation) { return false; }
+        public virtual Task Prerequisite(Simulation Sim, Gnome Gnome) { return null; }
         public virtual IEnumerable<int> GetRequiredResources() { return Enumerable.Empty<int>(); }
-        public virtual void ExecuteTask(Game Game, Gnome Gnome) { }
+        public virtual void ExecuteTask(Simulation Sim, Gnome Gnome) { }
 
         public static bool ResourceRequirmentsMet(Cell Cell, Task Task)
         {
@@ -102,10 +102,10 @@ namespace Game
             }
         }
 
-        public static bool NoGnomesInArea(Game Game, Coordinate Location)
+        public static bool NoGnomesInArea(Simulation Sim, Coordinate Location)
         {
             for (var z = Location.Z - 1; z <= Location.Z + 3; ++z)
-                if (Game.World.check(Location.X, Location.Y, z) && Game.World.CellAt(Location.X, Location.Y, z).PresentActor != null) return false;
+                if (Sim.World.check(Location.X, Location.Y, z) && Sim.World.CellAt(Location.X, Location.Y, z).PresentActor != null) return false;
             return true;
         }
     }

@@ -19,18 +19,18 @@ namespace Game.WorldMutations
             this.BlockType = BlockType;
         }
 
-        public override void Apply(Game Game)
+        public override void Apply(Simulation Sim)
         {
-            var cell = Game.World.CellAt(Location);
+            var cell = Sim.World.CellAt(Location);
             
-            if (cell.PresentActor != null || (!Task.NoGnomesInArea(Game, Location)))
+            if (cell.PresentActor != null || (!Task.NoGnomesInArea(Sim, Location)))
             {
                 Result = MutationResult.Failure;
                 return;
             }
 
             cell.Block = BlockType;
-            Game.World.MarkDirtyBlock(Location);
+            Sim.World.MarkDirtyBlock(Location);
             Result = MutationResult.Success;
         }
     }

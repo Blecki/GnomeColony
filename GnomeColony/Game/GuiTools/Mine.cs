@@ -13,11 +13,11 @@ namespace Game.GuiTools
             this.Icon = TileNames.TaskIconMine;
         }
 
-        public override void Apply(Game Game, WorldSceneNode WorldNode)
+        public override void Apply(Simulation Sim, WorldSceneNode WorldNode)
         {
-            if (Game.World.Check(WorldNode.HoverBlock))
+            if (Sim.World.Check(WorldNode.HoverBlock))
             {
-                Game.AddTask(new Tasks.Mine(WorldNode.HoverBlock));
+                Sim.AddTask(new Tasks.Mine(WorldNode.HoverBlock));
             }
         }
     }

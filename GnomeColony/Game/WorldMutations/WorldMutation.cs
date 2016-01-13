@@ -23,7 +23,7 @@ namespace Game
         public MutationResult Result { get; protected set; }
         public MutationTimeFrame MutationTimeFrame = MutationTimeFrame.BeforeUpdatingConnectivity;
 
-        public virtual void Apply(Game Game) { throw new NotImplementedException(); }
+        public virtual void Apply(Simulation Sim) { throw new NotImplementedException(); }
 
         public WorldMutation()
         {

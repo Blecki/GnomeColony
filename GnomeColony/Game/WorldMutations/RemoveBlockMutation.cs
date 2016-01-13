@@ -19,9 +19,9 @@ namespace Game.WorldMutations
             this.Gnome = Gnome;
         }
 
-        public override void Apply(Game Game)
+        public override void Apply(Simulation Sim)
         {
-            var cell = Game.World.CellAt(Location);
+            var cell = Sim.World.CellAt(Location);
 
             if (cell.Block == null)
             {
@@ -29,7 +29,7 @@ namespace Game.WorldMutations
                 return;
             }
 
-            if (cell.PresentActor != null || (!Task.NoGnomesInArea(Game, Location)))
+            if (cell.PresentActor != null || (!Task.NoGnomesInArea(Sim, Location)))
             {
                 Result = MutationResult.Failure;
                 return;
@@ -50,7 +50,7 @@ namespace Game.WorldMutations
                 cell.Resources.RemoveAt(0);
             }
 
-            Game.SetUpdateFlag(Location);
+            Sim.SetUpdateFlag(Location);
 
             Result = MutationResult.Success;
         }

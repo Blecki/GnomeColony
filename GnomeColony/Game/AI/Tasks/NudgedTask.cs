@@ -29,15 +29,14 @@ namespace Game
             this.Nudger = Nudger;
         }
 
-        public override TaskStatus QueryStatus(Game Game)
+        public override TaskStatus QueryStatus(Simulation Sim)
         {
             if (FailedToFindPath) return TaskStatus.Impossible;
-            if (MoveMutation != null && !MoveMutation.Done) return TaskStatus.NotComplete;
             if (AssignedGnome.Location == Location) return TaskStatus.NotComplete;
             return TaskStatus.Complete;
         }
 
-        public override bool QueryValidLocation(Game Game, Coordinate GnomeLocation)
+        public override bool QueryValidLocation(Simulation Sim, Coordinate GnomeLocation)
         {
             return true;
 
@@ -47,9 +46,9 @@ namespace Game
             //return true;
         }
 
-        public override void ExecuteTask(Game Game, Gnome Gnome)
+        public override void ExecuteTask(Simulation Sim, Gnome Gnome)
         {
-            var cell = Game.World.CellAt(Location);
+            var cell = Sim.World.CellAt(Location);
             if (cell.Links.Count == 0)
             {
                 FailedToFindPath = true;
@@ -61,11 +60,11 @@ namespace Game
 
             var blockingGnome = link.Neighbor.PresentActor as Gnome;
             if (blockingGnome != null)
-                blockingGnome.PushTask(new NudgedTask(Gnome, link.Neighbor.Location));
+                blockingGnome.Mind.PushTask(new NudgedTask(Gnome, link.Neighbor.Location));
             else
             {
                 MoveMutation = new WorldMutations.ActorMoveMutation(AssignedGnome.Location, link.Neighbor, Gnome);
-                Game.AddWorldMutation(MoveMutation);
+                Sim.AddWorldMutation(MoveMutation);
             }
         }
     }

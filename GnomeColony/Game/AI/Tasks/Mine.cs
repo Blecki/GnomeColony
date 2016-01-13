@@ -26,39 +26,39 @@ namespace Game.Tasks
             GnomeIcon = TileNames.TaskIconMine;
         }
 
-        public override bool QueryValidLocation(Game Game, Coordinate GnomeLocation)
+        public override bool QueryValidLocation(Simulation Sim, Coordinate GnomeLocation)
         {
             return Adjacent(GnomeLocation, Location);
         }
 
-        public override TaskStatus QueryStatus(Game Game)
+        public override TaskStatus QueryStatus(Simulation Sim)
         {
             if (State == States.Done) return TaskStatus.Complete;
-            if (!NoGnomesInArea(Game, Location)) return TaskStatus.Impossible;
+            if (!NoGnomesInArea(Sim, Location)) return TaskStatus.Impossible;
             return TaskStatus.NotComplete;
         }
 
-        public override Task Prerequisite(Game Game, Gnome Gnome)
+        public override Task Prerequisite(Simulation Sim, Gnome Gnome)
         {
             if (State != States.Mining) return null;
 
             if (Gnome.CarriedResource != 0) return new Deposit();
-            if (Game.World.CellAt(Location).Resources.Count != 0) return new RemoveExcessResource(this.Location);
+            if (Sim.World.CellAt(Location).Resources.Count != 0) return new RemoveExcessResource(this.Location);
             return null;
         }
 
-        public override void ExecuteTask(Game Game, Gnome Gnome)
+        public override void ExecuteTask(Simulation Sim, Gnome Gnome)
         {
             switch (State)
             {
                 case States.Mining:
                     Gnome.FacingDirection = CellLink.DirectionFromAToB(Gnome.Location, Location);
 
-                    Progress -= Game.ElapsedSeconds;
+                    Progress -= 0.1f;//Game.ElapsedSeconds;
                     if (Progress <= 0.0f)
                     {
                         MineMutation = new WorldMutations.RemoveBlockMutation(Location, Gnome);
-                        Game.AddWorldMutation(MineMutation);
+                        Sim.AddWorldMutation(MineMutation);
                         State = States.Finalizing;
                     }
 
@@ -69,7 +69,7 @@ namespace Game.Tasks
                     else
                     {
                         State = States.Done;
-                        Game.AddTask(new RemoveExcessResource(Location));
+                        Sim.AddTask(new RemoveExcessResource(Location));
                     }
                     return;
                 case States.Done:

@@ -90,6 +90,19 @@ namespace Game
                         Gem.Geo.Gen.Transform(cube, Matrix.CreateTranslation(x + 0.5f, y + 0.5f, z + 0.5f));
 
                         models.Add(cube);
+
+                        if (cell.Block.Hanging != -1 && Grid.check(x,y,z-1) && Grid.CellAt(x,y,z-1).Block == null)
+                        {
+                            var hangingBlock = Templates[cell.Block.Hanging];
+                            cube = CreateNormalBlockMesh(Tiles, hangingBlock);
+                            if (hangingBlock.Orientable)
+                                Gem.Geo.Gen.Transform(cube, Matrix.CreateRotationZ(
+                                    (Gem.Math.Angle.PI / 2) * (int)cell.BlockOrientation));
+
+                            Gem.Geo.Gen.Transform(cube, Matrix.CreateTranslation(x + 0.5f, y + 0.5f, z - 0.5f));
+
+                            models.Add(cube);
+                        }
                     }
 
                     if (cell.Task != null)

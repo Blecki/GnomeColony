@@ -32,10 +32,10 @@ namespace Game.GuiTools
             GuiRoot.AddChild(BlockContainer);
 
             var x = 96 + 8;
-            foreach (var template in Game.BlockTemplates)
+            foreach (var template in Game.Sim.Blocks.BlockTemplates)
             {
                 var lambdaTemplate = template;
-                var child = HoverTest.CreateGuiSprite(new Rectangle(x, 16, 32, 32), template.Value.Preview, Game.BlockTiles);
+                var child = HoverTest.CreateGuiSprite(new Rectangle(x, 16, 32, 32), template.Value.Preview, Game.Sim.Blocks.BlockTiles);
                 child.Properties[0].Values.Upsert("click-action", new Action(() =>
                 {
                     this.SelectedBlock = lambdaTemplate.Value;
@@ -53,24 +53,22 @@ namespace Game.GuiTools
             BlockContainer = null;
         }
 
-        public override void Apply(Game Game, WorldSceneNode WorldNode)
+        public override void Apply(Simulation Sim, WorldSceneNode WorldNode)
         {
             if (SelectedBlock == null) return;
 
-            if (Game.World.Check(WorldNode.AdjacentHoverBlock))
+            if (Sim.World.Check(WorldNode.AdjacentHoverBlock))
             {
-                var cell = Game.World.CellAt(WorldNode.AdjacentHoverBlock);
+                var cell = Sim.World.CellAt(WorldNode.AdjacentHoverBlock);
                 if (cell.Block != null) return;
-                cell.Block = Game.BlockTemplates[BlockTypes.Scaffold];
+                cell.Block = Sim.Blocks.BlockTemplates[BlockTypes.Scaffold];
                 cell.BlockOrientation = CellLink.Directions.North;
 
                 if (SelectedBlock.Orientable)
                     cell.BlockOrientation = CellLink.DeriveDirectionFromNormal(WorldNode.HoverNormal);
-                
-                
-                Game.AddTask(new Tasks.Build(SelectedBlock, WorldNode.AdjacentHoverBlock));
 
 
+                Sim.AddTask(new Tasks.Build(SelectedBlock, WorldNode.AdjacentHoverBlock));
             }
         }
     }

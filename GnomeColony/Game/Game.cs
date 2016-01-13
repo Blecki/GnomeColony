@@ -30,24 +30,8 @@ namespace Game
         public List<RenderTree> RenderTrees = new List<RenderTree>();
 
         private List<InputState> InputStack = new List<InputState>();
-        public CellGrid World { get; private set; }
-        private List<Actor> Actors;
-        private List<Task> Tasks;
-        public BlockTemplateSet BlockTemplates = new BlockTemplateSet();
-        public TileSheet BlockTiles;
-        private WorldSceneNode WorldSceneNode;
         public float ElapsedSeconds { get; private set; }
-        private List<WorldMutation> WorldMutations = new List<WorldMutation>();
-
-        public void AddWorldMutation(WorldMutation Mutation)
-        {
-            WorldMutations.Add(Mutation);
-        }
-
-        public void SetUpdateFlag(Coordinate Coordinate)
-        {
-            World.MarkDirtyBlock(Coordinate);
-        }
+        public Simulation Sim { get; private set; }
 
         private float CameraYaw = 0.25f;
         private float CameraPitch = 0.0f;
@@ -66,35 +50,6 @@ namespace Game
             if (InputStack.Count > 0) InputStack.Last().Exposed(this);
         }
 
-        public void AddTask(Task Task)
-        {
-            if (World.Check(Task.Location))
-            {
-                Task.IsTopLevelTask = true;
-
-                var cell = World.CellAt(Task.Location);
-                cell.Task = Task;
-                Tasks.Add(Task);
-                SetUpdateFlag(Task.Location);
-            }
-        }
-
-        public Task FindTask(Gnome Gnome)
-        {
-            return Tasks.FirstOrDefault(t => t.AssignedGnome == null);
-        }
-
-        public void AbandonTask(Task Task)
-        {
-            Task.AssignedGnome = null;
-            
-            if (Task.IsTopLevelTask)
-            {
-                Tasks.Remove(Task);
-                Tasks.Add(Task);
-            }
-        }
-
         public Game()
         {
         }
@@ -102,109 +57,17 @@ namespace Game
         public void Begin()
         {
             Content = new EpisodeContentManager(Main.EpisodeContent.ServiceProvider, "Content");
+            Sim = new Simulation(Content, 1.0f);
 
             RenderContext = new RenderContext(Content.Load<Effect>("draw"), Main.GraphicsDevice);
-
 
             RenderTrees.Add(new RenderTree
             {
                 Camera = new Gem.Render.FreeCamera(new Vector3(0, 0, 0), Vector3.UnitY, Vector3.UnitZ, Main.GraphicsDevice.Viewport),
-                SceneGraph = new BranchNode()
+                SceneGraph = Sim.CreateSceneNode()
             });
 
             (RenderTrees[0].Camera as FreeCamera).Position = CameraFocus + new Vector3(0, -4, 3);
-
-            #region Prepare Block Templates
-
-            BlockTemplates.Add(BlockTypes.Scaffold, new BlockTemplate
-            {
-                Preview = TileNames.TaskMarkerBuild,
-                Top = TileNames.TaskMarkerBuild,
-                SideA = TileNames.TaskMarkerBuild,
-                Bottom = TileNames.TaskMarkerBuild,
-                Shape = BlockShape.Cube,
-                Solid = false,
-                ResourceHeightOffset = -0.5f
-            });
-
-            BlockTemplates.Add(BlockTypes.Grass, new BlockTemplate
-                {
-                    Preview = TileNames.BlockGrassTop,
-                    Top = TileNames.BlockGrassTop,
-                    SideA = TileNames.BlockGrassSide,
-                    Bottom = TileNames.BlockDirt,
-                    Shape = BlockShape.Cube,
-                    ConstructionResources = new int[] {  BlockTypes.Dirt, BlockTypes.Dirt },
-                    MineResources = new int[] { BlockTypes.Dirt, BlockTypes.Dirt, BlockTypes.Dirt }
-                });
-
-            BlockTemplates.Add(BlockTypes.Dirt, new BlockTemplate
-            {
-                Preview = TileNames.BlockDirt,
-                Top = TileNames.BlockDirt,
-                SideA = TileNames.BlockDirt,
-                Bottom = TileNames.BlockDirt,
-                Shape = BlockShape.Cube
-            });
-
-            BlockTemplates.Add(BlockTypes.TestSlope, new BlockTemplate
-            {
-                Preview = TileNames.BlockGrassSlope,
-                Top = TileNames.BlockGrassTop,
-                SideA = TileNames.BlockGrassSlope,
-                SideB = TileNames.BlockGrassSide,
-                Bottom = TileNames.BlockDirt,
-                Orientable = true,
-                Shape = BlockShape.Slope,
-                ConstructionResources = new int[] { BlockTypes.Dirt, BlockTypes.Dirt },
-                MineResources = new int[] { BlockTypes.Dirt }
-            });
-
-            #endregion
-
-
-            #region Prepare World
-
-            World = new CellGrid(16, 16, 16);
-
-            World.forAll((t, x, y, z) =>
-                {
-                    if (z <= 1) t.Block = BlockTemplates[BlockTypes.Grass];
-                    else t.Block = null;
-                });
-
-            World.CellAt(4, 4, 1).SetFlag(CellFlags.Storehouse, true);
-
-            World.CellAt(1, 1, 2).Block = BlockTemplates[BlockTypes.TestSlope];
-            World.CellAt(1, 1, 2).BlockOrientation = CellLink.Directions.North;
-
-            World.CellAt(1, 2, 2).Block = BlockTemplates[BlockTypes.TestSlope];
-            World.CellAt(1, 2, 2).BlockOrientation = CellLink.Directions.East;
-            
-            World.CellAt(1, 3, 2).Block = BlockTemplates[BlockTypes.TestSlope];
-            World.CellAt(1, 3, 2).BlockOrientation = CellLink.Directions.South;
-
-            World.CellAt(1, 4, 2).Block = BlockTemplates[BlockTypes.TestSlope];
-            World.CellAt(1, 4, 2).BlockOrientation = CellLink.Directions.West;
-
-            Actors = new List<Actor>();
-            Tasks = new List<Task>();
-
-            var tileTexture = Content.Load<Texture2D>("tiles");
-            BlockTiles = new TileSheet(tileTexture, 16, 16);
-
-            WorldSceneNode = new WorldSceneNode(World, new WorldSceneNodeProperties
-            {
-                HiliteTexture = TileNames.HoverHilite,
-                TileSheet = BlockTiles,
-                BlockTemplates = BlockTemplates
-            });
-
-            RenderTrees[0].SceneGraph.Add(WorldSceneNode);
-
-            RenderTrees[0].SceneGraph.Add(new ActorSceneNode(Actors));
-
-            #endregion
 
             #region Prepare Input
 
@@ -230,22 +93,9 @@ namespace Game
             guiTools.Add(new GuiTools.Mine());
             guiTools.Add(new GuiTools.MarkStorehouse());
 
-            PushInputState(new HoverTest(BlockTemplates, BlockTiles, guiTools));
+            PushInputState(new HoverTest(Sim.Blocks.BlockTemplates, Sim.Blocks.BlockTiles, guiTools));
 
             #endregion
-
-            World.PrepareNavigation();
-            World.MarkDirtyChunk();
-            RenderTrees[0].SceneGraph.UpdateWorldTransform(Matrix.Identity);
-
-            for (int i = 0; i < 4; ++i)
-            {
-                var gnomeActor = new Gnome(BlockTiles);
-                gnomeActor.Location = new Coordinate(0, i, 1);
-                Actors.Add(gnomeActor);
-            }
-
-            
         }
 
         public void End()
@@ -255,38 +105,6 @@ namespace Game
         public void Update(float elapsedSeconds)
         {
             this.ElapsedSeconds = elapsedSeconds;
-
-            // Remove completed tasks.
-            for (var i = 0; i < Tasks.Count; )
-            {
-                if (Tasks[i].QueryStatus(this) == TaskStatus.Complete)
-                {
-                    World.CellAt(Tasks[i].Location).Task = null;
-                    SetUpdateFlag(Tasks[i].Location);
-                    Tasks.RemoveAt(i);
-                }
-                else
-                    ++i;
-            }
-
-            // Apply world mutations.
-            foreach (var mutation in WorldMutations.Where(m => m.MutationTimeFrame == MutationTimeFrame.BeforeUpdatingConnectivity))
-                mutation.Apply(this);
-
-            World.RelinkDirtyBlocks();
-
-            foreach (var mutation in WorldMutations.Where(m => m.MutationTimeFrame == MutationTimeFrame.AfterUpdatingConnectivity))
-                mutation.Apply(this);
-
-            WorldMutations.Clear();
-
-            if (World.ChunkDirty)
-            {
-                WorldSceneNode.UpdateGeometry();
-                World.ClearChunkDirtyFlag();
-            }
-
-            #region Handle Input
 
             if (Main.Input.Check("RIGHT")) CameraYaw += elapsedSeconds;
             if (Main.Input.Check("LEFT")) CameraYaw -= elapsedSeconds;
@@ -300,17 +118,14 @@ namespace Game
             if (CameraPitch < 0.5f) CameraPitch = 0.5f;
             if (CameraPitch > 1.5f) CameraPitch = 1.5f;
 
-            (RenderTrees[0].Camera as FreeCamera).Position = 
-                CameraFocus + 
-                Vector3.Transform(new Vector3(0, -CameraDistance, 0), 
+            (RenderTrees[0].Camera as FreeCamera).Position =
+                CameraFocus +
+                Vector3.Transform(new Vector3(0, -CameraDistance, 0),
                     Matrix.CreateRotationX(CameraPitch) * Matrix.CreateRotationZ(CameraYaw));
             (RenderTrees[0].Camera as FreeCamera).LookAt(CameraFocus, Vector3.UnitZ);
-
-            #endregion
-
-            foreach (var actor in Actors)
-                actor.Update(this);
             
+            Sim.Update(this, elapsedSeconds);
+                        
             HoverNode = null;
             var hoverItems = new List<HoverItem>();
 
@@ -346,7 +161,10 @@ namespace Game
             var viewport = Main.GraphicsDevice.Viewport;
 
             foreach (var renderTree in RenderTrees)
+            {
+                RenderContext.Camera = renderTree.Camera;
                 renderTree.SceneGraph.PreDraw(elapsedSeconds, RenderContext);
+            }
                        
             Main.GraphicsDevice.SetRenderTarget(null);
             Main.GraphicsDevice.Viewport = viewport;

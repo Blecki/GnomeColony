@@ -14,13 +14,13 @@ namespace Game.GuiTools
             this.HiliteFaces = HiliteFace.Top;
         }
 
-        public override void Apply(Game Game, WorldSceneNode WorldNode)
+        public override void Apply(Simulation Sim, WorldSceneNode WorldNode)
         {
-            if (Game.World.Check(WorldNode.HoverBlock))
+            if (Sim.World.Check(WorldNode.HoverBlock))
             {
-                var cell = Game.World.CellAt(WorldNode.HoverBlock);
+                var cell = Sim.World.CellAt(WorldNode.HoverBlock);
                 cell.SetFlag(CellFlags.Storehouse, true);
-                Game.SetUpdateFlag(WorldNode.HoverBlock);
+                Sim.SetUpdateFlag(WorldNode.HoverBlock);
             }
         }
     }

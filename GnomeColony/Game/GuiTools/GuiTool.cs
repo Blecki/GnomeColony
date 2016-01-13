@@ -21,7 +21,7 @@ namespace Game
 
         public HiliteFace HiliteFaces = HiliteFace.Top | HiliteFace.Sides;
         public int Icon { get; protected set; }
-        public virtual void Apply(Game Game, WorldSceneNode WorldNode) { }
+        public virtual void Apply(Simulation Sim, WorldSceneNode WorldNode) { }
 
         public virtual void Selected(Game Game, Gem.Gui.UIItem GuiRoot) { }
         public virtual void Deselected(Game Game, Gem.Gui.UIItem GuiRoot) { }

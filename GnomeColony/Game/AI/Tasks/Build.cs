@@ -30,24 +30,24 @@ namespace Game.Tasks
             GnomeIcon = TileNames.TaskIconBuild;
         }
 
-        public override bool QueryValidLocation(Game Game, Coordinate GnomeLocation)
+        public override bool QueryValidLocation(Simulation Sim, Coordinate GnomeLocation)
         {
             return Adjacent(GnomeLocation, Location);
         }
 
-        public override TaskStatus QueryStatus(Game Game)
+        public override TaskStatus QueryStatus(Simulation Sim)
         {
-            if (Object.ReferenceEquals(Game.World.CellAt(Location).Block, BlockType))
+            if (Object.ReferenceEquals(Sim.World.CellAt(Location).Block, BlockType))
                 return TaskStatus.Complete;
-            if (!NoGnomesInArea(Game, Location)) return TaskStatus.Impossible;
+            if (!NoGnomesInArea(Sim, Location)) return TaskStatus.Impossible;
             return TaskStatus.NotComplete;
         }
 
-        public override Task Prerequisite(Game Game, Gnome Gnome)
+        public override Task Prerequisite(Simulation Sim, Gnome Gnome)
         {
             if (State == States.Preparing)
             {
-                var cell = Game.World.CellAt(Location);
+                var cell = Sim.World.CellAt(Location);
                 var excessResources = FindExcessResources(cell, this);
                 var unfilledResources = FindUnfilledResourceRequirments(cell, this);
 
@@ -72,16 +72,16 @@ namespace Game.Tasks
             }
         }
 
-        public override void ExecuteTask(Game Game, Gnome Gnome)
+        public override void ExecuteTask(Simulation Sim, Gnome Gnome)
         {
             Gnome.FacingDirection = CellLink.DirectionFromAToB(Gnome.Location, Location);
-            var cell = Game.World.CellAt(Location);
+            var cell = Sim.World.CellAt(Location);
 
             switch (State)
             {
                 case States.Preparing:
                     ClearResourcesMutation = new WorldMutations.ClearResourcesMutation(Location, new List<int>(cell.Resources));
-                    Game.AddWorldMutation(ClearResourcesMutation);
+                    Sim.AddWorldMutation(ClearResourcesMutation);
                     State = States.ClearingResources;
                     return;
                 case States.ClearingResources:
@@ -94,11 +94,11 @@ namespace Game.Tasks
                     }
                     return;
                 case States.Constructing:
-                    Progress -= Game.ElapsedSeconds;
+                    Progress -= 0.1f;//Sim.ElapsedSeconds;
                     if (Progress <= 0.0f)
                     {
                         BuildMutation = new WorldMutations.PlaceBlockMutation(Location, BlockType);
-                        Game.AddWorldMutation(BuildMutation);
+                        Sim.AddWorldMutation(BuildMutation);
                         State = States.Finalizing;
                     }
                     return;

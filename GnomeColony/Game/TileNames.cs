@@ -16,6 +16,7 @@ namespace Game
 
         public const int HoverHilite = 4;
         public const int Storehouse = 5;
+        public const int Blank = 6;
 
         public const int BlockGrassSide = 32;
         public const int BlockGrassTop = 33;
@@ -25,6 +26,7 @@ namespace Game
         public const int BlockTreeTop = 65;
         public const int BlockCrystalTop = 96;
         public const int BlockCrystalSide = 97;
+        public const int BlockHangingRoots = 36;
 
         public const int TaskIconBase = 480;
         public const int TaskIconBlank = 481;

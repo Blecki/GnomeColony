@@ -19,9 +19,9 @@ namespace Game.WorldMutations
             this.ExpectedResources = ExpectedResources;
         }
 
-        public override void Apply(Game Game)
+        public override void Apply(Simulation Sim)
         {
-            var cell = Game.World.CellAt(Location);
+            var cell = Sim.World.CellAt(Location);
 
             if (cell.Resources.Count != ExpectedResources.Count)
             {
@@ -39,7 +39,7 @@ namespace Game.WorldMutations
                 }
 
             cell.Resources.Clear();            
-            Game.World.MarkDirtyBlock(Location);
+            Sim.World.MarkDirtyBlock(Location);
 
             Result = MutationResult.Success;
         }

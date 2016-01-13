@@ -21,9 +21,9 @@ namespace Game.WorldMutations
             this.Gnome = Gnome;
         }
 
-        public override void Apply(Game Game)
+        public override void Apply(Simulation Sim)
         {
-            var cell = Game.World.CellAt(Location);
+            var cell = Sim.World.CellAt(Location);
             
             var resourceIndex = cell.Resources.FindIndex(i => i == Resource);
             if (resourceIndex < 0)
@@ -40,7 +40,7 @@ namespace Game.WorldMutations
 
             Gnome.CarriedResource = Resource;
             cell.Resources.RemoveAt(resourceIndex);
-            Game.World.MarkDirtyBlock(Location);
+            Sim.World.MarkDirtyBlock(Location);
 
             Result = MutationResult.Success;
         }

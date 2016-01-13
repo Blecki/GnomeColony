@@ -92,7 +92,7 @@ namespace Game
                     {
                         Game.HoverNode.SetHover();
                         if (Game.Input.Check("LEFT-CLICK"))
-                            SelectedTool.Apply(Game, Game.HoverNode as WorldSceneNode);
+                            SelectedTool.Apply(Game.Sim, Game.HoverNode as WorldSceneNode);
                     }
                 }
             }
