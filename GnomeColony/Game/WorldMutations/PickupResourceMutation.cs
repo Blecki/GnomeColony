@@ -9,10 +9,10 @@ namespace Game.WorldMutations
     public class PickupResourceMutation : WorldMutation
     {
         public Coordinate Location;
-        public int Resource;
+        public String Resource;
         public Gnome Gnome;
 
-        public PickupResourceMutation(Coordinate Location, int Resource, Gnome Gnome)
+        public PickupResourceMutation(Coordinate Location, String Resource, Gnome Gnome)
         {
             this.MutationTimeFrame = MutationTimeFrame.BeforeUpdatingConnectivity;
 
@@ -32,7 +32,7 @@ namespace Game.WorldMutations
                 return;
             }
 
-            if (Gnome.CarriedResource != 0)
+            if (Gnome.CarryingResource)
             {
                 Result = MutationResult.Failure;
                 return;

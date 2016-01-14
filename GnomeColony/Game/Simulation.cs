@@ -69,31 +69,37 @@ namespace Game
             this.SimStepLength = SimStepLength;
             SimStepTime = 0.0f;
 
-            Blocks = new BlockSet(Content);
+            var definitionFile = Content.OpenUnbuiltTextStream("BlockDefinitionTest.txt").ReadToEnd();
+            var loadedBlocks = BlockSetLoader.LoadDefinitionFile(definitionFile);
+            Blocks = new BlockSet
+            {
+                Tiles = new TileSheet(Content.Load<Texture2D>("tiles"), 16, 16),
+                Templates = loadedBlocks.NamedBlocks
+            };
 
             World = new CellGrid(16, 16, 16);
 
             World.forAll((t, x, y, z) =>
                 {
-                    if (z <= 1) t.Block = Blocks.BlockTemplates[BlockTypes.Grass];
+                    if (z <= 1) t.Block = Blocks.Templates["Grass"];
                     else t.Block = null;
                 });
 
             World.CellAt(4, 4, 1).SetFlag(CellFlags.Storehouse, true);
 
-            World.CellAt(1, 1, 2).Block = Blocks.BlockTemplates[BlockTypes.TestSlope];
+            World.CellAt(1, 1, 2).Block = Blocks.Templates["Slope"];
             World.CellAt(1, 1, 2).BlockOrientation = CellLink.Directions.North;
 
-            World.CellAt(1, 2, 2).Block = Blocks.BlockTemplates[BlockTypes.TestSlope];
+            World.CellAt(1, 2, 2).Block = Blocks.Templates["Slope"];
             World.CellAt(1, 2, 2).BlockOrientation = CellLink.Directions.East;
 
-            World.CellAt(1, 3, 2).Block = Blocks.BlockTemplates[BlockTypes.TestSlope];
+            World.CellAt(1, 3, 2).Block = Blocks.Templates["Slope"];
             World.CellAt(1, 3, 2).BlockOrientation = CellLink.Directions.South;
 
-            World.CellAt(1, 4, 2).Block = Blocks.BlockTemplates[BlockTypes.TestSlope];
+            World.CellAt(1, 4, 2).Block = Blocks.Templates["Slope"];
             World.CellAt(1, 4, 2).BlockOrientation = CellLink.Directions.West;
 
-            World.CellAt(8, 8, 6).Block = Blocks.BlockTemplates[BlockTypes.Grass];
+            World.CellAt(8, 8, 6).Block = Blocks.Templates["Grass"];
 
             Actors = new List<Actor>();
             Tasks = new List<Task>();
@@ -104,7 +110,7 @@ namespace Game
 
             for (int i = 0; i < 4; ++i)
             {
-                var gnomeActor = new Gnome(this, Blocks.BlockTiles);
+                var gnomeActor = new Gnome(this, Blocks.Tiles);
                 gnomeActor.Location = new Coordinate(0, i, 1);
                 Actors.Add(gnomeActor);
                 Minds.Add(gnomeActor.Mind);
@@ -118,8 +124,7 @@ namespace Game
             WorldSceneNode = new WorldSceneNode(World, new WorldSceneNodeProperties
             {
                 HiliteTexture = TileNames.HoverHilite,
-                TileSheet = Blocks.BlockTiles,
-                BlockTemplates = Blocks.BlockTemplates
+                BlockSet = Blocks
             });
             result.Add(WorldSceneNode);
             result.Add(new ActorSceneNode(Actors));

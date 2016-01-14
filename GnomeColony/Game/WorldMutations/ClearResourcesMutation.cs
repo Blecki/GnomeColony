@@ -9,9 +9,9 @@ namespace Game.WorldMutations
     public class ClearResourcesMutation : WorldMutation
     {
         public Coordinate Location;
-        public List<int> ExpectedResources;
+        public List<String> ExpectedResources;
 
-        public ClearResourcesMutation(Coordinate Location, List<int> ExpectedResources)
+        public ClearResourcesMutation(Coordinate Location, List<String> ExpectedResources)
         {
             this.MutationTimeFrame = MutationTimeFrame.BeforeUpdatingConnectivity;
 

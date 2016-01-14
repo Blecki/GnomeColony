@@ -15,12 +15,16 @@ Child gnomes
 	- Move action takes a set of points to move along and a time frame to do it in. It does NOT know about the grid.
 	- 'Tick Time' - [0, 1] - time elapsed in current tick
 
-Block definition language
+* Block definition language
 * "Fringe" blocks - hang below existing block, things like hanging vines, bottom of ramps, etc.
 Non-solid blocks
 
 * Refactor block tiles stuff in sim into a 'block set' type
-	- Needs to be a pervasive change to all things that use the block set.
+	* - Needs to be a pervasive change to all things that use the block set.
 
+
+* Need to find blocks by name, not using an enum.
+Block definition loader needs to do a better job reporting errors.
+Clean up thing where tasks are passed gnomes, and have an assigned gnome.
 
 'Decal' objects - AKA, train tracks. Applied on surface of block.

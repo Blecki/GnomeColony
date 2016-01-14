@@ -42,7 +42,7 @@ namespace Game.Tasks
         {
             if (State != States.Mining) return null;
 
-            if (Gnome.CarriedResource != 0) return new Deposit();
+            if (Gnome.CarryingResource) return new Deposit();
             if (Sim.World.CellAt(Location).Resources.Count != 0) return new RemoveExcessResource(this.Location);
             return null;
         }

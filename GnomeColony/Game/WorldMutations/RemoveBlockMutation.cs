@@ -41,7 +41,7 @@ namespace Game.WorldMutations
                 return;
             }
             
-            cell.Resources = new List<int>(cell.Block.MineResources);
+            if (cell.Block.MineResources != null) cell.Resources = new List<String>(cell.Block.MineResources);
             cell.Block = null;
 
             if (cell.Resources.Count > 0)

@@ -41,7 +41,7 @@ namespace Game
                 if (newTask != null)
                     PushTask(newTask);
                 else
-                    if (Owner.CarriedResource != 0) PushTask(new Tasks.Deposit());
+                    if (Owner.CarryingResource) PushTask(new Tasks.Deposit());
             }
 
             var spins = 0;

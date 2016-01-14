@@ -59,8 +59,12 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Game\AI\GnomeMind.cs" />
+    <Compile Include="Game\BlockLoader\Load.cs" />
+    <Compile Include="Game\BlockLoader\Context.cs" />
+    <Compile Include="Game\BlockLoader\Grammar.cs" />
+    <Compile Include="Game\BlockLoader\Converters.cs" />
     <Compile Include="Game\GnomeNode.cs" />
-    <Compile Include="Game\BlockSet.cs" />
+    <Compile Include="Game\BlockLoader\BlockSet.cs" />
     <Compile Include="Game\Simulation.cs" />
     <Compile Include="Gem\Common\Animation.cs" />
     <Compile Include="Gem\Common\AnimationTimer.cs" />
@@ -147,7 +151,7 @@
     <Compile Include="Game\TileNames.cs" />
     <Compile Include="Game\MoveAction.cs" />
     <Compile Include="Game\ActorAction.cs" />
-    <Compile Include="Game\BlockTemplate.cs" />
+    <Compile Include="Game\BlockLoader\BlockTemplate.cs" />
     <Compile Include="Game\CellLink.cs" />
     <Compile Include="Game\CellGrid-Navigation.cs" />
     <Compile Include="Game\Coordinate.cs" />
@@ -188,6 +192,9 @@
     <Compile Include="Gem\Render\SceneNode.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="Ancora">
+      <HintPath>..\packages\Ancora.1.0.1\lib\net45\Ancora.dll</HintPath>
+    </Reference>
     <Reference Include="MonoGame.Framework">
       <HintPath>$(MSBuildProgramFiles32)\MonoGame\v3.0\Assemblies\Windows\MonoGame.Framework.dll</HintPath>
     </Reference>
@@ -199,6 +206,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Content\BlockDefinitionTest.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="Icon.ico" />
     <Content Include="Todo.txt" />
   </ItemGroup>

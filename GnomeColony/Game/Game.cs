@@ -93,7 +93,7 @@ namespace Game
             guiTools.Add(new GuiTools.Mine());
             guiTools.Add(new GuiTools.MarkStorehouse());
 
-            PushInputState(new HoverTest(Sim.Blocks.BlockTemplates, Sim.Blocks.BlockTiles, guiTools));
+            PushInputState(new HoverTest(Sim.Blocks, guiTools));
 
             #endregion
         }

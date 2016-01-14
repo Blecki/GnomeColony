@@ -62,7 +62,7 @@ namespace Game.Tasks
             return null;
         }
 
-        public override IEnumerable<int> GetRequiredResources()
+        public override IEnumerable<String> GetRequiredResources()
         {
             if (State == States.Preparing)
             {
@@ -80,7 +80,7 @@ namespace Game.Tasks
             switch (State)
             {
                 case States.Preparing:
-                    ClearResourcesMutation = new WorldMutations.ClearResourcesMutation(Location, new List<int>(cell.Resources));
+                    ClearResourcesMutation = new WorldMutations.ClearResourcesMutation(Location, new List<String>(cell.Resources));
                     Sim.AddWorldMutation(ClearResourcesMutation);
                     State = States.ClearingResources;
                     return;

@@ -62,16 +62,16 @@ namespace Game
         {
             base.PreDraw(ElapsedSeconds, Context);
 
-            if (ParentGnome.CarriedResource == 0 && CarriedResourceVisual != null)
+            if (!ParentGnome.CarryingResource && CarriedResourceVisual != null)
             {
                 base.Remove(CarriedResourceVisual);
                 CarriedResourceVisual = null;
             }
-            else if (ParentGnome.CarriedResource != 0 && CarriedResourceVisual == null)
+            else if (ParentGnome.CarryingResource && CarriedResourceVisual == null)
             {
                 CarriedResourceVisual = new Gem.Render.MeshNode(
-                    Generate.CreateResourceBlockMesh(Sim.Blocks.BlockTiles, Sim.Blocks.BlockTemplates[ParentGnome.CarriedResource]),
-                    Sim.Blocks.BlockTiles.Texture, null);
+                    Generate.CreateResourceBlockMesh(Sim.Blocks.Tiles, Sim.Blocks.Templates[ParentGnome.CarriedResource]),
+                    Sim.Blocks.Tiles.Texture, null);
                 base.Add(CarriedResourceVisual);
             }
 

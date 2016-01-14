@@ -45,7 +45,7 @@ namespace Game.Tasks
 
         public override Task Prerequisite(Simulation Sim, Gnome Gnome)
         {
-            if (Gnome.CarriedResource != 0)
+            if (Gnome.CarryingResource)
                 return new Deposit();
             return null;
         }

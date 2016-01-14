@@ -41,9 +41,9 @@ namespace Game
 
         public Actor PresentActor; // Actors are assigned only to their base cell, even though they are generally two cells tall.
 
-        public List<int> Resources = new List<int>();
+        public List<String> Resources = new List<String>();
 
-        public bool CanPlaceResource(int ResourceType)
+        public bool CanPlaceResource(String ResourceType)
         {
             if (HasFlag(CellFlags.Storehouse) && Resources.Count < 8) return true;
             else if (Task != null) return Task.FindUnfilledResourceRequirments(this, Task).Contains(ResourceType);

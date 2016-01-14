@@ -32,10 +32,10 @@ namespace Game.GuiTools
             GuiRoot.AddChild(BlockContainer);
 
             var x = 96 + 8;
-            foreach (var template in Game.Sim.Blocks.BlockTemplates)
+            foreach (var template in Game.Sim.Blocks.Templates)
             {
                 var lambdaTemplate = template;
-                var child = HoverTest.CreateGuiSprite(new Rectangle(x, 16, 32, 32), template.Value.Preview, Game.Sim.Blocks.BlockTiles);
+                var child = HoverTest.CreateGuiSprite(new Rectangle(x, 16, 32, 32), template.Value.Preview, Game.Sim.Blocks.Tiles);
                 child.Properties[0].Values.Upsert("click-action", new Action(() =>
                 {
                     this.SelectedBlock = lambdaTemplate.Value;
@@ -61,7 +61,7 @@ namespace Game.GuiTools
             {
                 var cell = Sim.World.CellAt(WorldNode.AdjacentHoverBlock);
                 if (cell.Block != null) return;
-                cell.Block = Sim.Blocks.BlockTemplates[BlockTypes.Scaffold];
+                cell.Block = Sim.Blocks.Templates["Scaffold"];
                 cell.BlockOrientation = CellLink.Directions.North;
 
                 if (SelectedBlock.Orientable)

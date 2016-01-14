@@ -11,16 +11,14 @@ namespace Game
     public class HoverTest : InputState
     {
         private Gem.Gui.GuiSceneNode GuiRoot;
-        private BlockTemplateSet BlockTemplates;
-        private TileSheet TileSheet;
+        private BlockSet Blocks;
         private List<GuiTool> Tools;
         private GuiTool SelectedTool;
         private Gem.Render.OrthographicCamera GUICamera;
                 
-        public HoverTest(BlockTemplateSet BlockTemplates, TileSheet TileSheet, List<GuiTool> Tools)
+        public HoverTest(BlockSet Blocks, List<GuiTool> Tools)
         {
-            this.BlockTemplates = BlockTemplates;
-            this.TileSheet = TileSheet;
+            this.Blocks = Blocks;
             this.Tools = Tools;
         }
 
@@ -56,7 +54,7 @@ namespace Game
             var y = 8;
             foreach (var tool in Tools)
             {
-                var child = CreateGuiSprite(new Rectangle(8, y, 64, 64), tool.Icon, TileSheet);
+                var child = CreateGuiSprite(new Rectangle(8, y, 64, 64), tool.Icon, Blocks.Tiles);
                 child.Properties[0].Values.Upsert("click-action", new Action(() =>
                     {
                         if (SelectedTool != null) SelectedTool.Deselected(Game, GuiRoot.uiRoot);

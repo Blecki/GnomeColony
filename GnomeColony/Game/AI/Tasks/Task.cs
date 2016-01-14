@@ -32,7 +32,7 @@ namespace Game
         public virtual TaskStatus QueryStatus(Simulation Sim) { return TaskStatus.NotComplete; }
         public virtual bool QueryValidLocation(Simulation Sim, Coordinate GnomeLocation) { return false; }
         public virtual Task Prerequisite(Simulation Sim, Gnome Gnome) { return null; }
-        public virtual IEnumerable<int> GetRequiredResources() { return Enumerable.Empty<int>(); }
+        public virtual IEnumerable<String> GetRequiredResources() { return Enumerable.Empty<String>(); }
         public virtual void ExecuteTask(Simulation Sim, Gnome Gnome) { }
 
         public static bool ResourceRequirmentsMet(Cell Cell, Task Task)
@@ -48,7 +48,7 @@ namespace Game
             return true;
         }
 
-        public static List<int> FindUnfilledResourceRequirments(Cell Cell, Task Task)
+        public static List<String> FindUnfilledResourceRequirments(Cell Cell, Task Task)
         {
             var taskRequirements = Task.GetRequiredResources().ToList();
             var cellResources = Cell.Resources;
@@ -60,10 +60,10 @@ namespace Game
             return taskRequirements;
         }
 
-        public static List<int> FindExcessResources(Cell Cell, Task Task)
+        public static List<String> FindExcessResources(Cell Cell, Task Task)
         {
             var taskRequirements = Task.GetRequiredResources();
-            var cellResources = new List<int>(Cell.Resources);
+            var cellResources = new List<String>(Cell.Resources);
 
             foreach (var item in taskRequirements)
                 if (cellResources.Contains(item))

@@ -8,9 +8,9 @@ namespace Game.Tasks
 {
     class Acquire : Task
     {
-        private List<int> ResourceTypes;
+        private List<String> ResourceTypes;
 
-        public Acquire(List<int> ResourceTypes) : base(new Coordinate(0,0,0))
+        public Acquire(List<String> ResourceTypes) : base(new Coordinate(0,0,0))
         {
             this.ResourceTypes = ResourceTypes;
             MarkerTile = 2;
@@ -36,13 +36,13 @@ namespace Game.Tasks
 
         public override TaskStatus QueryStatus(Simulation Sim)
         {
-            if (AssignedGnome.CarriedResource != 0 && ResourceTypes.Contains(AssignedGnome.CarriedResource)) return TaskStatus.Complete;
+            if (!AssignedGnome.CarryingResource && ResourceTypes.Contains(AssignedGnome.CarriedResource)) return TaskStatus.Complete;
             return TaskStatus.NotComplete;
         }
 
         public override Task Prerequisite(Simulation Sim, Gnome Gnome)
         {
-            if (Gnome.CarriedResource != 0 && !ResourceTypes.Contains(AssignedGnome.CarriedResource))
+            if (Gnome.CarryingResource && !ResourceTypes.Contains(AssignedGnome.CarriedResource))
                 return new Deposit();
             return null;
         }

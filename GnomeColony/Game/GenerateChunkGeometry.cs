@@ -71,7 +71,7 @@ namespace Game
             return ShapeTemplates[Shape].Mesh;
         }
 
-        public static Gem.Geo.Mesh ChunkGeometry(CellGrid Grid, TileSheet Tiles, BlockTemplateSet Templates)
+        public static Gem.Geo.Mesh ChunkGeometry(CellGrid Grid, BlockSet Blocks)
         {
             InitializeStaticData();
 
@@ -81,7 +81,7 @@ namespace Game
                 {
                     if (cell.Block != null)
                     {
-                        var cube = CreateNormalBlockMesh(Tiles, cell.Block);
+                        var cube = CreateNormalBlockMesh(Blocks.Tiles, cell.Block);
 
                         if (cell.Block.Orientable)
                             Gem.Geo.Gen.Transform(cube, Matrix.CreateRotationZ(
@@ -91,10 +91,10 @@ namespace Game
 
                         models.Add(cube);
 
-                        if (cell.Block.Hanging != -1 && Grid.check(x,y,z-1) && Grid.CellAt(x,y,z-1).Block == null)
+                        if (!String.IsNullOrEmpty(cell.Block.Hanging) && Grid.check(x,y,z-1) && Grid.CellAt(x,y,z-1).Block == null)
                         {
-                            var hangingBlock = Templates[cell.Block.Hanging];
-                            cube = CreateNormalBlockMesh(Tiles, hangingBlock);
+                            var hangingBlock = Blocks.Templates[cell.Block.Hanging];
+                            cube = CreateNormalBlockMesh(Blocks.Tiles, hangingBlock);
                             if (hangingBlock.Orientable)
                                 Gem.Geo.Gen.Transform(cube, Matrix.CreateRotationZ(
                                     (Gem.Math.Angle.PI / 2) * (int)cell.BlockOrientation));
@@ -107,7 +107,7 @@ namespace Game
 
                     if (cell.Task != null)
                     {
-                        var markerCube = CreateMarkerBlockMesh(Tiles, cell.Task.MarkerTile);
+                        var markerCube = CreateMarkerBlockMesh(Blocks.Tiles, cell.Task.MarkerTile);
                         Gem.Geo.Gen.Transform(markerCube, Matrix.CreateTranslation(x, y, z));
                         models.Add(markerCube);
                     }
@@ -118,7 +118,7 @@ namespace Game
                         Gem.Geo.Gen.MorphEx(navMesh, (inV) =>
                         {
                             var r = inV;
-                            r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Tiles.TileMatrix(TileNames.Storehouse));
+                            r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Blocks.Tiles.TileMatrix(TileNames.Storehouse));
                             return r;
                         });
                         models.Add(navMesh);
@@ -142,7 +142,7 @@ namespace Game
 
                     for (int i = 0; i < cell.Resources.Count; ++i)
                     {
-                        var resourceCube = CreateResourceBlockMesh(Tiles, Templates[cell.Resources[i]]);
+                        var resourceCube = CreateResourceBlockMesh(Blocks.Tiles, Blocks.Templates[cell.Resources[i]]);
                         Gem.Geo.Gen.Transform(resourceCube, Matrix.CreateTranslation(cell.CenterPoint 
                             + ResourceOffsets[offsetsIndex][i % ResourceOffsets[offsetsIndex].Length]
                             + new Vector3(0.0f, 0.0f, (cell.Block == null ? 0.0f : cell.Block.ResourceHeightOffset))));
@@ -167,23 +167,24 @@ namespace Game
             {
                 var r = inV;
 
+                var top = Template.Top;
+                var bottom = Template.Bottom == -1 ? Template.Top : Template.Bottom;
+                var sideA = Template.SideA == -1 ? Template.Top : Template.SideA;
+                var sideB = Template.SideB == -1 ? sideA : Template.SideB;
+
                 if (r.Normal.Z > 0.1f)
                     r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate,
-                        Tiles.TileMatrix(Template.Bottom));
+                        Tiles.TileMatrix(bottom));
                 else if (r.Normal.Z < -0.1f)
                     r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate,
-                        Tiles.TileMatrix(Template.Top));
+                        Tiles.TileMatrix(top));
                 else
                 {
-                    if (Template.SideB != -1)
-                    {
-                        if (r.Normal.X != 0)
-                            r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Tiles.TileMatrix(Template.SideA));
-                        else
-                            r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Tiles.TileMatrix(Template.SideB));
-                    }
+
+                    if (r.Normal.X != 0)
+                        r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Tiles.TileMatrix(sideA));
                     else
-                        r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Tiles.TileMatrix(Template.SideA));
+                        r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Tiles.TileMatrix(sideB));
                 }
 
                 return r;

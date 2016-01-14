@@ -10,9 +10,8 @@ namespace Game
 {
     public class WorldSceneNodeProperties : Gem.PropertyBag
     {
-        public TileSheet TileSheet { set { Upsert("tile-sheet", value); } }
+        public BlockSet BlockSet { set { Upsert("block-set", value); } }
         public int HiliteTexture { set { Upsert("hilite-texture", value); } }
-        public BlockTemplateSet BlockTemplates { set { Upsert("block-templates", value); } }
     }
 
     public class WorldSceneNode : Gem.Render.SceneNode
@@ -30,21 +29,19 @@ namespace Game
         public Coordinate AdjacentHoverBlock { get; private set; }
         public Vector3 HoverNormal { get; private set; }
 
-        private TileSheet TileSheet;
-        private BlockTemplateSet BlockTemplates;
+        private BlockSet Blocks;
 
         public WorldSceneNode(CellGrid World, Gem.PropertyBag Properties)
         {
             this.World = World;
-            this.TileSheet = Properties.GetPropertyAsOrDefault<TileSheet>("tile-sheet");
+            this.Blocks = Properties.GetPropertyAsOrDefault<BlockSet>("block-set");
             this.HiliteTexture = Properties.GetPropertyAsOrDefault<int>("hilite-texture");
-            this.BlockTemplates = Properties.GetPropertyAsOrDefault<BlockTemplateSet>("block-templates");
             this.Orientation = new Gem.Euler();
         }
 
         public void UpdateGeometry()
         {
-            ChunkMesh = Generate.ChunkGeometry(World, TileSheet, BlockTemplates);
+            ChunkMesh = Generate.ChunkGeometry(World, Blocks);
         }
 
         public override void UpdateWorldTransform(Microsoft.Xna.Framework.Matrix M)
@@ -64,7 +61,7 @@ namespace Game
         public override void Draw(Gem.Render.RenderContext Context)
         {
             Context.Color = Vector3.One;
-            Context.Texture = TileSheet.Texture;
+            Context.Texture = Blocks.Tiles.Texture;
             Context.NormalMap = Context.NeutralNormals;
             Context.World = WorldTransform;
             Context.LightingEnabled = true;
@@ -74,7 +71,7 @@ namespace Game
             if (MouseHover)
             {
                 Context.LightingEnabled = false;
-                Context.UVTransform = TileSheet.TileMatrix(HiliteTexture);
+                Context.UVTransform = Blocks.Tiles.TileMatrix(HiliteTexture);
                 Context.ApplyChanges();
                 Context.Draw(HiliteQuad);
             }

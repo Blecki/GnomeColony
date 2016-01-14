@@ -36,10 +36,10 @@ namespace Game.Tasks
             var requiredResources = Task.FindUnfilledResourceRequirments(cell, ParentTask);
             if (requiredResources.Count == 0) return null;
 
-            if (Gnome.CarriedResource != 0 && !requiredResources.Contains(Gnome.CarriedResource))
+            if (Gnome.CarryingResource && !requiredResources.Contains(Gnome.CarriedResource))
                 return new Deposit();
 
-            if (Gnome.CarriedResource == 0)
+            if (!Gnome.CarryingResource)
                 return new Acquire(requiredResources);
 
             // The gnome is carrying one of the required resources; let the normal mechanism move the gnome to

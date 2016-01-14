@@ -9,10 +9,10 @@ namespace Game.WorldMutations
     public class DropResourceMutation : WorldMutation
     {
         public Coordinate Location;
-        public int Resource;
+        public String Resource;
         public Gnome Gnome;
 
-        public DropResourceMutation(Coordinate Location, int Resource, Gnome Gnome)
+        public DropResourceMutation(Coordinate Location, String Resource, Gnome Gnome)
         {
             this.MutationTimeFrame = MutationTimeFrame.BeforeUpdatingConnectivity;
 
@@ -38,7 +38,7 @@ namespace Game.WorldMutations
             }
 
             cell.Resources.Add(Resource);
-            Gnome.CarriedResource = 0;
+            Gnome.CarriedResource = null;
             Sim.World.MarkDirtyBlock(Location);
 
             Result = MutationResult.Success;

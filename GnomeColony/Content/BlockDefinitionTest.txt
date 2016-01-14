@@ -1,0 +1,54 @@
+﻿tile grass-top 33;
+tile grass-side 32;
+tile dirt 34;
+tile grass-slope 35;
+tile hanging-vines 36;
+tile blank 6;
+		
+block Scaffold {
+	Preview 1;
+	Top 1;
+	Shape Cube;
+	Solid false;
+};
+
+block Grass {
+	Preview grass-top;
+	Top grass-top;
+	SideA grass-side;
+	Bottom dirt;
+	Shape Cube;
+	ConstructionResources [Dirt, Dirt];
+	MineResources [Dirt, Dirt, Dirt];
+	Hanging HangingVines;
+};
+
+block Dirt {
+	Preview dirt;
+	Top dirt;
+	Shape Cube;
+	ConstructionResources [Dirt, Dirt];
+	MineResources [Dirt, Dirt, Dirt];
+};
+     
+block HangingVines {
+	Preview hanging-vines;       
+	Top blank;
+	SideA hanging-vines;
+	Bottom blank;
+	Shape Cube;
+};
+
+block Slope {
+	Preview grass-slope;
+	Top grass-top;
+	SideA grass-slope;
+	SideB grass-side;
+	Bottom dirt;
+	Orientable true;
+    Shape Slope;
+	ConstructionResources [Dirt, Dirt];
+	MineResources [Dirt];
+};
+
+block break {};

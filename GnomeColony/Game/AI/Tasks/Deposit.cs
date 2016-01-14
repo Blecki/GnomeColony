@@ -13,7 +13,7 @@ namespace Game.Tasks
             MarkerTile = 0;
         }
 
-        private bool CanPlace(Cell C, int ResourceType)
+        private bool CanPlace(Cell C, String ResourceType)
         {
             if (C.HasFlag(CellFlags.Storehouse) && C.Resources.Count < 8) return true;
             else if (C.Task != null) return Task.FindUnfilledResourceRequirments(C, C.Task).Contains(ResourceType);
@@ -27,7 +27,7 @@ namespace Game.Tasks
 
         public override TaskStatus QueryStatus(Simulation Sim)
         {
-            if (AssignedGnome.CarriedResource != 0) return TaskStatus.NotComplete;
+            if (AssignedGnome.CarryingResource) return TaskStatus.NotComplete;
             return TaskStatus.Complete;
         }
 
