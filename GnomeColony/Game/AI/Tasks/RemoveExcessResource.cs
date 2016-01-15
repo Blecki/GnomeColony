@@ -43,14 +43,14 @@ namespace Game.Tasks
             }
         }
 
-        public override Task Prerequisite(Simulation Sim, Gnome Gnome)
+        public override Task Prerequisite(Simulation Sim)
         {
-            if (Gnome.CarryingResource)
+            if (AssignedGnome.CarryingResource)
                 return new Deposit();
             return null;
         }
 
-        public override void ExecuteTask(Simulation Sim, Gnome Gnome)
+        public override void ExecuteTask(Simulation Sim)
         {
             var cell = Sim.World.CellAt(Location);
             int resourceIndex = 0;
@@ -62,7 +62,7 @@ namespace Game.Tasks
             }
 
             if (resourceIndex >= 0)
-                Sim.AddWorldMutation(new WorldMutations.PickupResourceMutation(Location, cell.Resources[resourceIndex], Gnome));
+                Sim.AddWorldMutation(new WorldMutations.PickupResourceMutation(Location, cell.Resources[resourceIndex], AssignedGnome));
         }
     }
 }

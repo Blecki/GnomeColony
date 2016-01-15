@@ -65,5 +65,12 @@ namespace Gem.Geo
                 }
             }
         }
+
+        public static Mesh CalculateTangentsAndBiNormalsCopy(Mesh m)
+        {
+            var r = Gem.Geo.Gen.Copy(m);
+            CalculateTangentsAndBiNormals(r);
+            return r;
+        }
     }
 }

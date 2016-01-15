@@ -10,6 +10,23 @@ using Gem.Render;
 
 namespace Game
 {
+    public class BlockSetLoadException : Exception
+    {
+        public Ancora.StringIterator Location;
+        private bool LocationKnown;
+        
+        public BlockSetLoadException(Ancora.StringIterator Location, String Message) : base(Message + " @ " + Location.GetLocationDescription())
+        {
+            this.Location = Location;
+            LocationKnown = true;
+        }
+
+        public BlockSetLoadException(String Message) : base(Message)
+        {
+            LocationKnown = false;
+        }
+    }
+
     public class BlockSetLoader
     {
         public static BlockSetLoadContext LoadDefinitionFile(String FileData)
@@ -17,9 +34,9 @@ namespace Game
             var parser = new BlockGrammar();
             var parsed = parser.Root.Parse(new Ancora.StringIterator(FileData));
             if (parsed.ResultType != Ancora.ResultType.Success)
-                throw new InvalidOperationException("Failed parsing block definitions: " + parsed.FailReason.Message);
+                throw new BlockSetLoadException("Failed parsing block definitions: " + parsed.FailReason.Message);
             if (!parsed.After.AtEnd)
-                throw new InvalidOperationException("Failed parsing block definitions: Failed to consume entire file.");
+                throw new BlockSetLoadException("Failed parsing block definitions: Failed to consume entire file.");
 
             var context = new BlockSetLoadContext();
 
@@ -43,10 +60,23 @@ namespace Game
                     {
                         var memberName = member.Value.ToString();
                         var field = typeof(BlockTemplate).GetField(memberName);
-                        if (field == null) throw new InvalidOperationException("Failed parsing block definitions: Unknown member " + memberName + ".");
+                        
+                        if (field == null) 
+                            throw new BlockSetLoadException(member.Location, "Failed parsing block definitions: Unknown member " + memberName + ".");
+                        
                         var converterAttribute = field.GetCustomAttributes(false).FirstOrDefault(a => a is BlockPropertyConverter) as BlockPropertyConverter;
-                        if (converterAttribute == null) throw new InvalidOperationException("Failed parsing block definitions: Member " + memberName + " does not have a converter.");
-                        field.SetValue(blockTemplate, converterAttribute.Convert(context, member.Children[0]));
+                        
+                        if (converterAttribute == null) 
+                            throw new BlockSetLoadException(member.Location, "Failed parsing block definitions: Member " + memberName + " does not have a converter.");
+                        
+                        try
+                        {
+                            field.SetValue(blockTemplate, converterAttribute.Convert(context, member.Children[0]));
+                        }
+                        catch (Exception e)
+                        {
+                            throw new BlockSetLoadException(member.Location, "Exception thrown whil loading block definition file: " + e.Message);
+                        }
                     }
                 }
             }

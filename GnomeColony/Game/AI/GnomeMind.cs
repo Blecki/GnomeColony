@@ -63,7 +63,7 @@ namespace Game
                 }
                 else
                 {
-                    var prerequisite = currentTask.Prerequisite(Sim, Owner);
+                    var prerequisite = currentTask.Prerequisite(Sim);
                     if (prerequisite != null)
                         PushTask(prerequisite);
                     else
@@ -71,7 +71,7 @@ namespace Game
                         // All prerequisites met.
                         if (currentTask.QueryValidLocation(Sim, Owner.Location))
                         {
-                            currentTask.ExecuteTask(Sim, Owner);
+                            currentTask.ExecuteTask(Sim);
                             break;
                         }
                         else

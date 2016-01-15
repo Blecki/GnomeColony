@@ -5,6 +5,9 @@ tile grass-slope 35;
 tile hanging-vines 36;
 tile blank 6;
 		
+tile track-h 128;
+tile track-v 129;
+
 block Scaffold {
 	Preview 1;
 	Top 1;
@@ -51,4 +54,15 @@ block Slope {
 	MineResources [Dirt];
 };
 
-block break {};
+block TrackH {
+	Preview track-h;
+	Top track-h;
+	Shape Decal;
+};
+
+block TrackV {
+	Preview track-v;
+	Top track-v;
+	Shape Decal;
+};
+

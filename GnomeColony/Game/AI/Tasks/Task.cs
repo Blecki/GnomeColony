@@ -31,9 +31,9 @@ namespace Game
 
         public virtual TaskStatus QueryStatus(Simulation Sim) { return TaskStatus.NotComplete; }
         public virtual bool QueryValidLocation(Simulation Sim, Coordinate GnomeLocation) { return false; }
-        public virtual Task Prerequisite(Simulation Sim, Gnome Gnome) { return null; }
+        public virtual Task Prerequisite(Simulation Sim) { return null; }
         public virtual IEnumerable<String> GetRequiredResources() { return Enumerable.Empty<String>(); }
-        public virtual void ExecuteTask(Simulation Sim, Gnome Gnome) { }
+        public virtual void ExecuteTask(Simulation Sim) { }
 
         public static bool ResourceRequirmentsMet(Cell Cell, Task Task)
         {

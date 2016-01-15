@@ -11,7 +11,8 @@ namespace Game
         Cube,
         Slope,
         Stair,
-        Slab
+        Slab,
+        Decal
     }
 
     public class BlockShapeTemplate

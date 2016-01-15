@@ -41,7 +41,7 @@ namespace Game
             return true; // This is the task that takes gnomes to valid locations.
         }
 
-        public override void ExecuteTask(Simulation Sim, Gnome Gnome)
+        public override void ExecuteTask(Simulation Sim)
         {
             var pathfindingResult = Pathfinding.Flood(Sim.World.CellAt(AssignedGnome.Location),
                             c => GoalTask.QueryValidLocation(Sim, c.Location),
@@ -55,11 +55,11 @@ namespace Game
                     var blockingGnome = path[1].PresentActor as Gnome;
                     if (blockingGnome != null)
                     {
-                        blockingGnome.Mind.PushTask(new NudgedTask(Gnome, path[1].Location));
+                        blockingGnome.Mind.PushTask(new NudgedTask(AssignedGnome, path[1].Location));
                     }
                     else
                     {
-                        MoveMutation = new WorldMutations.ActorMoveMutation(AssignedGnome.Location, path[1], Gnome);
+                        MoveMutation = new WorldMutations.ActorMoveMutation(AssignedGnome.Location, path[1], AssignedGnome);
                         Sim.AddWorldMutation(MoveMutation);
                     }
                 }

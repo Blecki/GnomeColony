@@ -30,16 +30,16 @@ namespace Game.Tasks
             else return TaskStatus.NotComplete;
         }
 
-        public override Task Prerequisite(Simulation Sim, Gnome Gnome)
+        public override Task Prerequisite(Simulation Sim)
         {
             var cell = Sim.World.CellAt(Location);
             var requiredResources = Task.FindUnfilledResourceRequirments(cell, ParentTask);
             if (requiredResources.Count == 0) return null;
 
-            if (Gnome.CarryingResource && !requiredResources.Contains(Gnome.CarriedResource))
+            if (AssignedGnome.CarryingResource && !requiredResources.Contains(AssignedGnome.CarriedResource))
                 return new Deposit();
 
-            if (!Gnome.CarryingResource)
+            if (!AssignedGnome.CarryingResource)
                 return new Acquire(requiredResources);
 
             // The gnome is carrying one of the required resources; let the normal mechanism move the gnome to
@@ -47,9 +47,9 @@ namespace Game.Tasks
             return null;
         }
 
-        public override void ExecuteTask(Simulation Sim, Gnome Gnome)
+        public override void ExecuteTask(Simulation Sim)
         {
-            Sim.AddWorldMutation(new WorldMutations.DropResourceMutation(Location, Gnome.CarriedResource, Gnome));
+            Sim.AddWorldMutation(new WorldMutations.DropResourceMutation(Location, AssignedGnome.CarriedResource, AssignedGnome));
         }
 
     }

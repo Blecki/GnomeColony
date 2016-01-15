@@ -192,8 +192,9 @@
     <Compile Include="Gem\Render\SceneNode.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="Ancora">
-      <HintPath>..\packages\Ancora.1.0.1\lib\net45\Ancora.dll</HintPath>
+    <Reference Include="Ancora, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Ancora.1.0.2\lib\net45\Ancora.dll</HintPath>
     </Reference>
     <Reference Include="MonoGame.Framework">
       <HintPath>$(MSBuildProgramFiles32)\MonoGame\v3.0\Assemblies\Windows\MonoGame.Framework.dll</HintPath>
@@ -206,7 +207,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Content\BlockDefinitionTest.txt">
+    <Content Include="Content\blocks.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="Icon.ico" />

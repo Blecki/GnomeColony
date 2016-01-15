@@ -43,7 +43,7 @@ namespace Game.Tasks
             return TaskStatus.NotComplete;
         }
 
-        public override Task Prerequisite(Simulation Sim, Gnome Gnome)
+        public override Task Prerequisite(Simulation Sim)
         {
             if (State == States.Preparing)
             {
@@ -72,9 +72,9 @@ namespace Game.Tasks
             }
         }
 
-        public override void ExecuteTask(Simulation Sim, Gnome Gnome)
+        public override void ExecuteTask(Simulation Sim)
         {
-            Gnome.FacingDirection = CellLink.DirectionFromAToB(Gnome.Location, Location);
+            AssignedGnome.FacingDirection = CellLink.DirectionFromAToB(AssignedGnome.Location, Location);
             var cell = Sim.World.CellAt(Location);
 
             switch (State)

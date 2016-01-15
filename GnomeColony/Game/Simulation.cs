@@ -69,7 +69,7 @@ namespace Game
             this.SimStepLength = SimStepLength;
             SimStepTime = 0.0f;
 
-            var definitionFile = Content.OpenUnbuiltTextStream("BlockDefinitionTest.txt").ReadToEnd();
+            var definitionFile = Content.OpenUnbuiltTextStream("blocks.txt").ReadToEnd();
             var loadedBlocks = BlockSetLoader.LoadDefinitionFile(definitionFile);
             Blocks = new BlockSet
             {
@@ -100,6 +100,11 @@ namespace Game
             World.CellAt(1, 4, 2).BlockOrientation = CellLink.Directions.West;
 
             World.CellAt(8, 8, 6).Block = Blocks.Templates["Grass"];
+
+            World.CellAt(6, 6, 1).Decal = Blocks.Templates["TrackH"];
+            World.CellAt(7, 6, 2).Block = Blocks.Templates["Slope"];
+            World.CellAt(7, 6, 2).BlockOrientation = CellLink.Directions.West;
+            World.CellAt(7, 6, 2).Decal = Blocks.Templates["TrackV"];
 
             Actors = new List<Actor>();
             Tasks = new List<Task>();

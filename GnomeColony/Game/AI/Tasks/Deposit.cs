@@ -31,10 +31,10 @@ namespace Game.Tasks
             return TaskStatus.Complete;
         }
 
-        public override void ExecuteTask(Simulation Sim, Gnome Gnome)
+        public override void ExecuteTask(Simulation Sim)
         {
-            var dropLocation = EnumerateAdjacent(Gnome.Location).First(c => Sim.World.Check(c) && CanPlace(Sim.World.CellAt(c), Gnome.CarriedResource));
-            Sim.AddWorldMutation(new WorldMutations.DropResourceMutation(dropLocation, Gnome.CarriedResource, Gnome));
+            var dropLocation = EnumerateAdjacent(AssignedGnome.Location).First(c => Sim.World.Check(c) && CanPlace(Sim.World.CellAt(c), AssignedGnome.CarriedResource));
+            Sim.AddWorldMutation(new WorldMutations.DropResourceMutation(dropLocation, AssignedGnome.CarriedResource, AssignedGnome));
         }
     }
 }

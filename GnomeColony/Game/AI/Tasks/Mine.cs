@@ -38,26 +38,26 @@ namespace Game.Tasks
             return TaskStatus.NotComplete;
         }
 
-        public override Task Prerequisite(Simulation Sim, Gnome Gnome)
+        public override Task Prerequisite(Simulation Sim)
         {
             if (State != States.Mining) return null;
 
-            if (Gnome.CarryingResource) return new Deposit();
+            if (AssignedGnome.CarryingResource) return new Deposit();
             if (Sim.World.CellAt(Location).Resources.Count != 0) return new RemoveExcessResource(this.Location);
             return null;
         }
 
-        public override void ExecuteTask(Simulation Sim, Gnome Gnome)
+        public override void ExecuteTask(Simulation Sim)
         {
             switch (State)
             {
                 case States.Mining:
-                    Gnome.FacingDirection = CellLink.DirectionFromAToB(Gnome.Location, Location);
+                    AssignedGnome.FacingDirection = CellLink.DirectionFromAToB(AssignedGnome.Location, Location);
 
                     Progress -= 0.1f;//Game.ElapsedSeconds;
                     if (Progress <= 0.0f)
                     {
-                        MineMutation = new WorldMutations.RemoveBlockMutation(Location, Gnome);
+                        MineMutation = new WorldMutations.RemoveBlockMutation(Location, AssignedGnome);
                         Sim.AddWorldMutation(MineMutation);
                         State = States.Finalizing;
                     }

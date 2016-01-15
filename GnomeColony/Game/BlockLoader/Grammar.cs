@@ -21,7 +21,7 @@ namespace Game
                 DelimitedList((ws + identifier + ws).WithMutator(n => n.Children[0]), Character(',').WithMutator(n => null))
                     .WithMutator(n =>
                     {
-                        var r = new Ancora.AstNode { NodeType = "LIST" };
+                        var r = new Ancora.AstNode { NodeType = "LIST", Location = n.Location };
                         r.Children.Add(n.Children[0]);
                         foreach (var sub in n.Children[1].Children)
                             r.Children.Add(sub.Children[0]);
@@ -42,6 +42,7 @@ namespace Game
             {
                 n.NodeType = "MEMBER";
                 n.Value = n.Children[0].Value;
+                n.Location = n.Children[0].Location;
                 var value = n.Children[1].Children[0];
                 n.Children.Clear();
                 n.Children.Add(value);

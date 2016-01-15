@@ -22,7 +22,7 @@ namespace Game
                     new BlockShapeTemplate
                     {
                         Mesh = Gem.Geo.Gen.CreateTexturedFacetedCube(),
-                        NavigationMesh = Gem.Geo.Gen.FacetCopy(Gem.Geo.Gen.TransformCopy(Gem.Geo.Gen.CreateQuad(), Matrix.CreateTranslation(0.0f, 0.0f, 1.0f)))
+                        NavigationMesh = Gem.Geo.Gen.CalculateTangentsAndBiNormalsCopy(Gem.Geo.Gen.FacetCopy(Gem.Geo.Gen.TransformCopy(Gem.Geo.Gen.CreateQuad(), Matrix.CreateTranslation(0.0f, 0.0f, 1.0f))))
                     });
 
                 ShapeTemplates.Add(BlockShape.Slab,
@@ -31,15 +31,23 @@ namespace Game
                         Mesh = Gem.Geo.Gen.TransformCopy(
                             Gem.Geo.Gen.CreateTexturedFacetedCube(), 
                             Matrix.CreateScale(1.0f, 1.0f, 0.5f)),
-                        NavigationMesh = Gem.Geo.Gen.FacetCopy(Gem.Geo.Gen.TransformCopy(Gem.Geo.Gen.CreateQuad(), Matrix.CreateTranslation(0.0f, 0.0f, 0.5f)))
+                        NavigationMesh = Gem.Geo.Gen.CalculateTangentsAndBiNormalsCopy(Gem.Geo.Gen.FacetCopy(Gem.Geo.Gen.TransformCopy(Gem.Geo.Gen.CreateQuad(), Matrix.CreateTranslation(0.0f, 0.0f, 0.5f))))
                     });
 
                 ShapeTemplates.Add(BlockShape.Slope,
                     new BlockShapeTemplate
                     {
                         Mesh = Gem.Geo.Gen.TextureAndFacetAsCube(Gem.Geo.Gen.CreateWedge(1.0f)),
-                        NavigationMesh = Gem.Geo.Gen.FacetCopy(
-                            Gem.Geo.Gen.CreateSlantedQuad(1.0f))
+                        NavigationMesh = Gem.Geo.Gen.CalculateTangentsAndBiNormalsCopy(Gem.Geo.Gen.FacetCopy(
+                            Gem.Geo.Gen.CreateSlantedQuad(1.0f)))
+                    });
+
+               
+                ShapeTemplates.Add(BlockShape.Decal,
+                    new BlockShapeTemplate
+                    {
+                        Mesh = Gem.Geo.Gen.CalculateTangentsAndBiNormalsCopy(Gem.Geo.Gen.FacetCopy(Gem.Geo.Gen.TransformCopy(Gem.Geo.Gen.CreateQuad(), Matrix.CreateTranslation(0.0f, 0.0f, 0.51f)))),
+                        NavigationMesh = Gem.Geo.Gen.CalculateTangentsAndBiNormalsCopy(Gem.Geo.Gen.FacetCopy(Gem.Geo.Gen.TransformCopy(Gem.Geo.Gen.CreateQuad(), Matrix.CreateTranslation(0.0f, 0.0f, 0.5f))))
                     });
             }
 
@@ -91,7 +99,7 @@ namespace Game
 
                         models.Add(cube);
 
-                        if (!String.IsNullOrEmpty(cell.Block.Hanging) && Grid.check(x,y,z-1) && Grid.CellAt(x,y,z-1).Block == null)
+                        if (!String.IsNullOrEmpty(cell.Block.Hanging) && Grid.check(x, y, z - 1) && !Grid.CellAt(x, y, z - 1).IsSolid)
                         {
                             var hangingBlock = Blocks.Templates[cell.Block.Hanging];
                             cube = CreateNormalBlockMesh(Blocks.Tiles, hangingBlock);
@@ -103,6 +111,27 @@ namespace Game
 
                             models.Add(cube);
                         }
+                    }
+
+                    if (cell.Decal != null)
+                    {
+                        var navMesh = cell.Block == null ? ShapeTemplates[cell.Decal.Shape].NavigationMesh : ShapeTemplates[cell.Block.Shape].NavigationMesh;
+                        var copy = Gem.Geo.Gen.Copy(navMesh);
+                        Gem.Geo.Gen.MorphEx(copy, (inV) =>
+                        {
+                            var r = inV;
+                            r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Blocks.Tiles.TileMatrix(cell.Decal.Top));
+                            return r;
+                        });
+
+                        if (cell.Block != null && cell.Block.Orientable)
+                            Gem.Geo.Gen.Transform(copy, Matrix.CreateRotationZ(
+                                (Gem.Math.Angle.PI / 2) * (int)cell.BlockOrientation));
+
+                        // Nav meshes are not centered at 0.5, so they don't need to be translated as much.
+                        Gem.Geo.Gen.Transform(copy, Matrix.CreateTranslation(x + 0.5f, y + 0.5f, z));
+
+                        models.Add(copy);
                     }
 
                     if (cell.Task != null)

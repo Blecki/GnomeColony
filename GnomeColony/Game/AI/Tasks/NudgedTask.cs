@@ -46,7 +46,7 @@ namespace Game
             //return true;
         }
 
-        public override void ExecuteTask(Simulation Sim, Gnome Gnome)
+        public override void ExecuteTask(Simulation Sim)
         {
             var cell = Sim.World.CellAt(Location);
             if (cell.Links.Count == 0)
@@ -60,10 +60,10 @@ namespace Game
 
             var blockingGnome = link.Neighbor.PresentActor as Gnome;
             if (blockingGnome != null)
-                blockingGnome.Mind.PushTask(new NudgedTask(Gnome, link.Neighbor.Location));
+                blockingGnome.Mind.PushTask(new NudgedTask(AssignedGnome, link.Neighbor.Location));
             else
             {
-                MoveMutation = new WorldMutations.ActorMoveMutation(AssignedGnome.Location, link.Neighbor, Gnome);
+                MoveMutation = new WorldMutations.ActorMoveMutation(AssignedGnome.Location, link.Neighbor, AssignedGnome);
                 Sim.AddWorldMutation(MoveMutation);
             }
         }
