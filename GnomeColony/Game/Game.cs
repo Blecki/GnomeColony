@@ -15,9 +15,7 @@ namespace Game
         public Gem.Input Input { get; set; }
         public Main Main { get; set; }
 
-        EpisodeContentManager Content;
-        float CameraDistance = -12;
-        Vector3 CameraFocus = new Vector3(8.0f, 8.0f, 3.0f);
+        protected EpisodeContentManager Content;
         public RenderContext RenderContext { get; private set; }
         public SceneNode HoverNode { get; private set; }
 
@@ -31,10 +29,6 @@ namespace Game
 
         private List<InputState> InputStack = new List<InputState>();
         public float ElapsedSeconds { get; private set; }
-        public Simulation Sim { get; private set; }
-
-        private float CameraYaw = 0.25f;
-        private float CameraPitch = 0.0f;
 
         public void PushInputState(InputState NextState)
         {
@@ -57,45 +51,7 @@ namespace Game
         public void Begin()
         {
             Content = new EpisodeContentManager(Main.EpisodeContent.ServiceProvider, "Content");
-            Sim = new Simulation(Content, 1.0f);
-
             RenderContext = new RenderContext(Content.Load<Effect>("draw"), Main.GraphicsDevice);
-
-            RenderTrees.Add(new RenderTree
-            {
-                Camera = new Gem.Render.FreeCamera(new Vector3(0, 0, 0), Vector3.UnitY, Vector3.UnitZ, Main.GraphicsDevice.Viewport),
-                SceneGraph = Sim.CreateSceneNode()
-            });
-
-            (RenderTrees[0].Camera as FreeCamera).Position = CameraFocus + new Vector3(0, -4, 3);
-
-            #region Prepare Input
-
-            Main.Input.ClearBindings();
-            Main.Input.AddAxis("MAIN-AXIS", new MouseAxisBinding());
-            Main.Input.AddBinding("RIGHT", new KeyboardBinding(Keys.Right, KeyBindingType.Held));
-            Main.Input.AddBinding("LEFT", new KeyboardBinding(Keys.Left, KeyBindingType.Held));
-            Main.Input.AddBinding("UP", new KeyboardBinding(Keys.Up, KeyBindingType.Held));
-            Main.Input.AddBinding("DOWN", new KeyboardBinding(Keys.Down, KeyBindingType.Held));
-            Main.Input.AddBinding("PAN-LEFT", new KeyboardBinding(Keys.A, KeyBindingType.Held));
-            Main.Input.AddBinding("PAN-FORWARD", new KeyboardBinding(Keys.W, KeyBindingType.Held));
-            Main.Input.AddBinding("PAN-RIGHT", new KeyboardBinding(Keys.D, KeyBindingType.Held));
-            Main.Input.AddBinding("PAN-BACK", new KeyboardBinding(Keys.S, KeyBindingType.Held));
-            Main.Input.AddBinding("LEFT-CLICK", new MouseButtonBinding("LeftButton", KeyBindingType.Pressed));
-            Main.Input.AddBinding("RIGHT-CLICK", new MouseButtonBinding("RightButton", KeyBindingType.Pressed));
-
-            Main.Input.AddBinding("CAMERA-DISTANCE-TOGGLE", new KeyboardBinding(Keys.R, KeyBindingType.Held));
-
-            Main.ScriptBuilder.DeriveScriptsFrom("Gnome.ScriptBase");
-
-            var guiTools = new List<GuiTool>();
-            guiTools.Add(new GuiTools.Build());
-            guiTools.Add(new GuiTools.Mine());
-            guiTools.Add(new GuiTools.MarkStorehouse());
-
-            PushInputState(new HoverTest(Sim.Blocks, guiTools));
-
-            #endregion
         }
 
         public void End()
@@ -105,26 +61,6 @@ namespace Game
         public void Update(float elapsedSeconds)
         {
             this.ElapsedSeconds = elapsedSeconds;
-
-            if (Main.Input.Check("RIGHT")) CameraYaw += elapsedSeconds;
-            if (Main.Input.Check("LEFT")) CameraYaw -= elapsedSeconds;
-            if (Main.Input.Check("UP")) CameraPitch += elapsedSeconds;
-            if (Main.Input.Check("DOWN")) CameraPitch -= elapsedSeconds;
-
-            if (Main.Input.Check("CAMERA-DISTANCE-TOGGLE"))
-                CameraDistance = -24.0f;
-            else CameraDistance = -14.0f;
-
-            if (CameraPitch < 0.5f) CameraPitch = 0.5f;
-            if (CameraPitch > 1.5f) CameraPitch = 1.5f;
-
-            (RenderTrees[0].Camera as FreeCamera).Position =
-                CameraFocus +
-                Vector3.Transform(new Vector3(0, -CameraDistance, 0),
-                    Matrix.CreateRotationX(CameraPitch) * Matrix.CreateRotationZ(CameraYaw));
-            (RenderTrees[0].Camera as FreeCamera).LookAt(CameraFocus, Vector3.UnitZ);
-            
-            Sim.Update(this, elapsedSeconds);
                         
             HoverNode = null;
             var hoverItems = new List<HoverItem>();
@@ -188,19 +124,16 @@ namespace Game
                 RenderContext.ActiveLightCount = 3;
                 RenderContext.Texture = RenderContext.White;
                 RenderContext.NormalMap = RenderContext.NeutralNormals;
+                RenderContext.Ambient = new Vector4(0.2f, 0.2f, 0.4f, 0);
                 RenderContext.ApplyChanges();
 
                 renderTree.SceneGraph.Draw(RenderContext);
+
                 RenderContext.LightingEnabled = true;
-
-
+                RenderContext.Ambient = Vector4.Zero;
                 RenderContext.World = Matrix.Identity;
                 RenderContext.Texture = RenderContext.White;
             }
-            
-            //World.NavMesh.DebugRender(RenderContext);
-            //if (HitFace != null) 
-            //    World.NavMesh.DebugRenderFace(RenderContext, HitFace);
         }
     }
 }

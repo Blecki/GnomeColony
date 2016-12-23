@@ -22,8 +22,16 @@ namespace Game
 
         public bool Navigatable = false;
         public List<CellLink> Links = new List<CellLink>();
-        public Vector3 CenterPoint;
         public Gem.Geo.Mesh NavigationMesh;
+
+        public Vector3 CenterPoint
+        {
+            get
+            {
+                if (Block == null) return Location.AsVector3() + new Vector3(0.5f, 0.5f, 0.5f);
+                else return Location.AsVector3() + Generate.GetCenterPoint(Block.Shape, (int)BlockOrientation) + new Vector3(0, 0, 0.5f);
+            }
+        }
 
         public CellFlags Flags = 0;
 
@@ -56,7 +64,7 @@ namespace Game
             get
             {
                 if (Block == null) return false;
-                return Block.Solid;
+                return Block.MaterialType == BlockMaterialType.Solid;
             }
         }        
     }

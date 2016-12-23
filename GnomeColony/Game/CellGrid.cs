@@ -10,10 +10,8 @@ namespace Game
     {
         private Cell CellProxy = new Cell();
         private List<Coordinate> DirtyBlocks = new List<Coordinate>();
-        public bool ChunkDirty { get; private set; }
-        public void ClearChunkDirtyFlag() { ChunkDirty = false; }
-        public void MarkDirtyChunk() { ChunkDirty = true; }
-
+        public List<Coordinate> DirtyChunks = new List<Coordinate>();
+        
         public CellGrid(int width, int height, int depth)
             : base(width, height, depth, (x, y, z) => new Cell { Location = new Coordinate(x, y, z) })
         {
@@ -28,6 +26,9 @@ namespace Game
         public void MarkDirtyBlock(Coordinate Coordinate)
         {
             DirtyBlocks.Add(Coordinate);
+            var chunkCoordinate = new Coordinate(Coordinate.X / 16, Coordinate.Y / 16, Coordinate.Z / 16);
+            if (!DirtyChunks.Contains(chunkCoordinate))
+                DirtyChunks.Add(chunkCoordinate);
         }
 
         public void RelinkDirtyBlocks()
@@ -38,7 +39,6 @@ namespace Game
                 RelinkColumn(block.X, block.Y);
 
             DirtyBlocks.Clear();
-            MarkDirtyChunk();
         }
 
         public bool Check(Coordinate C)

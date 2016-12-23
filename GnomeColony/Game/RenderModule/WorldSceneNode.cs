@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Game
+namespace Game.RenderModule
 {
     public class WorldSceneNodeProperties : Gem.PropertyBag
     {
@@ -16,8 +16,10 @@ namespace Game
 
     public class WorldSceneNode : Gem.Render.SceneNode
     {
+        public static bool WireFrameMode = false;
+        
         private CellGrid World;
-        private Gem.Geo.Mesh ChunkMesh;
+        private Gem.Common.Grid3D<Gem.Geo.Mesh> ChunkMeshes;
         
         public int HiliteTexture;
         public float PickRadius = 100.0f;
@@ -31,17 +33,30 @@ namespace Game
 
         private BlockSet Blocks;
 
+        public Vector3 SunPosition = new Vector3(0, 100.0f, 1000.0f);
+
         public WorldSceneNode(CellGrid World, Gem.PropertyBag Properties)
         {
             this.World = World;
             this.Blocks = Properties.GetPropertyAsOrDefault<BlockSet>("block-set");
             this.HiliteTexture = Properties.GetPropertyAsOrDefault<int>("hilite-texture");
             this.Orientation = new Gem.Euler();
+            ChunkMeshes = new Gem.Common.Grid3D<Gem.Geo.Mesh>(World.width / 16, World.height / 16, World.depth / 16, (x,y,z) => null);
+
+            ChunkMeshes.forAll((m, x, y, z) => World.MarkDirtyBlock(new Coordinate(x * 16, y * 16, z * 16)));
         }
 
         public void UpdateGeometry()
         {
-            ChunkMesh = Generate.ChunkGeometry(World, Blocks);
+            foreach (var chunkCoordinate in World.DirtyChunks)
+            {
+                var chunkMesh = Generate.ChunkGeometry(World,
+                    chunkCoordinate.X * 16, chunkCoordinate.Y * 16, chunkCoordinate.Z * 16, 16, 16, 16, Blocks);
+                ChunkMeshes[chunkCoordinate.X, chunkCoordinate.Y, chunkCoordinate.Z] = chunkMesh;
+                if (chunkMesh != null) chunkMesh.PrepareLineIndicies();
+            }
+
+            World.DirtyChunks.Clear();
         }
 
         public override void UpdateWorldTransform(Microsoft.Xna.Framework.Matrix M)
@@ -51,6 +66,7 @@ namespace Game
 
         public override void PreDraw(float ElapsedSeconds, Gem.Render.RenderContext Context)
         {
+            UpdateGeometry();
         }
 
         public override void SetHover()
@@ -65,8 +81,16 @@ namespace Game
             Context.NormalMap = Context.NeutralNormals;
             Context.World = WorldTransform;
             Context.LightingEnabled = true;
+
+            Context.SetLight(0, SunPosition, float.PositiveInfinity, new Vector3(1.0f, 1.0f, 1.0f));
+            Context.ActiveLightCount = 1;
+
             Context.ApplyChanges();
-            Context.Draw(ChunkMesh);
+
+            if (WireFrameMode)
+                ChunkMeshes.forAll((m, x, y, z) => Context.DrawLines(m));
+            else
+                ChunkMeshes.forAll((m, x, y, z) => Context.Draw(m));
 
             if (MouseHover)
             {
@@ -87,7 +111,7 @@ namespace Game
             {
                 if (!World.check(x, y, z)) return false;
                 if (World.CellAt(x, y, z).Block == null) return false;
-                if (World.CellAt(x, y, z).Block.Solid == false) return false;
+                if (World.CellAt(x, y, z).Block.MaterialType != BlockMaterialType.Solid) return false;
 
                 HiliteQuad = Gem.Geo.Gen.CreateQuad();
 

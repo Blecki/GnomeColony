@@ -8,6 +8,7 @@ float4 DiffuseColor;
 float Alpha;
 float ClipAlpha;
 
+float4 Ambient;
 float3 LightPosition[16];
 float LightFalloff[16];
 float3 LightColor[16];
@@ -105,6 +106,7 @@ PixelShaderOutput PSTexturedColor(TexturedVertexShaderOutput input) : COLOR0
 		output.Color += saturate(texColor * DiffuseColor * float4(LightColor[i],1) * lightAttenuation * lightIntensity);
 	}
 
+	output.Color += saturate(texColor * Ambient);
 	output.Color.a = texColor.a * Alpha;
 	clip(texColor.a < ClipAlpha ? -1:1);
 

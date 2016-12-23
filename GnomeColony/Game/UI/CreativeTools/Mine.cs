@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Game.RenderModule;
 
-namespace Game.GuiTools
+namespace Game.Creative
 {
     public class Mine : GuiTool
     {
@@ -17,7 +18,7 @@ namespace Game.GuiTools
         {
             if (Sim.World.Check(WorldNode.HoverBlock))
             {
-                Sim.AddTask(new Tasks.Mine(WorldNode.HoverBlock));
+                Sim.AddWorldMutation(new WorldMutations.DeleteBlockMutation(WorldNode.HoverBlock));
             }
         }
     }

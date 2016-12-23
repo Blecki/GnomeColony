@@ -113,11 +113,13 @@ namespace Gem.Render
             }
         }
 
+        public Vector4 Ambient { set { Effect.Parameters["Ambient"].SetValue(value); } }
         public float Alpha { set { Effect.Parameters["Alpha"].SetValue(value); } }
         public float ClipAlpha { set { Effect.Parameters["ClipAlpha"].SetValue(value); } }
 
         public void Draw(Geo.IMesh Mesh)
         {
+            if (Mesh == null) return;
             ApplyChanges();
             Mesh.Render(Device);
         }
@@ -193,6 +195,8 @@ namespace Gem.Render
 
         public void DrawLines(Gem.Geo.Mesh mesh)
         {
+            if (mesh == null) return;
+
             ApplyChanges();
 
             if (mesh.lineIndicies == null) mesh.PrepareLineIndicies();

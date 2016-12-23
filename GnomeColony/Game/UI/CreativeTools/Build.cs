@@ -5,8 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using Gem;
+using Game.RenderModule;
 
-namespace Game.GuiTools
+namespace Game.Creative
 {
     public class Build : GuiTool
     {
@@ -18,7 +19,7 @@ namespace Game.GuiTools
             this.Icon = TileNames.TaskIconBuild;
         }
 
-        public override void Selected(Game Game, Gem.Gui.UIItem GuiRoot)
+        public override void Selected(Simulation Sim, Gem.Gui.UIItem GuiRoot)
         {
             this.SelectedBlock = null;
 
@@ -32,10 +33,10 @@ namespace Game.GuiTools
             GuiRoot.AddChild(BlockContainer);
 
             var x = 96 + 8;
-            foreach (var template in Game.Sim.Blocks.Templates)
+            foreach (var template in Sim.Blocks.Templates.Where(t => t.Value.BuildType != BuildType.None))
             {
                 var lambdaTemplate = template;
-                var child = HoverTest.CreateGuiSprite(new Rectangle(x, 16, 32, 32), template.Value.Preview, Game.Sim.Blocks.Tiles);
+                var child = CommandInput.CreateGuiSprite(new Rectangle(x, 16, 32, 32), template.Value.Preview, Sim.Blocks.Tiles);
                 child.Properties[0].Values.Upsert("click-action", new Action(() =>
                 {
                     this.SelectedBlock = lambdaTemplate.Value;
@@ -47,7 +48,7 @@ namespace Game.GuiTools
             }
         }
 
-        public override void Deselected(Game Game, Gem.Gui.UIItem GuiRoot)
+        public override void Deselected(Simulation Sim, Gem.Gui.UIItem GuiRoot)
         {
             if (BlockContainer != null) GuiRoot.RemoveChild(BlockContainer);
             BlockContainer = null;
@@ -61,14 +62,11 @@ namespace Game.GuiTools
             {
                 var cell = Sim.World.CellAt(WorldNode.AdjacentHoverBlock);
                 if (cell.Block != null) return;
-                cell.Block = Sim.Blocks.Templates["Scaffold"];
                 cell.BlockOrientation = CellLink.Directions.North;
-
                 if (SelectedBlock.Orientable)
                     cell.BlockOrientation = CellLink.DeriveDirectionFromNormal(WorldNode.HoverNormal);
-
-
-                Sim.AddTask(new Tasks.Build(SelectedBlock, WorldNode.AdjacentHoverBlock));
+                var mutation = new WorldMutations.PlaceBlockMutation(WorldNode.AdjacentHoverBlock, SelectedBlock);
+                Sim.AddWorldMutation(mutation);
             }
         }
     }

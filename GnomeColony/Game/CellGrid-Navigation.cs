@@ -31,29 +31,36 @@ namespace Game
             }
         }
 
+        public CellLink? FindLink(Cell From, Cell To)
+        {
+            if (From.Block == null || To.Block == null) return null;
+
+            var coincidentEdge = Gem.Geo.Mesh.FindCoincidentEdgeWithTransforms(
+                Generate.GetNavigationMesh(From.Block.Shape, (int)From.BlockOrientation),
+                Matrix.CreateTranslation(From.Location.AsVector3()),
+                Generate.GetNavigationMesh(To.Block.Shape, (int)To.BlockOrientation),
+                Matrix.CreateTranslation(To.Location.AsVector3()));
+
+            if (coincidentEdge.HasValue)
+                return new CellLink
+                {
+                    Direction = CellLink.DirectionFromAToB(From.Location, To.Location),
+                    Neighbor = To,
+                    EdgePoint = (coincidentEdge.Value.P0 + coincidentEdge.Value.P1) / 2.0f,
+                    LinkZOffset = 0.0f
+                };
+            else
+                return null;
+        }
+
         private void UpdateNavigation(Cell c, int x, int y, int z)
         {
             c.Navigatable = false;
             c.Links.Clear();
             c.NavigationMesh = null;
-            c.CenterPoint = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f);
-            
+
             if (c.IsSolid)
             {
-                c.NavigationMesh = Gem.Geo.Gen.Copy(Generate.GetNavigationMesh(c.Block.Shape));
-
-                if (c.Block.Orientable)
-                    Gem.Geo.Gen.Transform(c.NavigationMesh, Matrix.CreateRotationZ(
-                        (Gem.Math.Angle.PI / 2) * (int)c.BlockOrientation));
-
-                Gem.Geo.Gen.Transform(c.NavigationMesh, Matrix.CreateTranslation(x + 0.5f, y + 0.5f, z));
-                Gem.Geo.Gen.CalculateTangentsAndBiNormals(c.NavigationMesh);
-
-                var centerPointRayOrigin = new Vector3(x + 0.5f, y + 0.5f, z + 2.0f);
-                var hitCenter = c.NavigationMesh.RayIntersection(new Ray(centerPointRayOrigin, new Vector3(0, 0, -1)));
-                if (hitCenter.Intersects)
-                    c.CenterPoint = centerPointRayOrigin + (new Vector3(0, 0, -1) * hitCenter.Distance);
-                
                 c.Navigatable = true;
 
                 // Block must have two clear blocks above it to be navigatable.
@@ -63,6 +70,11 @@ namespace Game
                 if (z != (this.depth - 2))
                     if (CellAt(x, y, z + 2).IsSolid)
                         c.Navigatable = false;
+
+                if (c.Navigatable)
+                    c.NavigationMesh = Gem.Geo.Gen.TransformCopy(Generate.GetNavigationMesh(c.Block.Shape, (int)c.BlockOrientation), Matrix.CreateTranslation(x + 0.5f, y + 0.5f, z));
+                else
+                    c.NavigationMesh = null;
             }
         }
 

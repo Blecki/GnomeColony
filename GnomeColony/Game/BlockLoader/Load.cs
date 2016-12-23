@@ -75,7 +75,7 @@ namespace Game
                         }
                         catch (Exception e)
                         {
-                            throw new BlockSetLoadException(member.Location, "Exception thrown whil loading block definition file: " + e.Message);
+                            throw new BlockSetLoadException(member.Location, "Exception thrown while loading block definition file: " + e.Message);
                         }
                     }
                 }

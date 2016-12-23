@@ -15,6 +15,8 @@ namespace Game
         public Gem.PropertyBag Properties;
         public ActorAction CurrentAction { get; set; }
         public CellLink.Directions FacingDirection = CellLink.Directions.North;
+
+        public List<Component> Components;
         
         public virtual void Create(Gem.PropertyBag Properties)
         {

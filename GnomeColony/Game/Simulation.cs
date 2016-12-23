@@ -18,13 +18,12 @@ namespace Game
         private List<GnomeMind> Minds;
         public BlockSet Blocks;
         private List<WorldMutation> WorldMutations = new List<WorldMutation>();
+        private List<Module> Modules = new List<Module>();
 
         public float SimStepTime { get; private set; }
         public float SimStepLength { get; private set; }
         public float SimStepPercentage { get { return SimStepTime / SimStepLength; } }
         
-        private WorldSceneNode WorldSceneNode;
-
         public void AddWorldMutation(WorldMutation Mutation)
         {
             WorldMutations.Add(Mutation);
@@ -77,64 +76,31 @@ namespace Game
                 Templates = loadedBlocks.NamedBlocks
             };
 
-            World = new CellGrid(16, 16, 16);
+            World = new CellGrid(64, 64, 64);
 
             World.forAll((t, x, y, z) =>
                 {
-                    if (z <= 1) t.Block = Blocks.Templates["Grass"];
+                    if (z == 2) t.Block = Blocks.Templates["Grass"];
+                    else if (z < 2) t.Block = Blocks.Templates["Dirt"];
                     else t.Block = null;
                 });
-
-            World.CellAt(4, 4, 1).SetFlag(CellFlags.Storehouse, true);
-
-            World.CellAt(1, 1, 2).Block = Blocks.Templates["Slope"];
-            World.CellAt(1, 1, 2).BlockOrientation = CellLink.Directions.North;
-
-            World.CellAt(1, 2, 2).Block = Blocks.Templates["Slope"];
-            World.CellAt(1, 2, 2).BlockOrientation = CellLink.Directions.East;
-
-            World.CellAt(1, 3, 2).Block = Blocks.Templates["Slope"];
-            World.CellAt(1, 3, 2).BlockOrientation = CellLink.Directions.South;
-
-            World.CellAt(1, 4, 2).Block = Blocks.Templates["Slope"];
-            World.CellAt(1, 4, 2).BlockOrientation = CellLink.Directions.West;
-
-            World.CellAt(8, 8, 6).Block = Blocks.Templates["Grass"];
-
-            World.CellAt(6, 6, 1).Decal = Blocks.Templates["TrackH"];
-            World.CellAt(7, 6, 2).Block = Blocks.Templates["Slope"];
-            World.CellAt(7, 6, 2).BlockOrientation = CellLink.Directions.West;
-            World.CellAt(7, 6, 2).Decal = Blocks.Templates["TrackV"];
 
             Actors = new List<Actor>();
             Tasks = new List<Task>();
             Minds = new List<GnomeMind>();
 
-            World.PrepareNavigation();
-            World.MarkDirtyChunk();
-
-            for (int i = 0; i < 4; ++i)
-            {
-                var gnomeActor = new Gnome(this, Blocks.Tiles);
-                gnomeActor.Location = new Coordinate(0, i, 1);
-                Actors.Add(gnomeActor);
-                Minds.Add(gnomeActor.Mind);
-            }            
+            var renderModule = new RenderModule.RenderModule();
+            Modules.Add(renderModule);
         }
 
         public BranchNode CreateSceneNode()
         {
             var result = new BranchNode();
-
-            WorldSceneNode = new WorldSceneNode(World, new WorldSceneNodeProperties
+            foreach (var module in Modules)
             {
-                HiliteTexture = TileNames.HoverHilite,
-                BlockSet = Blocks
-            });
-            result.Add(WorldSceneNode);
-            result.Add(new ActorSceneNode(Actors));
-            result.UpdateWorldTransform(Matrix.Identity);
-            WorldSceneNode.UpdateGeometry();
+                var node = module.CreateSceneNode(this);
+                if (node != null) result.Add(node);
+            }
             return result;
         }
 
@@ -162,23 +128,19 @@ namespace Game
             foreach (var mutation in WorldMutations.Where(m => m.MutationTimeFrame == MutationTimeFrame.BeforeUpdatingConnectivity))
                 mutation.Apply(this);
 
-            World.RelinkDirtyBlocks();
+            //World.RelinkDirtyBlocks();
 
             foreach (var mutation in WorldMutations.Where(m => m.MutationTimeFrame == MutationTimeFrame.AfterUpdatingConnectivity))
                 mutation.Apply(this);
 
             WorldMutations.Clear();
-
-            if (World.ChunkDirty)
-            {
-                WorldSceneNode.UpdateGeometry();
-                World.ClearChunkDirtyFlag();
-            }
         }
 
         public void Update(Game Game, float ElapsedSeconds)
         {
             SimStepTime += ElapsedSeconds;
+            ForgetCompletedTasks();
+            ApplyMutations();
 
             if (SimStepTime > SimStepLength)
             {
@@ -188,8 +150,8 @@ namespace Game
                     mind.Update(Game, this);
                 SimStepTime -= SimStepLength;
 
-                ForgetCompletedTasks();
-                ApplyMutations();
+                foreach (var module in Modules)
+                    module.SimStep();
             }           
 
             foreach (var actor in Actors)
@@ -197,6 +159,9 @@ namespace Game
 
             foreach (var actor in Actors)
                 actor.UpdatePosition(this);
+
+            foreach (var module in Modules)
+                module.Update(ElapsedSeconds);
         }
     }
 }

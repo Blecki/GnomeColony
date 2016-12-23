@@ -8,18 +8,14 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Game
 {
-    public class HoverTest : InputState
+    public class GuiInputState : InputState
     {
-        private Gem.Gui.GuiSceneNode GuiRoot;
-        private BlockSet Blocks;
-        private List<GuiTool> Tools;
-        private GuiTool SelectedTool;
+        public Gem.Gui.GuiSceneNode GuiRoot { get; private set; }
         private Gem.Render.OrthographicCamera GUICamera;
-                
-        public HoverTest(BlockSet Blocks, List<GuiTool> Tools)
-        {
-            this.Blocks = Blocks;
-            this.Tools = Tools;
+
+        public GuiInputState()
+        { 
+        
         }
 
         public static Gem.Gui.UIItem CreateGuiSprite(Rectangle Position, int TileIndex, TileSheet TileSheet)
@@ -51,57 +47,23 @@ namespace Game
             GuiRoot = new Gem.Gui.GuiSceneNode(guiQuad, Game.Main.GraphicsDevice, 800, 600);
             GuiRoot.uiRoot.AddPropertySet(null, new Gem.Gui.GuiProperties { Transparent = true });
 
-            var y = 8;
-            foreach (var tool in Tools)
-            {
-                var child = CreateGuiSprite(new Rectangle(8, y, 64, 64), tool.Icon, Blocks.Tiles);
-                child.Properties[0].Values.Upsert("click-action", new Action(() =>
-                    {
-                        if (SelectedTool != null) SelectedTool.Deselected(Game, GuiRoot.uiRoot);
-                        SelectedTool = tool;
-                        tool.Selected(Game, GuiRoot.uiRoot);
-                    }));
-                GuiRoot.uiRoot.AddChild(child);
-                y += 68;
-            }
-
             GuiRoot.RenderOnTop = true;
             GuiRoot.DistanceBias = float.NegativeInfinity;
 
             renderTree.SceneGraph.Add(GuiRoot);
-
-            SelectedTool = Tools[0];
         }
     
         public override void Update(Game Game)
         {
             if (!Game.Main.IsActive) return;
 
-            if (Game.HoverNode is WorldSceneNode)
-            {
-                if (SelectedTool != null)
-                {
-                    var hoverNormal = (Game.HoverNode as WorldSceneNode).HoverNormal;
-                    var hoverSide = GuiTool.HiliteFace.Sides;
-                    if (hoverNormal.Z > 0) 
-                        hoverSide = GuiTool.HiliteFace.Top;
-
-                    if ((SelectedTool.HiliteFaces & hoverSide) == hoverSide)
-                    {
-                        Game.HoverNode.SetHover();
-                        if (Game.Input.Check("LEFT-CLICK"))
-                            SelectedTool.Apply(Game.Sim, Game.HoverNode as WorldSceneNode);
-                    }
-                }
-            }
-            else if (Game.HoverNode is Gem.Gui.GuiSceneNode)
+            if (Game.HoverNode is Gem.Gui.GuiSceneNode)
             {
                 Game.HoverNode.SetHover();
                 var action = Game.HoverNode.GetClickAction();
                 if (action != null && Game.Input.Check("LEFT-CLICK"))
                     action();
-            }
-            
+            }            
         }
     }
 }

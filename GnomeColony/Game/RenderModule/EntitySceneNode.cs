@@ -4,26 +4,23 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Game
+namespace Game.RenderModule
 {
-    public class ActorSceneNode : Gem.Render.SceneNode
+    public class EntitySceneNode : Gem.Render.SceneNode
     {
-        private List<Actor> Source;
+        private RenderModule Module;
 
-        public ActorSceneNode(List<Actor> Source)
+        public EntitySceneNode(RenderModule Module)
         {
-            this.Source = Source;
+            this.Module = Module;
         }
 
         public IEnumerable<Gem.Render.SceneNode> Nodes
         {
             get
             {
-                foreach (var actor in Source)
-                {
-                    if (actor.Renderable != null) yield return actor.Renderable;
-                    //if (actor.PopupGui != null) yield return actor.PopupGui;
-                }
+                foreach (var entity in Module.Renderables)
+                    if (entity.Value.Renderable != null) yield return entity.Value.Renderable;
             }
         }
 

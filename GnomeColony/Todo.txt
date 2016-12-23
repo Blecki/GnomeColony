@@ -7,8 +7,19 @@ Revisit gnome sprites
 Female gnomes
 Child gnomes
 
+Surface blocks - aka water. Only drawn when the block above it is not the same type.
+World generation.
+	- Much larger world. Like super sized.
+	* - Super zoomed out view
+	- Generate 'block types', not specific blocks - then fill in with blocks.
 Fix movement
-Blocks can be buildable or not
+
+Main menu - 
+	Simple gui buttons
+	Gui elements in tile texture?
+	Unique tileset for gui assets?
+
+Render tree has lighting info - can't keep lights hardcoded in game.
 
 == COMPLETED ==
 * Run AI on constant tick rate
@@ -25,3 +36,4 @@ Blocks can be buildable or not
 * Block definition loader needs to do a better job reporting errors.
 * Clean up thing where tasks are passed gnomes, and have an assigned gnome.
 * 'Decal' objects - AKA, train tracks. Applied on surface of block.
+* Blocks can be buildable or not

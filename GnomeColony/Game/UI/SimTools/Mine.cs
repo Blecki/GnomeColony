@@ -3,24 +3,22 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Game.RenderModule;
 
 namespace Game.GuiTools
 {
-    public class MarkStorehouse : GuiTool
+    public class Mine : GuiTool
     {
-        public MarkStorehouse()
+        public Mine()
         {
-            this.Icon = TileNames.TaskIconMarkStorehouse;
-            this.HiliteFaces = HiliteFace.Top;
+            this.Icon = TileNames.TaskIconMine;
         }
 
         public override void Apply(Simulation Sim, WorldSceneNode WorldNode)
         {
             if (Sim.World.Check(WorldNode.HoverBlock))
             {
-                var cell = Sim.World.CellAt(WorldNode.HoverBlock);
-                cell.SetFlag(CellFlags.Storehouse, true);
-                Sim.SetUpdateFlag(WorldNode.HoverBlock);
+                Sim.AddTask(new Tasks.Mine(WorldNode.HoverBlock));
             }
         }
     }

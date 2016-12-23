@@ -12,13 +12,23 @@ namespace Game
         Slope,
         Stair,
         Slab,
-        Decal
+        Surface,
+        HalfSlopeLow,
+        HalfSlopeHigh,
+    }
+    
+    public enum BlockMaterialType
+    {
+        Solid,
+        Liquid,
+        Air
     }
 
-    public class BlockShapeTemplate
+    public enum BuildType
     {
-        public Gem.Geo.Mesh Mesh;
-        public Gem.Geo.Mesh NavigationMesh;
+        All,
+        CreativeOnly,
+        None
     }
 
     public class BlockTemplate
@@ -26,15 +36,19 @@ namespace Game
         public String Name;
         [TileBlockPropertyConverter] public int Preview = 1;
         [TileBlockPropertyConverter] public int Top = 1;
-        [TileBlockPropertyConverter] public int SideA = -1;
-        [TileBlockPropertyConverter] public int SideB = -1;
+        [TileBlockPropertyConverter] public int NorthSide = -1;
+        [TileBlockPropertyConverter] public int SouthSide = -1;
+        [TileBlockPropertyConverter] public int EastSide = -1;
+        [TileBlockPropertyConverter] public int WestSide = -1;
         [TileBlockPropertyConverter] public int Bottom = -1;
         [BlockBlockPropertyConverter] public String Hanging = null;
         [EnumBlockPropertyConverter(typeof(BlockShape))] public BlockShape Shape;
-        [BoolBlockPropertyConverter] public bool Solid = true;
         public float ResourceHeightOffset = 0.0f;
         [ListBlockPropertyConverter] public String[] ConstructionResources;
         [ListBlockPropertyConverter] public String[] MineResources;
+
         [BoolBlockPropertyConverter] public bool Orientable = false;
+        [EnumBlockPropertyConverter(typeof(BlockMaterialType))] public BlockMaterialType MaterialType = BlockMaterialType.Solid;
+        [EnumBlockPropertyConverter(typeof(BuildType))] public BuildType BuildType = BuildType.All;
     }
 }

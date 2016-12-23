@@ -41,6 +41,7 @@ namespace Game.WorldMutations
             cell.PresentActor = null;
             Onto.PresentActor = Actor;
 
+            // Todo: Reimplement smooth movement.
             //Actor.CurrentAction = new MoveAction(cell, cell.Links[stepIndex].Direction);
             Actor.FacingDirection = cell.Links[stepIndex].Direction;
 
