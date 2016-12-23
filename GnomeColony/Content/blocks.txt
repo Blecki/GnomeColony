@@ -34,6 +34,18 @@ block Grass {
 	BuildType All;
 };
 
+block GrassSlab {
+	Preview grass-side-mid;
+	Top grass-top;
+	NorthSide grass-side-mid;
+	Bottom dirt;
+	Shape Slab;
+	ConstructionResources [Dirt, Dirt];
+	MineResources [Dirt, Dirt, Dirt];
+	Hanging HangingVines;
+	BuildType All;
+};
+
 block Dirt {
 	Preview dirt;
 	Top dirt;

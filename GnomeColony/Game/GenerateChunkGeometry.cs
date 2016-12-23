@@ -166,9 +166,12 @@ namespace Game
                     Gem.Geo.Gen.FacetCopy(Gem.Geo.Gen.TransformCopy(Gem.Geo.Gen.CreateQuad(), Matrix.CreateTranslation(0.0f, 0.0f, 1.0f))));
 
                 InitializeShapeTemplate(BlockShape.Slab,
-                    Gem.Geo.Gen.TransformCopy(
-                            Gem.Geo.Gen.CreateTexturedFacetedCube(), 
-                            Matrix.CreateScale(1.0f, 1.0f, 0.5f)),
+                    Gem.Geo.Gen.TextureAndFacetAsCube(
+                        Gem.Geo.Gen.TransformCopy(
+                            Gem.Geo.Gen.TransformCopy(
+                                Gem.Geo.Gen.CreateCube(),
+                                Matrix.CreateScale(1.0f, 1.0f, 0.5f)),
+                            Matrix.CreateTranslation(0, 0, -0.25f))),
                     Gem.Geo.Gen.FacetCopy(Gem.Geo.Gen.TransformCopy(Gem.Geo.Gen.CreateQuad(), Matrix.CreateTranslation(0.0f, 0.0f, 0.5f))));
 
                 InitializeShapeTemplate(BlockShape.Slope,
