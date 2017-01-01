@@ -69,5 +69,21 @@ namespace Game.Creative
                 Sim.AddWorldMutation(mutation);
             }
         }
+
+        public override void Hover(Simulation Sim, WorldSceneNode WorldNode)
+        {
+            if (SelectedBlock == null) return;
+
+            if (Sim.World.Check(WorldNode.AdjacentHoverBlock))
+            {
+                var phantom = new Cell();
+                phantom.Location = WorldNode.AdjacentHoverBlock;
+                phantom.BlockOrientation = CellLink.Directions.North;
+                if (SelectedBlock.Orientable)
+                    phantom.BlockOrientation = CellLink.DeriveDirectionFromNormal(WorldNode.HoverNormal);
+                phantom.Block = SelectedBlock;
+                WorldNode.SetPhantomPlacementCell(phantom);
+            }
+        }
     }
 }

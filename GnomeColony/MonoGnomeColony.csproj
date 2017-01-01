@@ -58,6 +58,8 @@
     <ApplicationIcon>Icon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Game\BlockLoader\Templates\Dirt.cs" />
+    <Compile Include="Game\BlockLoader\Templates\Grass.cs" />
     <Compile Include="Game\Entity.cs" />
     <Compile Include="Game\RenderModule\EntitySceneNode.cs" />
     <Compile Include="Game\AI\GnomeMind.cs" />

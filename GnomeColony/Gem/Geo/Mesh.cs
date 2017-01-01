@@ -68,5 +68,20 @@ namespace Gem.Geo
             Device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, verticies, 0, verticies.Length,
                                 indicies, 0, indicies.Length / 3);
         }
+
+        public Rectangle CalculateBoundingRectangle()
+        {
+            Vector3 minimum = verticies[0].Position;
+            Vector3 maximum = verticies[0].Position;
+            foreach (var vert in verticies)
+            {
+                if (vert.Position.X < minimum.X) minimum.X = vert.Position.X;
+                if (vert.Position.Y < minimum.Y) minimum.Y = vert.Position.Y;
+                if (vert.Position.X > maximum.X) maximum.X = vert.Position.X;
+                if (vert.Position.Y > maximum.Y) maximum.Y = vert.Position.Y;
+            }
+
+            return new Rectangle((int)minimum.X, (int)minimum.Y, (int)maximum.X - (int)minimum.X, (int)maximum.Y - (int)minimum.Y);
+        }
     }
 }

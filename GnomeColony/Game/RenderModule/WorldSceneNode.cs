@@ -27,6 +27,20 @@ namespace Game.RenderModule
         private bool MouseHover = false;
         private Gem.Geo.Mesh HiliteQuad;
 
+        public Gem.Geo.Mesh PhantomPlacementCell = null;
+        public void SetPhantomPlacementCell(Cell Cell)
+        {
+            var mesh = Generate.CreateNormalBlockMesh(Blocks.Tiles, Cell.Block, (int)Cell.BlockOrientation);
+            PhantomPlacementCell = Gem.Geo.Gen.Merge(mesh.ToArray());
+            Gem.Geo.Gen.Transform(PhantomPlacementCell, Matrix.CreateTranslation(Cell.Location.AsVector3()));
+            Gem.Geo.Gen.Transform(PhantomPlacementCell, Matrix.CreateTranslation(new Vector3(0.5f, 0.5f, 0.5f)));
+
+        }
+        public void ClearPhantomPlacementCell()
+        {
+            PhantomPlacementCell = null;
+        }
+
         public Coordinate HoverBlock { get; private set; }
         public Coordinate AdjacentHoverBlock { get; private set; }
         public Vector3 HoverNormal { get; private set; }
@@ -94,6 +108,14 @@ namespace Game.RenderModule
 
             if (MouseHover)
             {
+                if (PhantomPlacementCell != null)
+                {
+                    Context.Alpha = 0.75f;
+                    Context.ApplyChanges();
+                    Context.Draw(PhantomPlacementCell);
+                    PhantomPlacementCell = null;
+                }
+
                 Context.LightingEnabled = false;
                 Context.UVTransform = Blocks.Tiles.TileMatrix(HiliteTexture);
                 Context.ApplyChanges();

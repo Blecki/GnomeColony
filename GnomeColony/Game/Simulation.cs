@@ -68,13 +68,15 @@ namespace Game
             this.SimStepLength = SimStepLength;
             SimStepTime = 0.0f;
 
-            var definitionFile = Content.OpenUnbuiltTextStream("blocks.txt").ReadToEnd();
-            var loadedBlocks = BlockSetLoader.LoadDefinitionFile(definitionFile);
-            Blocks = new BlockSet
-            {
-                Tiles = new TileSheet(Content.Load<Texture2D>("tiles"), 16, 16),
-                Templates = loadedBlocks.NamedBlocks
-            };
+            //var definitionFile = Content.OpenUnbuiltTextStream("blocks.txt").ReadToEnd();
+            //var loadedBlocks = BlockSetLoader.LoadDefinitionFile(definitionFile);
+            Blocks = BlockSet.FromReflection();
+            Blocks.Tiles = new TileSheet(Content.Load<Texture2D>("tiles"), 16, 16);
+            //Blocks = new BlockSet
+            //{
+            //    Tiles = new TileSheet(Content.Load<Texture2D>("tiles"), 16, 16),
+            //    Templates = loadedBlocks.NamedBlocks
+            //};
 
             World = new CellGrid(64, 64, 64);
 

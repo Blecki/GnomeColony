@@ -61,6 +61,7 @@ namespace Game
                     if ((SelectedTool.HiliteFaces & hoverSide) == hoverSide)
                     {
                         Game.HoverNode.SetHover();
+                        SelectedTool.Hover(Sim, Game.HoverNode as WorldSceneNode);
                         if (Game.Input.Check("LEFT-CLICK"))
                             SelectedTool.Apply(Sim, Game.HoverNode as WorldSceneNode);
                     }

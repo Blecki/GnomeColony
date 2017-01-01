@@ -165,7 +165,7 @@ namespace Game
                     Gem.Geo.Gen.CreateTexturedFacetedCube(),
                     Gem.Geo.Gen.FacetCopy(Gem.Geo.Gen.TransformCopy(Gem.Geo.Gen.CreateQuad(), Matrix.CreateTranslation(0.0f, 0.0f, 1.0f))));
 
-                InitializeShapeTemplate(BlockShape.Slab,
+                InitializeShapeTemplate(BlockShape.LowerSlab,
                     Gem.Geo.Gen.TextureAndFacetAsCube(
                         Gem.Geo.Gen.TransformCopy(
                             Gem.Geo.Gen.TransformCopy(
@@ -173,6 +173,15 @@ namespace Game
                                 Matrix.CreateScale(1.0f, 1.0f, 0.5f)),
                             Matrix.CreateTranslation(0, 0, -0.25f))),
                     Gem.Geo.Gen.FacetCopy(Gem.Geo.Gen.TransformCopy(Gem.Geo.Gen.CreateQuad(), Matrix.CreateTranslation(0.0f, 0.0f, 0.5f))));
+
+                InitializeShapeTemplate(BlockShape.UpperSlab,
+                    Gem.Geo.Gen.TextureAndFacetAsCube(
+                        Gem.Geo.Gen.TransformCopy(
+                            Gem.Geo.Gen.TransformCopy(
+                                Gem.Geo.Gen.CreateCube(),
+                                Matrix.CreateScale(1.0f, 1.0f, 0.5f)),
+                            Matrix.CreateTranslation(0, 0, 0.25f))),
+                    Gem.Geo.Gen.FacetCopy(Gem.Geo.Gen.TransformCopy(Gem.Geo.Gen.CreateQuad(), Matrix.CreateTranslation(0.0f, 0.0f, 1.0f))));
 
                 InitializeShapeTemplate(BlockShape.Slope,
                     Gem.Geo.Gen.TextureAndFacetAsCube(Gem.Geo.Gen.CreateWedge(1.0f)),
@@ -419,7 +428,7 @@ namespace Game
             return result;
         }
 
-        private static List<Gem.Geo.Mesh> CreateNormalBlockMesh(TileSheet Tiles, BlockTemplate Template, int Orientation)
+        public static List<Gem.Geo.Mesh> CreateNormalBlockMesh(TileSheet Tiles, BlockTemplate Template, int Orientation)
         {
             return ShapeTemplates[Template.Shape][Orientation].Faces.Select(f =>
                 {
@@ -429,7 +438,7 @@ namespace Game
                 }).ToList();
         }
 
-        private static void MorphBlockTextureCoordinates(TileSheet Tiles, BlockTemplate Template, Gem.Geo.Mesh Mesh, int Orientation)
+        public static void MorphBlockTextureCoordinates(TileSheet Tiles, BlockTemplate Template, Gem.Geo.Mesh Mesh, int Orientation)
         {
             var top = Template.Top;
             var bottom = Template.Bottom == -1 ? Template.Top : Template.Bottom;

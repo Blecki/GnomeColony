@@ -22,7 +22,7 @@ namespace Game
         public HiliteFace HiliteFaces = HiliteFace.Top | HiliteFace.Sides;
         public int Icon { get; protected set; }
         public virtual void Apply(Simulation Sim, RenderModule.WorldSceneNode WorldNode) { }
-
+        public virtual void Hover(Simulation Sim, RenderModule.WorldSceneNode WorldNode) { }
         public virtual void Selected(Simulation Sim, Gem.Gui.UIItem GuiRoot) { }
         public virtual void Deselected(Simulation Sim, Gem.Gui.UIItem GuiRoot) { }
     }
