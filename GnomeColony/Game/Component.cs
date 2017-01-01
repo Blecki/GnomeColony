@@ -8,6 +8,5 @@ namespace Game
 {
     public class Component
     {
-        public Actor Owner;
     }
 }

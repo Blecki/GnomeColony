@@ -6,16 +6,16 @@ using System.Threading.Tasks;
 
 namespace Game.Templates
 {
-    public class Dirt : BlockTemplate
+    public class Grass : BlockTemplate
     {
-        public Dirt()
+        public Grass()
         {
-            Preview = 34;
-            Top = 34;
-            NorthSide = 34;
+            Preview = 33;
+            Top = 33;
+            NorthSide = 32;
             Bottom = 34;
             Shape = BlockShape.Cube;
-            BuildType = global::Game.BuildType.All;
+            //Hanging = "HangingVines";
         }
     }
 }

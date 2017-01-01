@@ -18,7 +18,6 @@ namespace Game.RenderModule
     public class RenderModule : Module
     {
         public WorldSceneNode WorldNode;
-        public EntitySceneNode EntityNode;
         public Dictionary<int, RenderComponent> Renderables = new Dictionary<int, RenderComponent>();
         public Dictionary<int, LightComponent> Lights = new Dictionary<int, LightComponent>();
 
@@ -40,7 +39,6 @@ namespace Game.RenderModule
                 BlockSet = Sim.Blocks
             });
             r.Add(worldSceneNode);
-            r.Add(new EntitySceneNode(this));
             r.UpdateWorldTransform(Matrix.Identity);
             worldSceneNode.UpdateGeometry();
             return r;

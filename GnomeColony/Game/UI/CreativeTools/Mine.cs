@@ -18,7 +18,9 @@ namespace Game.Creative
         {
             if (Sim.World.Check(WorldNode.HoverBlock))
             {
-                Sim.AddWorldMutation(new WorldMutations.DeleteBlockMutation(WorldNode.HoverBlock));
+                var cell = Sim.World.CellAt(WorldNode.HoverBlock);
+                cell.Block = null;
+                Sim.SetUpdateFlag(WorldNode.HoverBlock);
             }
         }
     }

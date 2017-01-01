@@ -33,7 +33,7 @@ namespace Game.Creative
             GuiRoot.AddChild(BlockContainer);
 
             var x = 96 + 8;
-            foreach (var template in Sim.Blocks.Templates.Where(t => t.Value.BuildType != BuildType.None))
+            foreach (var template in Sim.Blocks.Templates)
             {
                 var lambdaTemplate = template;
                 var child = CommandInput.CreateGuiSprite(new Rectangle(x, 16, 32, 32), template.Value.Preview, Sim.Blocks.Tiles);
@@ -65,8 +65,8 @@ namespace Game.Creative
                 cell.BlockOrientation = CellLink.Directions.North;
                 if (SelectedBlock.Orientable)
                     cell.BlockOrientation = CellLink.DeriveDirectionFromNormal(WorldNode.HoverNormal);
-                var mutation = new WorldMutations.PlaceBlockMutation(WorldNode.AdjacentHoverBlock, SelectedBlock);
-                Sim.AddWorldMutation(mutation);
+                cell.Block = SelectedBlock;
+                Sim.World.MarkDirtyBlock(WorldNode.AdjacentHoverBlock);
             }
         }
 

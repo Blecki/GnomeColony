@@ -68,13 +68,11 @@ namespace Game
 
         private class BlockShapeTemplate
         {
-            public Gem.Geo.Mesh NavigationMesh;
-            public Microsoft.Xna.Framework.Vector3 CenterPoint;
+            public Gem.Geo.Mesh TopFace;
             public List<BlockFace> Faces;
         }
 
         private static Dictionary<BlockShape, List<BlockShapeTemplate>> ShapeTemplates = null;
-        private static Dictionary<int, Vector3[]> ResourceOffsets = null;
 
         private static IEnumerable<Gem.Geo.Mesh> EnumerateAsUniqueMeshes(Gem.Geo.Mesh Mesh)
         {
@@ -118,7 +116,7 @@ namespace Game
             return result;
         }
 
-        private static void InitializeShapeTemplate(BlockShape Shape, Gem.Geo.Mesh Mesh, Gem.Geo.Mesh NavMesh)
+        private static void InitializeShapeTemplate(BlockShape Shape, Gem.Geo.Mesh Mesh)
         {
             var l = new List<BlockShapeTemplate>();
 
@@ -138,16 +136,7 @@ namespace Game
                     Direction = ClassifyNormal(NormalOfFirstFace(f))
                 }).ToList();
 
-                // Prepare navigation mesh.
-                r.NavigationMesh = Gem.Geo.Gen.TransformCopy(NavMesh, Matrix.CreateRotationZ((Gem.Math.Angle.PI / 2) * i));
-                Gem.Geo.Gen.CalculateTangentsAndBiNormals(r.NavigationMesh);
-
-                var centerPointRayOrigin = new Vector3(0.5f, 0.5f, 2.0f);
-                var hitCenter = r.NavigationMesh.RayIntersection(new Ray(centerPointRayOrigin, new Vector3(0, 0, -1)));
-                if (hitCenter.Intersects)
-                    r.CenterPoint = centerPointRayOrigin + (new Vector3(0, 0, -1) * hitCenter.Distance);
-                else
-                    r.CenterPoint = new Vector3(0.5f, 0.5f, 0.5f);
+                r.TopFace = Gem.Geo.Gen.Merge(r.Faces.Where(f => f.Direction == BlockFaceDirection.Up).Select(f => f.Mesh).ToArray());
 
                 l.Add(r);
             }
@@ -162,8 +151,7 @@ namespace Game
                 ShapeTemplates = new Dictionary<BlockShape, List<BlockShapeTemplate>>();
 
                 InitializeShapeTemplate(BlockShape.Cube,
-                    Gem.Geo.Gen.CreateTexturedFacetedCube(),
-                    Gem.Geo.Gen.FacetCopy(Gem.Geo.Gen.TransformCopy(Gem.Geo.Gen.CreateQuad(), Matrix.CreateTranslation(0.0f, 0.0f, 1.0f))));
+                    Gem.Geo.Gen.CreateTexturedFacetedCube());
 
                 InitializeShapeTemplate(BlockShape.LowerSlab,
                     Gem.Geo.Gen.TextureAndFacetAsCube(
@@ -171,8 +159,7 @@ namespace Game
                             Gem.Geo.Gen.TransformCopy(
                                 Gem.Geo.Gen.CreateCube(),
                                 Matrix.CreateScale(1.0f, 1.0f, 0.5f)),
-                            Matrix.CreateTranslation(0, 0, -0.25f))),
-                    Gem.Geo.Gen.FacetCopy(Gem.Geo.Gen.TransformCopy(Gem.Geo.Gen.CreateQuad(), Matrix.CreateTranslation(0.0f, 0.0f, 0.5f))));
+                            Matrix.CreateTranslation(0, 0, -0.25f))));
 
                 InitializeShapeTemplate(BlockShape.UpperSlab,
                     Gem.Geo.Gen.TextureAndFacetAsCube(
@@ -180,16 +167,13 @@ namespace Game
                             Gem.Geo.Gen.TransformCopy(
                                 Gem.Geo.Gen.CreateCube(),
                                 Matrix.CreateScale(1.0f, 1.0f, 0.5f)),
-                            Matrix.CreateTranslation(0, 0, 0.25f))),
-                    Gem.Geo.Gen.FacetCopy(Gem.Geo.Gen.TransformCopy(Gem.Geo.Gen.CreateQuad(), Matrix.CreateTranslation(0.0f, 0.0f, 1.0f))));
+                            Matrix.CreateTranslation(0, 0, 0.25f))));
 
                 InitializeShapeTemplate(BlockShape.Slope,
-                    Gem.Geo.Gen.TextureAndFacetAsCube(Gem.Geo.Gen.CreateWedge(1.0f)),
-                    Gem.Geo.Gen.FacetCopy(Gem.Geo.Gen.CreateSlantedQuad(1.0f)));
+                    Gem.Geo.Gen.TextureAndFacetAsCube(Gem.Geo.Gen.CreateWedge(1.0f)));
 
                 InitializeShapeTemplate(BlockShape.HalfSlopeLow,
-                    Gem.Geo.Gen.TextureAndFacetAsCube(Gem.Geo.Gen.CreateWedge(0.5f)),
-                    Gem.Geo.Gen.FacetCopy(Gem.Geo.Gen.CreateSlantedQuad(0.5f)));
+                    Gem.Geo.Gen.TextureAndFacetAsCube(Gem.Geo.Gen.CreateWedge(0.5f)));
 
                 InitializeShapeTemplate(BlockShape.HalfSlopeHigh,
                     Gem.Geo.Gen.TextureAndFacetAsCube(
@@ -199,30 +183,8 @@ namespace Game
                                     Gem.Geo.Gen.CreateSlantedCube(1.0f),
                                     Matrix.CreateTranslation(0, 0, 0.5f)), // Translate up 
                                 Matrix.CreateScale(1.0f, 1.0f, 0.5f)), // Scale in half
-                            Matrix.CreateTranslation(0, 0, -0.5f))),
-                    Gem.Geo.Gen.FacetCopy(
-                        Gem.Geo.Gen.TransformCopy(
-                            Gem.Geo.Gen.CreateSlantedQuad(0.5f),
-                            Matrix.CreateTranslation(0, 0, 0.5f))));
+                            Matrix.CreateTranslation(0, 0, -0.5f))));
 
-                InitializeShapeTemplate(BlockShape.Surface,
-                    Gem.Geo.Gen.FacetCopy(Gem.Geo.Gen.TransformCopy(Gem.Geo.Gen.CreateQuad(), Matrix.CreateTranslation(0.0f, 0.0f, 0.4f))),
-                    Gem.Geo.Gen.FacetCopy(Gem.Geo.Gen.TransformCopy(Gem.Geo.Gen.CreateQuad(), Matrix.CreateTranslation(0.0f, 0.0f, 0.5f))));
-            }
-
-            if (ResourceOffsets == null)
-            {
-                ResourceOffsets = new Dictionary<int, Vector3[]>();
-
-                ResourceOffsets.Add(0, new Vector3[] { new Vector3(0, 0, 0.25f) });
-                ResourceOffsets.Add(1, new Vector3[] { new Vector3(0, 0, 0.25f) });
-                ResourceOffsets.Add(2, new Vector3[] { new Vector3(-0.25f, -0.25f, 0.25f), new Vector3(0.25f, 0.25f, 0.25f) });
-                ResourceOffsets.Add(3, new Vector3[] { new Vector3(-0.25f, -0.25f, 0.25f), new Vector3(0.25f, 0.25f, 0.25f), new Vector3(0.25f, -0.25f, 0.25f) });
-                ResourceOffsets.Add(4, new Vector3[] { new Vector3(-0.25f, -0.25f, 0.25f), new Vector3(0.25f, 0.25f, 0.25f), new Vector3(0.25f, -0.25f, 0.25f), new Vector3(-0.25f, 0.25f, 0.25f) });
-                ResourceOffsets.Add(5, new Vector3[] { new Vector3(-0.25f, -0.25f, 0.25f), new Vector3(0.25f, 0.25f, 0.25f), new Vector3(0.25f, -0.25f, 0.25f), new Vector3(-0.25f, 0.25f, 0.25f), new Vector3(0, 0, 0.75f) });
-                ResourceOffsets.Add(6, new Vector3[] { new Vector3(-0.25f, -0.25f, 0.25f), new Vector3(0.25f, 0.25f, 0.25f), new Vector3(0.25f, -0.25f, 0.25f), new Vector3(-0.25f, 0.25f, 0.25f), new Vector3(-0.25f, -0.25f, 0.75f), new Vector3(0.25f, 0.25f, 0.75f) });
-                ResourceOffsets.Add(7, new Vector3[] { new Vector3(-0.25f, -0.25f, 0.25f), new Vector3(0.25f, 0.25f, 0.25f), new Vector3(0.25f, -0.25f, 0.25f), new Vector3(-0.25f, 0.25f, 0.25f), new Vector3(-0.25f, -0.25f, 0.75f), new Vector3(0.25f, 0.25f, 0.75f), new Vector3(0.25f, -0.25f, 0.75f)});
-                ResourceOffsets.Add(8, new Vector3[] { new Vector3(-0.25f, -0.25f, 0.25f), new Vector3(0.25f, 0.25f, 0.25f), new Vector3(0.25f, -0.25f, 0.25f), new Vector3(-0.25f, 0.25f, 0.25f), new Vector3(-0.25f, -0.25f, 0.75f), new Vector3(0.25f, 0.25f, 0.75f), new Vector3(0.25f, -0.25f, 0.75f), new Vector3(-0.25f, 0.25f, 0.75f) });
             }
         }
 
@@ -231,19 +193,7 @@ namespace Game
             InitializeStaticData();
             return ShapeTemplates[Shape][Orientation];
         }
-
-        public static Gem.Geo.Mesh GetNavigationMesh(BlockShape Shape, int Orientation)
-        {
-            InitializeStaticData();
-            return ShapeTemplates[Shape][Orientation].NavigationMesh;
-        }
-        
-        public static Vector3 GetCenterPoint(BlockShape Shape, int Orientation)
-        {
-            InitializeStaticData();
-            return ShapeTemplates[Shape][Orientation].CenterPoint;
-        }
-
+                
         private static bool CoincidentVertex(Gem.Geo.Mesh M, Vector3 V)
         {
             foreach (var v in M.verticies)
@@ -295,9 +245,9 @@ namespace Game
                                         // Draw face if there is no neighbor block.
                                         if (neighborCell.Block == null) return true; 
 
-                                        // Draw this face if this block is solid and the neighbor is not.
-                                        if (cell.Block.MaterialType == BlockMaterialType.Solid && neighborCell.Block.MaterialType != BlockMaterialType.Solid) 
-                                            return true;
+                                        //// Draw this face if this block is solid and the neighbor is not.
+                                        //if (cell.Block.MaterialType == BlockMaterialType.Solid && neighborCell.Block.MaterialType != BlockMaterialType.Solid) 
+                                        //    return true;
 
                                         // Don't draw this face if this is a cube on a cube - This lets us skip the expensive coincident face checks.
                                         if (cell.Block.Shape == BlockShape.Cube && neighborCell.Block.Shape == BlockShape.Cube)
@@ -324,7 +274,7 @@ namespace Game
                                 }
                             }
 
-                            if (!String.IsNullOrEmpty(cell.Block.Hanging) && Grid.check(x, y, z - 1) && !Grid.CellAt(x, y, z - 1).IsSolid)
+                            if (!String.IsNullOrEmpty(cell.Block.Hanging) && Grid.check(x, y, z - 1))
                             {
                                 var hangingBlockTemplate = Blocks.Templates[cell.Block.Hanging];
                                 var shapeTemplate = GetShapeTemplate(hangingBlockTemplate.Shape, (int)cell.BlockOrientation);
@@ -345,11 +295,11 @@ namespace Game
                                     var neighborCell = Grid.CellAt(neighborCoordinate);
 
                                     // Don't draw fringe if the block next to the parent is solid.
-                                    if (neighborCell.Block != null && neighborCell.Block.MaterialType == BlockMaterialType.Solid) return false;
+                                    if (neighborCell.Block != null) return false;
 
                                     // Don't draw fringe if the block next to the fringe is solid.
                                     var lowerNeighborCell = Grid.CellAt(neighborCoordinate.X, neighborCoordinate.Y, z - 1);
-                                    if (lowerNeighborCell.Block != null && lowerNeighborCell.Block.MaterialType == BlockMaterialType.Solid) return false;
+                                    if (lowerNeighborCell.Block != null) return false;
 
                                     return true;
                                 });
@@ -367,7 +317,11 @@ namespace Game
 
                     if (cell.Decal != null)
                     {
-                        var navMesh = cell.Block == null ? GetNavigationMesh(cell.Decal.Shape, 0) : GetNavigationMesh(cell.Block.Shape, (int)cell.BlockOrientation);
+                        
+                        var navMesh = cell.Block == null ? 
+                            ShapeTemplates[cell.Decal.Shape][(int)cell.BlockOrientation].TopFace :
+                            ShapeTemplates[cell.Block.Shape][(int)cell.BlockOrientation].TopFace;
+                
                         var copy = Gem.Geo.Gen.Copy(navMesh);
                         Gem.Geo.Gen.MorphEx(copy, (inV) =>
                         {
@@ -376,47 +330,7 @@ namespace Game
                             return r;
                         });
 
-                        // Nav meshes are not centered at 0.5, so they don't need to be translated as much.
-                        Gem.Geo.Gen.Transform(copy, Matrix.CreateTranslation(x + 0.5f, y + 0.5f, z));
-
                         models.Add(copy);
-                    }
-
-                    if (cell.Task != null)
-                    {
-                        var markerCube = CreateMarkerBlockMesh(Blocks.Tiles, cell.Task.MarkerTile);
-                        Gem.Geo.Gen.Transform(markerCube, Matrix.CreateTranslation(x, y, z));
-                        models.Add(markerCube);
-                    }
-
-                    if (cell.HasFlag(CellFlags.Storehouse) && cell.Navigatable && cell.NavigationMesh != null)
-                    {
-                        var navMesh = cell.Block == null ? GetNavigationMesh(BlockShape.Cube, 0) : GetNavigationMesh(cell.Block.Shape, (int)cell.BlockOrientation);
-                        var copy = Gem.Geo.Gen.Copy(navMesh);
-                        Gem.Geo.Gen.MorphEx(copy, (inV) =>
-                        {
-                            var r = inV;
-                            r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Blocks.Tiles.TileMatrix(TileNames.Storehouse));
-                            return r;
-                        });
-
-                        // Nav meshes are not centered at 0.5, so they don't need to be translated as much.
-                        Gem.Geo.Gen.Transform(copy, Matrix.CreateTranslation(x + 0.5f, y + 0.5f, z));
-
-                        models.Add(copy);
-                    }
-                                        
-                    var offsetsIndex = 0;
-                    if (ResourceOffsets.ContainsKey(cell.Resources.Count))
-                        offsetsIndex = cell.Resources.Count;
-
-                    for (int i = 0; i < cell.Resources.Count; ++i)
-                    {
-                        var resourceCube = CreateResourceBlockMesh(Blocks.Tiles, Blocks.Templates[cell.Resources[i]]);
-                        Gem.Geo.Gen.Transform(resourceCube, Matrix.CreateTranslation(cell.CenterPoint 
-                            + ResourceOffsets[offsetsIndex][i % ResourceOffsets[offsetsIndex].Length]
-                            + new Vector3(0.0f, 0.0f, (cell.Block == null ? 0.0f : cell.Block.ResourceHeightOffset))));
-                        models.Add(resourceCube);
                     }
 
                 });
@@ -475,30 +389,6 @@ namespace Game
 
                 return r;
             });
-        }
-
-        private static Gem.Geo.Mesh CreateMarkerBlockMesh(TileSheet Tiles, int MarkerTile)
-        {
-            var cube = Gem.Geo.Gen.CreateTexturedFacetedCube();
-            Gem.Geo.Gen.Transform(cube, Matrix.CreateScale(1.02f)); // Make cube slightly larger.
-            Gem.Geo.Gen.Transform(cube, Matrix.CreateTranslation(0.5f, 0.5f, 0.5f)); // re-origin cube.
-            
-            //Morph cube texture coordinates
-            Gem.Geo.Gen.MorphEx(cube, (inV) =>
-            {
-                var r = inV;
-                r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Tiles.TileMatrix(MarkerTile));
-                return r;
-            });
-
-            return cube;
-        }
-
-        public static Gem.Geo.Mesh CreateResourceBlockMesh(TileSheet Tiles, BlockTemplate Template)
-        {
-            var mesh = Gem.Geo.Gen.Merge(CreateNormalBlockMesh(Tiles, Template, 0).ToArray());
-            Gem.Geo.Gen.Transform(mesh, Matrix.CreateScale(0.5f));
-            return mesh;
         }
     }
 }

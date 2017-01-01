@@ -133,7 +133,6 @@ namespace Game.RenderModule
             {
                 if (!World.check(x, y, z)) return false;
                 if (World.CellAt(x, y, z).Block == null) return false;
-                if (World.CellAt(x, y, z).Block.MaterialType != BlockMaterialType.Solid) return false;
 
                 HiliteQuad = Gem.Geo.Gen.CreateQuad();
 
