@@ -5,6 +5,11 @@ using System.Text;
 
     public static class HelperExtensions
     {
+        public static List<T> MakeList<T>(params T[] items)
+        {
+            return new List<T>(items);
+        }
+
         public static void Upsert<A, B>(this Dictionary<A, B> Dict, A _a, B _b)
         {
             if (Dict.ContainsKey(_a)) Dict[_a] = _b;

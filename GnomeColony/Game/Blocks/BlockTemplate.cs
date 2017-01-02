@@ -13,9 +13,9 @@ namespace Game
         Stair,
         LowerSlab,
         UpperSlab,
-        Surface,
         HalfSlopeLow,
         HalfSlopeHigh,
+        Composite
     }
     
     public class BlockTemplate
@@ -32,5 +32,10 @@ namespace Game
         public BlockShape Shape;
 
         public bool Orientable = false;
+
+        public List<BlockTemplate> CompositeBlocks;
+
+        public virtual bool CanComposite(BlockTemplate Onto) { return false; }
+        public virtual BlockTemplate Compose(BlockTemplate With, BlockSet TemplateSet) { return this; }
     }
 }

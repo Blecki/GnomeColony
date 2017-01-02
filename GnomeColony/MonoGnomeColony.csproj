@@ -59,6 +59,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Game\Blocks\Templates\Dirt.cs" />
+    <Compile Include="Game\Blocks\Templates\GrassHighSlab.cs" />
+    <Compile Include="Game\Blocks\Templates\GrassLowSlab.cs" />
     <Compile Include="Game\Blocks\Templates\Grass.cs" />
     <Compile Include="Game\Component.cs" />
     <Compile Include="Game\RenderModule\RenderModule.cs" />

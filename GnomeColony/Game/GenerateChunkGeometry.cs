@@ -218,120 +218,7 @@ namespace Game
 
             Grid.forRect(SX, SY, SZ, W, H, D, (cell, x, y, z) =>
                 {
-                    if (cell.Block != null)
-                    {
-                        if (cell.Block.Shape == BlockShape.Surface && Grid.check(x, y, z + 1) &&
-                            Object.ReferenceEquals(Grid.CellAt(x, y, z + 1).Block, cell.Block))
-                        { }
-                        else
-                        {
-                            {
-                                var shapeTemplate = GetShapeTemplate(cell.Block.Shape, (int)cell.BlockOrientation);
-
-                                var exposedFaces = shapeTemplate.Faces.Where(f =>
-                                    {
-                                        // The camera can't look up... so cull down faces.
-                                        if (f.Direction == BlockFaceDirection.Down) return false;
-
-                                        // If the face is not planar with a block side (eg, a slope) it will never be culled.
-                                        if (f.Direction == BlockFaceDirection.Nonspecific) return true;
-
-                                        var neighborCoordinate = Neighbor(new Coordinate(x, y, z), f.Direction);
-
-                                        // Faces on the very edge of the world should be drawn.
-                                        if (!Grid.Check(neighborCoordinate)) return true; 
-
-                                        var neighborCell = Grid.CellAt(neighborCoordinate);
-                                        // Draw face if there is no neighbor block.
-                                        if (neighborCell.Block == null) return true; 
-
-                                        //// Draw this face if this block is solid and the neighbor is not.
-                                        //if (cell.Block.MaterialType == BlockMaterialType.Solid && neighborCell.Block.MaterialType != BlockMaterialType.Solid) 
-                                        //    return true;
-
-                                        // Don't draw this face if this is a cube on a cube - This lets us skip the expensive coincident face checks.
-                                        if (cell.Block.Shape == BlockShape.Cube && neighborCell.Block.Shape == BlockShape.Cube)
-                                            return false;
-
-                                        // Find the neighboring face that could potentially overlap this face.
-                                        var neighborFaceDirection = Opposite(f.Direction);
-                                        var neighborShapeTemplate = GetShapeTemplate(neighborCell.Block.Shape, (int)neighborCell.BlockOrientation);
-                                        var neighborFace = neighborShapeTemplate.Faces.FirstOrDefault(nf => nf.Direction == neighborFaceDirection);
-
-                                        // If there is no neighbor face on this side of the block, draw the face.
-                                        if (neighborFace == null) return true;
-
-                                        // If the faces are coincident, cull this face. 
-                                        return !AreCoincident(Gem.Geo.Gen.TransformCopy(f.Mesh, Matrix.CreateTranslation(-f.Normal)), neighborFace.Mesh);
-                                    });
-
-                                foreach (var face in exposedFaces)
-                                {
-                                    var mesh = Gem.Geo.Gen.Copy(face.Mesh);
-                                    MorphBlockTextureCoordinates(Blocks.Tiles, cell.Block, mesh, (int)cell.BlockOrientation);
-                                    Gem.Geo.Gen.Transform(mesh, Matrix.CreateTranslation(x + 0.5f, y + 0.5f, z + 0.5f));
-                                    models.Add(mesh);
-                                }
-                            }
-
-                            if (!String.IsNullOrEmpty(cell.Block.Hanging) && Grid.check(x, y, z - 1))
-                            {
-                                var hangingBlockTemplate = Blocks.Templates[cell.Block.Hanging];
-                                var shapeTemplate = GetShapeTemplate(hangingBlockTemplate.Shape, (int)cell.BlockOrientation);
-
-                                var exposedFaces = shapeTemplate.Faces.Where(f =>
-                                {
-                                    // Don't draw the top or bottom of fringe blocks.
-                                    if (f.Direction == BlockFaceDirection.Up || f.Direction == BlockFaceDirection.Down)
-                                        return false;
-
-                                    // Draw this face because it's not planar to the sides.
-                                    if (f.Direction == BlockFaceDirection.Nonspecific) return true;
-
-                                    var neighborCoordinate = Neighbor(new Coordinate(x, y, z), f.Direction);
-                                    // Draw this face because it's on the edge of the world.
-                                    if (!Grid.Check(neighborCoordinate)) return true;
-
-                                    var neighborCell = Grid.CellAt(neighborCoordinate);
-
-                                    // Don't draw fringe if the block next to the parent is solid.
-                                    if (neighborCell.Block != null) return false;
-
-                                    // Don't draw fringe if the block next to the fringe is solid.
-                                    var lowerNeighborCell = Grid.CellAt(neighborCoordinate.X, neighborCoordinate.Y, z - 1);
-                                    if (lowerNeighborCell.Block != null) return false;
-
-                                    return true;
-                                });
-
-                                foreach (var face in exposedFaces)
-                                {
-                                    var mesh = Gem.Geo.Gen.Copy(face.Mesh);
-                                    MorphBlockTextureCoordinates(Blocks.Tiles, hangingBlockTemplate, mesh, (int)cell.BlockOrientation);
-                                    Gem.Geo.Gen.Transform(mesh, Matrix.CreateTranslation(x + 0.5f, y + 0.5f, z - 0.5f));
-                                    models.Add(mesh);
-                                }
-                            }
-                        }
-                    }
-
-                    if (cell.Decal != null)
-                    {
-                        
-                        var navMesh = cell.Block == null ? 
-                            ShapeTemplates[cell.Decal.Shape][(int)cell.BlockOrientation].TopFace :
-                            ShapeTemplates[cell.Block.Shape][(int)cell.BlockOrientation].TopFace;
-                
-                        var copy = Gem.Geo.Gen.Copy(navMesh);
-                        Gem.Geo.Gen.MorphEx(copy, (inV) =>
-                        {
-                            var r = inV;
-                            r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Blocks.Tiles.TileMatrix(cell.Decal.Top));
-                            return r;
-                        });
-
-                        models.Add(copy);
-                    }
+                    GenerateCellGeometry(models, Grid, Blocks, cell, x, y, z);
 
                 });
 
@@ -340,6 +227,133 @@ namespace Game
             if (result.VertexCount == 0) return null; // Empty chunk?
 
             return result;
+        }
+
+        private static void GenerateCellGeometry(List<Gem.Geo.Mesh> Into, CellGrid Grid, BlockSet Blocks, Cell cell, int x, int y, int z)
+        {
+            if (cell.Block != null)
+            {
+                if (cell.Block.Shape == BlockShape.Composite)
+                    foreach (var subBlock in cell.Block.CompositeBlocks)
+                        GenerateBlockGeometry(Into, Grid, Blocks, subBlock, cell.BlockOrientation, x, y, z);
+                else
+                    GenerateBlockGeometry(Into, Grid, Blocks, cell.Block, cell.BlockOrientation, x, y, z);                
+            }
+
+            if (cell.Decal != null)
+                GenerateDecalGeometry(Into, Blocks, cell);
+        }
+
+        private static void GenerateDecalGeometry(List<Gem.Geo.Mesh> Into, BlockSet Blocks, Cell cell)
+        {
+            var navMesh = cell.Block == null ?
+                ShapeTemplates[cell.Decal.Shape][(int)cell.BlockOrientation].TopFace :
+                ShapeTemplates[cell.Block.Shape][(int)cell.BlockOrientation].TopFace;
+
+            var copy = Gem.Geo.Gen.Copy(navMesh);
+            Gem.Geo.Gen.MorphEx(copy, (inV) =>
+            {
+                var r = inV;
+                r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Blocks.Tiles.TileMatrix(cell.Decal.Top));
+                return r;
+            });
+
+            Into.Add(copy);
+        }
+
+        private static void GenerateBlockGeometry(List<Gem.Geo.Mesh> Into, CellGrid Grid, BlockSet Blocks, BlockTemplate Block, CellLink.Directions BlockOrientation, int x, int y, int z)
+        {
+            var shapeTemplate = GetShapeTemplate(Block.Shape, (int)BlockOrientation);
+
+            var exposedFaces = shapeTemplate.Faces.Where(f =>
+            {
+                // The camera can't look up... so cull down faces.
+                if (f.Direction == BlockFaceDirection.Down) return false;
+
+                // If the face is not planar with a block side (eg, a slope) it will never be culled.
+                if (f.Direction == BlockFaceDirection.Nonspecific) return true;
+
+                var neighborCoordinate = Neighbor(new Coordinate(x, y, z), f.Direction);
+
+                // Faces on the very edge of the world should be drawn.
+                if (!Grid.Check(neighborCoordinate)) return true;
+
+                var neighborCell = Grid.CellAt(neighborCoordinate);
+                // Draw face if there is no neighbor block.
+                if (neighborCell.Block == null) return true;
+
+                //// Draw this face if this block is solid and the neighbor is not.
+                //if (cell.Block.MaterialType == BlockMaterialType.Solid && neighborCell.Block.MaterialType != BlockMaterialType.Solid) 
+                //    return true;
+
+                // Don't draw this face if this is a cube on a cube - This lets us skip the expensive coincident face checks.
+                if (Block.Shape == BlockShape.Cube && neighborCell.Block.Shape == BlockShape.Cube)
+                    return false;
+
+                // Find the neighboring face that could potentially overlap this face.
+                // Todo: Actually iterate over all shapes in composite neighbor.
+                if (neighborCell.Block.Shape == BlockShape.Composite)
+                    return true;
+                var neighborFaceDirection = Opposite(f.Direction);
+                var neighborShapeTemplate = GetShapeTemplate(neighborCell.Block.Shape, (int)neighborCell.BlockOrientation);
+                var neighborFace = neighborShapeTemplate.Faces.FirstOrDefault(nf => nf.Direction == neighborFaceDirection);
+
+                // If there is no neighbor face on this side of the block, draw the face.
+                if (neighborFace == null) return true;
+
+                // If the faces are coincident, cull this face. 
+                return !AreCoincident(Gem.Geo.Gen.TransformCopy(f.Mesh, Matrix.CreateTranslation(-f.Normal)), neighborFace.Mesh);
+            });
+
+            foreach (var face in exposedFaces)
+            {
+                var mesh = Gem.Geo.Gen.Copy(face.Mesh);
+                MorphBlockTextureCoordinates(Blocks.Tiles, Block, mesh, (int)BlockOrientation);
+                Gem.Geo.Gen.Transform(mesh, Matrix.CreateTranslation(x + 0.5f, y + 0.5f, z + 0.5f));
+                Into.Add(mesh);
+            }
+
+            if (!String.IsNullOrEmpty(Block.Hanging) && Grid.check(x, y, z - 1))
+                GenerateHangingGeometry(Into, Grid, Blocks, Block, BlockOrientation, x, y, z);
+        }
+
+        private static void GenerateHangingGeometry(List<Gem.Geo.Mesh> Into, CellGrid Grid, BlockSet Blocks, BlockTemplate Block, CellLink.Directions BlockOrientation, int x, int y, int z)
+        {
+            var hangingBlockTemplate = Blocks.Templates[Block.Hanging];
+            var shapeTemplate = GetShapeTemplate(hangingBlockTemplate.Shape, (int)BlockOrientation);
+
+            var exposedFaces = shapeTemplate.Faces.Where(f =>
+            {
+                // Don't draw the top or bottom of fringe blocks.
+                if (f.Direction == BlockFaceDirection.Up || f.Direction == BlockFaceDirection.Down)
+                    return false;
+
+                // Draw this face because it's not planar to the sides.
+                if (f.Direction == BlockFaceDirection.Nonspecific) return true;
+
+                var neighborCoordinate = Neighbor(new Coordinate(x, y, z), f.Direction);
+                // Draw this face because it's on the edge of the world.
+                if (!Grid.Check(neighborCoordinate)) return true;
+
+                var neighborCell = Grid.CellAt(neighborCoordinate);
+
+                // Don't draw fringe if the block next to the parent is solid.
+                if (neighborCell.Block != null) return false;
+
+                // Don't draw fringe if the block next to the fringe is solid.
+                var lowerNeighborCell = Grid.CellAt(neighborCoordinate.X, neighborCoordinate.Y, z - 1);
+                if (lowerNeighborCell.Block != null) return false;
+
+                return true;
+            });
+            
+            foreach (var face in exposedFaces)
+            {
+                var mesh = Gem.Geo.Gen.Copy(face.Mesh);
+                MorphBlockTextureCoordinates(Blocks.Tiles, hangingBlockTemplate, mesh, (int)BlockOrientation);
+                Gem.Geo.Gen.Transform(mesh, Matrix.CreateTranslation(x + 0.5f, y + 0.5f, z - 0.5f));
+                Into.Add(mesh);
+            }
         }
 
         public static List<Gem.Geo.Mesh> CreateNormalBlockMesh(TileSheet Tiles, BlockTemplate Template, int Orientation)

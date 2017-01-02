@@ -60,13 +60,23 @@ namespace Game.Creative
 
             if (Sim.World.Check(WorldNode.AdjacentHoverBlock))
             {
-                var cell = Sim.World.CellAt(WorldNode.AdjacentHoverBlock);
-                if (cell.Block != null) return;
-                cell.BlockOrientation = CellLink.Directions.North;
-                if (SelectedBlock.Orientable)
-                    cell.BlockOrientation = CellLink.DeriveDirectionFromNormal(WorldNode.HoverNormal);
-                cell.Block = SelectedBlock;
-                Sim.World.MarkDirtyBlock(WorldNode.AdjacentHoverBlock);
+                var mouseIsOnTopFace = WorldNode.HoverNormal.Z > 0.5f;
+                var underBlock = Sim.World.CellAt(WorldNode.HoverBlock);
+                if (mouseIsOnTopFace && SelectedBlock.CanComposite(underBlock.Block))
+                {
+                    underBlock.Block = SelectedBlock.Compose(underBlock.Block, Sim.Blocks);
+                    Sim.SetUpdateFlag(WorldNode.HoverBlock);
+                }
+                else
+                {
+                    var cell = Sim.World.CellAt(WorldNode.AdjacentHoverBlock);
+                    if (cell.Block != null) return;
+                    cell.BlockOrientation = CellLink.Directions.North;
+                    if (SelectedBlock.Orientable)
+                        cell.BlockOrientation = CellLink.DeriveDirectionFromNormal(WorldNode.HoverNormal);
+                    cell.Block = SelectedBlock;
+                    Sim.World.MarkDirtyBlock(WorldNode.AdjacentHoverBlock);
+                }
             }
         }
 
@@ -77,11 +87,25 @@ namespace Game.Creative
             if (Sim.World.Check(WorldNode.AdjacentHoverBlock))
             {
                 var phantom = new Cell();
-                phantom.Location = WorldNode.AdjacentHoverBlock;
-                phantom.BlockOrientation = CellLink.Directions.North;
-                if (SelectedBlock.Orientable)
-                    phantom.BlockOrientation = CellLink.DeriveDirectionFromNormal(WorldNode.HoverNormal);
-                phantom.Block = SelectedBlock;
+                
+                //If on top face 
+                var mouseIsOnTopFace = WorldNode.HoverNormal.Z > 0.5f;
+                var underBlock = Sim.World.CellAt(WorldNode.HoverBlock);
+                if (mouseIsOnTopFace && SelectedBlock.CanComposite(underBlock.Block))
+                {
+                    phantom.Location = WorldNode.HoverBlock;
+                    phantom.BlockOrientation = underBlock.BlockOrientation;
+                    phantom.Block = SelectedBlock;
+                }
+                else
+                {
+                    phantom.Location = WorldNode.AdjacentHoverBlock;
+                    phantom.BlockOrientation = CellLink.Directions.North;
+                    if (SelectedBlock.Orientable)
+                        phantom.BlockOrientation = CellLink.DeriveDirectionFromNormal(WorldNode.HoverNormal);
+                    phantom.Block = SelectedBlock;
+                }
+
                 WorldNode.SetPhantomPlacementCell(phantom);
             }
         }
