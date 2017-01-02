@@ -1,0 +1,76 @@
+﻿{
+	"Sheets": [
+		{
+			"Name": "tiles",
+			"Texture": "Content/gnome_colony_skin/tiles",
+			"TileWidth": 16,
+			"TileHeight": 16
+		},
+		{
+			"Name": "font",
+			"Texture": "Content/gnome_colony_skin/font",
+			"TileWidth": 6,
+			"TileHeight": 8
+		},
+		{
+			"Name": "mouse",
+			"Texture": "Content/gnome_colony_skin/pointers",
+			"TileWidth": 16,
+			"TileHeight" : 16
+		},
+		{
+			"Name": "basic",
+			"Texture": "Content/gnome_colony_skin/basic",
+			"TileWidth": 8,
+			"TileHeight": 8
+		},
+		{
+			"Name": "border-one",
+			"Texture": "Content/gnome_colony_skin/border",
+			"TileWidth": 4,
+			"TileHeight": 4
+		},
+		{
+			"Name": "border-fancy",
+			"Texture": "Content/gnome_colony_skin/border",
+			"TileWidth": 4,
+			"TileHeight": 4
+		},
+		{
+			"Name": "border-button",
+			"Texture": "Content/gnome_colony_skin/border",
+			"TileWidth": 4,
+			"TileHeight": 4
+		},
+		{
+			"Name": "checkbox",
+			"Texture": "Content/gnome_colony_skin/checkbox",
+			"TileWidth": 16,
+			"TileHeight": 16
+		},
+		{
+			"Name": "radiobutton",
+			"Texture": "Content/gnome_colony_skin/radiobutton",
+			"TileWidth": 16,
+			"TileHeight": 16
+		},
+		{
+			"Name": "border-thin",
+			"Texture": "Content/gnome_colony_skin/thin",
+			"TileWidth": 2,
+			"TileHeight": 2
+		},
+		{
+			"Name": "vertical-scrollbar",
+			"Texture": "Content/gnome_colony_skin/vertical-scrollbar",
+			"TileWidth": 24,
+			"TileHeight": 24
+		},
+		{
+			"Name": "combo-down",
+			"Texture": "Content/gnome_colony_skin/down",
+			"TileWidth": 16,
+			"TileHeight": 16
+		}
+	]
+}

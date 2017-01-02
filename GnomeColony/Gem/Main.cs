@@ -17,43 +17,20 @@ namespace Gem
         public IScreen Game { get { return activeGame; } set { nextGame = value; } }
 		public EpisodeContentManager EpisodeContent;
         public ScriptBuilder ScriptBuilder;
-        private Render.RenderContext RenderContext;
-        private Render.OrthographicCamera ConsoleCamera;
+        private GumInputMapper InputMapper;
 
-        private List<Console.ConsoleWindow> Consoles = new List<Console.ConsoleWindow>();
-        
-        public Console.ConsoleWindow MainConsole
-        {
-            get
-            {
-                if (Consoles.Count == 0) return null;
-                return Consoles[0];
-            }
-        }
-
+        public Gum.Root GuiRoot;
         GraphicsDeviceManager graphics;
 
         public Input Input { get; private set; }
 
         public bool ConsoleOpen { get; private set; }
-        private string startupCommand;
 
         public void ReportException(Exception e)
         {
-            ConsoleOpen = true;
-            Consoles[0].WriteLine(e.Message);
-            Consoles[0].WriteLine(e.StackTrace);
-        }
-
-        public void ReportError(String msg)
-        {
-            ConsoleOpen = true;
-            Consoles[0].WriteLine(msg);
-        }
-
-        public void Write(String msg)
-        {
-            Consoles[0].Write(msg);
+        //    ConsoleOpen = true;
+        //    Console.WriteLine(e.Message);
+        //    Console.WriteLine(e.StackTrace);
         }
 
         public Main(String startupCommand)
@@ -66,56 +43,18 @@ namespace Gem
             IsMouseVisible = true;
             IsFixedTimeStep = true;
 
-            Input = new Input(Window.Handle);
+            Input = new Input();
             Input.AddAxis("MAIN", new MouseAxisBinding());
+            InputMapper = new GumInputMapper(Window.Handle);
 
-            this.startupCommand = startupCommand;
-        }
-
-        public Console.ConsoleWindow AllocateConsole(Rectangle at, int FontScale = 2)
-        {
-            Consoles.Add(new Console.ConsoleWindow(GraphicsDevice, EpisodeContent, at, FontScale));
-            return Consoles[Consoles.Count - 1];
-        }
-
-        public void ClearConsoles()
-        {
-            Consoles.Clear();
-        }
-
-        public void OpenConsole()
-        {
-            if (ConsoleOpen) return;
-
-               if (MainConsole != null)
-                        Input.PushKeyboardHandler(new Console.ConsoleWindowKeyboardHandler(MainConsole));
-                    ConsoleOpen = true;
-        }
-
-        public void CloseConsole()
-        {
-            if (!ConsoleOpen) return;
-            Input.PopKeyboardHandler();
-            ConsoleOpen = false;
         }
 
         protected override void LoadContent()
         {
 			EpisodeContent = new EpisodeContentManager(Content.ServiceProvider, "");
-			var mainConsole = AllocateConsole(GraphicsDevice.Viewport.Bounds);
-            ScriptBuilder = new Gem.ScriptBuilder(mainConsole.WriteLine);
-            mainConsole.ConsoleCommandHandler += s =>
-            {
-                var action = ScriptBuilder.CompileScript(s);
-                if (action != null) action();
-            };
-            mainConsole.Resize(GraphicsDevice.Viewport.Bounds, 2);
-
-            RenderContext = new Render.RenderContext(EpisodeContent.Load<Effect>("Content/draw"), GraphicsDevice);
-            ConsoleCamera = new Render.OrthographicCamera(GraphicsDevice.Viewport);
-            ConsoleCamera.focus = new Vector2(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Height / 2);
-
-			Input.PushKeyboardHandler(new MainKeyboardHandler(this));
+        
+            GuiRoot = new Gum.Root(GraphicsDevice, new Point(640, 480), EpisodeContent, "Content/mono_draw",
+                "Content/gnome_colony_skin/sheets.txt");
         }
 
         protected override void UnloadContent()
@@ -150,20 +89,21 @@ namespace Gem
                     nextGame = null;
                 }
 
-                //try
+                var guiInputQueue = InputMapper.GetInputQueue();
+                foreach (var @event in guiInputQueue)
                 {
-                    Input.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
-                    if (activeGame != null) activeGame.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
+                    if (@event.Message == Gum.InputEvents.KeyPress && @event.Args.KeyValue == '~')
+                        ConsoleOpen = !ConsoleOpen;
+                    else
+                        GuiRoot.HandleInput(@event.Message, @event.Args);
                 }
-                //catch (Exception e)
-                {
-                //    ReportException(e);
-                }
+
+                Input.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
+                if (activeGame != null) activeGame.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
             }
             else
                 ticks = 1;
-            
-
+           
             base.Update(gameTime);
         }
 
@@ -171,27 +111,11 @@ namespace Gem
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
-            if (ConsoleOpen)
-                foreach (var consoleWindow in Consoles)
-                    consoleWindow.PrepareImage();
-
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
             if (activeGame != null) activeGame.Draw((float)gameTime.ElapsedGameTime.TotalSeconds);
 
-            if (ConsoleOpen)
-            {
-                GraphicsDevice.DepthStencilState = DepthStencilState.None;
-                RenderContext.Camera = ConsoleCamera;
-                RenderContext.LightingEnabled = false;
-                RenderContext.World = Matrix.Identity;
-                RenderContext.UVTransform = Matrix.Identity;
-                RenderContext.NormalMap = RenderContext.NeutralNormals;
-                RenderContext.Alpha = 0.75f;
-                RenderContext.ApplyChanges();
+            GuiRoot.Draw();
 
-                foreach (var consoleWindow in Consoles)
-                    consoleWindow.Draw(RenderContext);
-            }
             
             base.Draw(gameTime);
         }

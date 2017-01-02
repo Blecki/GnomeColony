@@ -37,5 +37,10 @@ namespace Game
             return A.X != B.X || A.Y != B.Y || A.Z != B.Z;
         }
 
+        public static Coordinate operator+(Coordinate A, Coordinate B)
+        {
+            return new Coordinate(A.X + B.X, A.Y + B.Y, A.Z + B.Z);
+        }
+
     }
 }

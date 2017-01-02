@@ -27,5 +27,22 @@ namespace Game
             if (N.Y > 0) return Directions.South;
             return Directions.North;
         }
+
+        internal static Directions Rotate(Directions BaseOrientation)
+        {
+            switch (BaseOrientation)
+            {
+                case Directions.North:
+                    return Directions.East;
+                case Directions.East:
+                    return Directions.South;
+                case Directions.South:
+                    return Directions.West;
+                case Directions.West:
+                    return Directions.North;
+                default:
+                    return BaseOrientation;
+            }
+        }
     }
 }

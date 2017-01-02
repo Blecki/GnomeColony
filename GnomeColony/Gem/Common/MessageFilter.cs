@@ -9,8 +9,7 @@ using System.Runtime.InteropServices;
 
 namespace Gem
 {
-
-    public class KeyboardMessageFilter : IMessageFilter
+    public class MessageFilter : IMessageFilter
     {
         [DllImport("user32.dll")]
         static extern bool TranslateMessage(ref Message lpMsg);
@@ -18,26 +17,27 @@ namespace Gem
         const int WM_CHAR = 0x0102;
         const int WM_KEYUP = 0x101;
         const int WM_KEYDOWN = 0x0100;
+        const int WM_MOUSEMOVE = 0x0200;
+        const int WM_LBUTTONDOWN = 0x0201;
+        const int WM_LBUTTONUP = 0x202;
+        const int WM_RBUTTONDOWN = 0x204;
+        const int WM_RBUTTONUP = 0x0205;
 
         public bool PreFilterMessage(ref Message m)
         {
-            if (m.Msg == WM_KEYUP)
+            if (m.Msg == WM_KEYDOWN)
                 TranslateMessage(ref m);
-                
-            if (m.Msg == WM_KEYDOWN || m.Msg == WM_KEYUP || m.Msg == WM_CHAR)
-            {
-                if (KeyboardEvent != null)
-                    KeyboardEvent(m);
-            }
-            return false;
+
+            if (Handler != null) return Handler(m);
+            return true;
         }
 
-        private Action<System.Windows.Forms.Message> KeyboardEvent;
+        private Func<System.Windows.Forms.Message, bool> Handler;
         
-        public static void AddKeyboardMessageFilter(Action<System.Windows.Forms.Message> KeyboardEvent)
+        public static void AddMessageFilter(Func<System.Windows.Forms.Message, bool> Handler)
         {
-            var filter = new KeyboardMessageFilter();
-            filter.KeyboardEvent = KeyboardEvent;
+            var filter = new MessageFilter();
+            filter.Handler = Handler;
             System.Windows.Forms.Application.AddMessageFilter(filter);
         }
     }

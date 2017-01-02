@@ -17,19 +17,16 @@ namespace Game
         public Simulation Sim { get; private set; }
         private float CameraYaw = 0.25f;
         private float CameraPitch = 0.0f;
-        private FreeCamera Camera;
+
+        public Gum.Widget BlockChooser = null;
+        private GuiTool SelectedTool;
 
         void IScreen.Begin()
         {
             base.Begin();
-            Sim = new Simulation(Content, 1.0f);
-            Camera = new Gem.Render.FreeCamera(new Vector3(0, 0, 0), Vector3.UnitY, Vector3.UnitZ, Main.GraphicsDevice.Viewport);
+            Sim = new Simulation(Content);
 
-            RenderTrees.Add(new RenderTree
-            {
-                Camera = Camera,
-                SceneGraph = Sim.CreateSceneNode()
-            });
+            SceneGraph = Sim.RenderModule.CreateSceneNode(Sim);
 
             Camera.Position = CameraFocus + new Vector3(0, -4, 3);
 
@@ -56,14 +53,65 @@ namespace Game
 
             Main.ScriptBuilder.DeriveScriptsFrom("Gnome.ScriptBase");
 
-            var guiTools = new List<GuiTool>();
-            guiTools.Add(new Creative.Build());
-            guiTools.Add(new Creative.Mine());
-
-            PushInputState(new CommandInput(Sim, guiTools));
 
             #endregion
+
+
+            Main.GuiRoot.RootItem.AddChild(
+                new Gum.Widget
+                {
+                    Rect = new Rectangle(8, 8, 64, 64),
+                    Background = new Gum.TileReference("tiles", TileNames.TaskIconBuild),
+                    OnClick = SetupBlockChooser
+                });
+
+            Main.GuiRoot.RootItem.AddChild(
+                new Gum.Widget
+                {
+                    Rect = new Rectangle(8, 76, 64, 64),
+                    Background = new Gum.TileReference("tiles", TileNames.TaskIconMine),
+                    OnClick = (sender, args) =>
+                    {
+                        if (BlockChooser != null)
+                            Main.GuiRoot.RootItem.RemoveChild(BlockChooser);
+                        BlockChooser = null;
+                        SelectedTool = new Creative.Mine();
+                    }
+                });
+
+            Main.Input.AddBinding("ROTATE_BLOCK", new Gem.KeyboardBinding(Microsoft.Xna.Framework.Input.Keys.F, Gem.KeyBindingType.Pressed));
         }
+
+        private void SetupBlockChooser(Gum.Widget _sender, Gum.InputEventArgs _args)
+        {
+            if (BlockChooser != null) return;
+
+            BlockChooser = Main.GuiRoot.RootItem.AddChild(new Gum.Widget
+            {
+                Rect = new Rectangle(96, 8, 512, 128),
+                Border = "border-one"
+            });
+
+            var x = 96 + 8;
+            foreach (var template in Sim.Blocks.Templates)
+            {
+                var lambdaTemplate = template;
+                BlockChooser.AddChild(new Gum.Widget
+                {
+                    Rect = new Rectangle(x, 16, 32, 32),
+                    Background = new Gum.TileReference("tiles", template.Value.Preview),
+                    OnClick = (sender, args) =>
+                        {
+                            Main.GuiRoot.RootItem.RemoveChild(BlockChooser);
+                            BlockChooser = null;
+                            SelectedTool = new Creative.Build(lambdaTemplate.Value);
+                        }
+                });
+
+                x += 32;
+            }
+        }
+
 
         void IScreen.End()
         {
@@ -107,9 +155,28 @@ namespace Game
                     Matrix.CreateRotationX(CameraPitch) * Matrix.CreateRotationZ(CameraYaw));
             Camera.LookAt(CameraFocus, Vector3.UnitZ);
 
-            Sim.Update(this, elapsedSeconds);
-
             RenderModule.WorldSceneNode.WireFrameMode = Main.Input.Check("WIREFRAME-TOGGLE");
+
+            if (SelectedTool != null) SelectedTool.Update(this);
+
+            if (HoverNode is RenderModule.WorldSceneNode)
+            {
+                if (SelectedTool != null)
+                {
+                    var hoverNormal = (HoverNode as RenderModule.WorldSceneNode).HoverNormal;
+                    var hoverSide = GuiTool.HiliteFace.Sides;
+                    if (hoverNormal.Z > 0)
+                        hoverSide = GuiTool.HiliteFace.Top;
+
+                    if ((SelectedTool.HiliteFaces & hoverSide) == hoverSide)
+                    {
+                        HoverNode.SetHover();
+                        SelectedTool.Hover(Sim, HoverNode as RenderModule.WorldSceneNode);
+                        if (Input.Check("LEFT-CLICK"))
+                            SelectedTool.Apply(Sim, HoverNode as RenderModule.WorldSceneNode);
+                    }
+                }
+            }
         }
 
     }

@@ -26,10 +26,14 @@ namespace Game.Templates
 
         public override BlockTemplate Compose(BlockTemplate With, BlockSet TemplateSet)
         {
+            if (With is GrassLowSlab) return TemplateSet.Templates["Grass"];
+
             return new BlockTemplate
             {
-                Shape = BlockShape.Composite,
-                CompositeBlocks = HelperExtensions.MakeList(TemplateSet.Templates["GrassLowSlab"], this)
+                Type = BlockType.Combined,
+                CompositeBlocks = HelperExtensions.MakeList(
+                    new SubBlock { Block = TemplateSet.Templates["GrassLowSlab"] }, 
+                    new SubBlock { Block = this })
             };
         }
     }

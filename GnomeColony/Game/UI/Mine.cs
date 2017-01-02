@@ -11,7 +11,6 @@ namespace Game.Creative
     {
         public Mine()
         {
-            this.Icon = TileNames.TaskIconMine;
         }
 
         public override void Apply(Simulation Sim, WorldSceneNode WorldNode)
@@ -20,6 +19,7 @@ namespace Game.Creative
             {
                 var cell = Sim.World.CellAt(WorldNode.HoverBlock);
                 cell.Block = null;
+                cell.Decal = null;
                 Sim.SetUpdateFlag(WorldNode.HoverBlock);
             }
         }

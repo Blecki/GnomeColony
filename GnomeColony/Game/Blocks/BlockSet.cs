@@ -18,11 +18,16 @@ namespace Game
         public static BlockSet FromReflection()
         {
             var r = new BlockSet { Templates = new Dictionary<string, BlockTemplate>() };
+
             foreach (var type in System.Reflection.Assembly.GetExecutingAssembly().GetTypes())
             {
                 if (type.IsSubclassOf(typeof(BlockTemplate)))
                     r.Templates.Add(type.Name, Activator.CreateInstance(type) as BlockTemplate);
             }
+
+            foreach (var template in r.Templates)
+                template.Value.Initialize(r);
+
             return r;
         }
     }

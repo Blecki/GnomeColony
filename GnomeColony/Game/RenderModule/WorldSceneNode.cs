@@ -27,18 +27,28 @@ namespace Game.RenderModule
         private bool MouseHover = false;
         private Gem.Geo.Mesh HiliteQuad;
 
-        public Gem.Geo.Mesh PhantomPlacementCell = null;
-        public void SetPhantomPlacementCell(Cell Cell)
-        {
-            var mesh = Generate.CreateNormalBlockMesh(Blocks.Tiles, Cell.Block, (int)Cell.BlockOrientation);
-            PhantomPlacementCell = Gem.Geo.Gen.Merge(mesh.ToArray());
-            Gem.Geo.Gen.Transform(PhantomPlacementCell, Matrix.CreateTranslation(Cell.Location.AsVector3()));
-            Gem.Geo.Gen.Transform(PhantomPlacementCell, Matrix.CreateTranslation(new Vector3(0.5f, 0.5f, 0.5f)));
+        public Gem.Geo.Mesh PhantomPlacementMesh = null;
 
+        public void SetPhantomPlacements(List<PhantomBlock> Phantoms)
+        {
+            PhantomPlacementMesh = Gem.Geo.Gen.Merge(
+                Phantoms.Select(p =>
+                {
+                    if (p.Block.Type == BlockType.Decal)
+                        return Generate.GenerateDecalPreviewGeometry(p.Block, Blocks, p.TargetCell,
+                            p.FinalPosition.X, p.FinalPosition.Y, p.FinalPosition.Z);
+                    else
+                        return Gem.Geo.Gen.Merge(Generate.CreatePreviewBlockMesh(Blocks.Tiles,
+                            p.FinalBlock,
+                            (int)p.Orientation,
+                            p.FinalPosition.X, p.FinalPosition.Y, p.FinalPosition.Z).ToArray());
+                    
+                }).ToArray());
         }
+        
         public void ClearPhantomPlacementCell()
         {
-            PhantomPlacementCell = null;
+            PhantomPlacementMesh = null;
         }
 
         public Coordinate HoverBlock { get; private set; }
@@ -108,12 +118,12 @@ namespace Game.RenderModule
 
             if (MouseHover)
             {
-                if (PhantomPlacementCell != null)
+                if (PhantomPlacementMesh != null)
                 {
                     Context.Alpha = 0.75f;
                     Context.ApplyChanges();
-                    Context.Draw(PhantomPlacementCell);
-                    PhantomPlacementCell = null;
+                    Context.Draw(PhantomPlacementMesh);
+                    PhantomPlacementMesh = null;
                 }
 
                 Context.LightingEnabled = false;

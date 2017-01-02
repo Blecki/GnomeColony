@@ -233,18 +233,21 @@ namespace Game
         {
             if (cell.Block != null)
             {
-                if (cell.Block.Shape == BlockShape.Composite)
+                if (cell.Block.Type == BlockType.Combined)
                     foreach (var subBlock in cell.Block.CompositeBlocks)
-                        GenerateBlockGeometry(Into, Grid, Blocks, subBlock, cell.BlockOrientation, x, y, z);
+                        GenerateBlockGeometry(Into, Grid, Blocks, subBlock.Block, cell.BlockOrientation, 
+                            x + subBlock.Offset.X, 
+                            y + subBlock.Offset.Y, 
+                            z + subBlock.Offset.Z);
                 else
                     GenerateBlockGeometry(Into, Grid, Blocks, cell.Block, cell.BlockOrientation, x, y, z);                
             }
 
             if (cell.Decal != null)
-                GenerateDecalGeometry(Into, Blocks, cell);
+                GenerateDecalGeometry(Into, Blocks, cell, x, y, z);
         }
 
-        private static void GenerateDecalGeometry(List<Gem.Geo.Mesh> Into, BlockSet Blocks, Cell cell)
+        public static void GenerateDecalGeometry(List<Gem.Geo.Mesh> Into, BlockSet Blocks, Cell cell, int x, int y, int z)
         {
             var navMesh = cell.Block == null ?
                 ShapeTemplates[cell.Decal.Shape][(int)cell.BlockOrientation].TopFace :
@@ -257,8 +260,31 @@ namespace Game
                 r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Blocks.Tiles.TileMatrix(cell.Decal.Top));
                 return r;
             });
+            Gem.Geo.Gen.Transform(copy, Matrix.CreateTranslation(x + 0.5f, y + 0.5f, z + 0.5f));
 
             Into.Add(copy);
+        }
+
+        public static Gem.Geo.Mesh GenerateDecalPreviewGeometry(
+            BlockTemplate Decal, 
+            BlockSet Blocks, 
+            Cell cell,
+            int x, int y, int z)
+        {
+            var navMesh = cell.Block == null ?
+                ShapeTemplates[cell.Decal.Shape][(int)cell.BlockOrientation].TopFace :
+                ShapeTemplates[cell.Block.Shape][(int)cell.BlockOrientation].TopFace;
+
+            var copy = Gem.Geo.Gen.Copy(navMesh);
+            Gem.Geo.Gen.MorphEx(copy, (inV) =>
+            {
+                var r = inV;
+                r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Blocks.Tiles.TileMatrix(Decal.Top));
+                return r;
+            });
+            Gem.Geo.Gen.Transform(copy, Matrix.CreateTranslation(x + 0.5f, y + 0.5f, z + 0.5f));
+
+            return copy;
         }
 
         private static void GenerateBlockGeometry(List<Gem.Geo.Mesh> Into, CellGrid Grid, BlockSet Blocks, BlockTemplate Block, CellLink.Directions BlockOrientation, int x, int y, int z)
@@ -292,7 +318,7 @@ namespace Game
 
                 // Find the neighboring face that could potentially overlap this face.
                 // Todo: Actually iterate over all shapes in composite neighbor.
-                if (neighborCell.Block.Shape == BlockShape.Composite)
+                if (neighborCell.Block.Type == BlockType.Combined)
                     return true;
                 var neighborFaceDirection = Opposite(f.Direction);
                 var neighborShapeTemplate = GetShapeTemplate(neighborCell.Block.Shape, (int)neighborCell.BlockOrientation);
@@ -356,13 +382,26 @@ namespace Game
             }
         }
 
-        public static List<Gem.Geo.Mesh> CreateNormalBlockMesh(TileSheet Tiles, BlockTemplate Template, int Orientation)
+        public static List<Gem.Geo.Mesh> CreatePreviewBlockMesh(
+            TileSheet Tiles, BlockTemplate Template, int Orientation,
+            int x, int y, int z)
         {
-            return ShapeTemplates[Template.Shape][Orientation].Faces.Select(f =>
+            if (Template.Type == BlockType.Combined)
+            {
+                var r = new List<Gem.Geo.Mesh>();
+
+                foreach (var subBlock in Template.CompositeBlocks)
+                    r.AddRange(CreatePreviewBlockMesh(Tiles, subBlock.Block, Orientation,
+                        subBlock.Offset.X, subBlock.Offset.Y, subBlock.Offset.Z));
+
+                return r.Select(m => Gem.Geo.Gen.TransformCopy(m, Matrix.CreateTranslation(x + 0.5f, y + 0.5f, z + 0.5f))).ToList();
+            }
+            else
+                return ShapeTemplates[Template.Shape][Orientation].Faces.Select(f =>
                 {
                     var mesh = Gem.Geo.Gen.Copy(f.Mesh);
                     MorphBlockTextureCoordinates(Tiles, Template, mesh, Orientation);
-                    return mesh;
+                    return Gem.Geo.Gen.TransformCopy(mesh, Matrix.CreateTranslation(x + 0.5f, y + 0.5f, z + 0.5f));
                 }).ToList();
         }
 

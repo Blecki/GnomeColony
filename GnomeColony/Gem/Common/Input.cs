@@ -107,26 +107,8 @@ namespace Gem
         }
     }
 
-    public interface IKeyboardHandler
-    {
-        void KeyUp(System.Windows.Forms.KeyEventArgs e);
-        void KeyDown(System.Windows.Forms.KeyEventArgs e);
-        void KeyPress(System.Windows.Forms.KeyPressEventArgs e);
-    }
-
     public class Input
     {
-        /// <summary>
-        /// Window message types.
-        /// </summary>
-        /// <remarks>Heavily abridged, naturally.</remarks>
-        public enum WindowMessage
-        {
-            WM_KEYDOWN = 0x100,
-            WM_KEYUP = 0x101,
-            WM_CHAR = 0x102,
-        };
-
         internal KeyboardState previousState;
         internal KeyboardState currentState;
         internal MouseState previousMouseState;
@@ -136,50 +118,6 @@ namespace Gem
 
         private MultiDictionary<String, InputBinding> bindings = new MultiDictionary<string, InputBinding>();
         private Dictionary<String, AxisBinding> axisBindings = new Dictionary<string, AxisBinding>();
-
-        //public XnaTextInput.TextInputHandler textHook;
-        
-        //public void UnhookKeyboard()
-        //{
-        //    textHook.Unhook();
-        //}
-
-        //public void RehookKeyboard()
-        //{
-        //    textHook.Rehook();
-        //}
-
-        public Input(IntPtr WindowHandle)
-        {
-            //textHook = new XnaTextInput.TextInputHandler(WindowHandle);
-            KeyboardMessageFilter.AddKeyboardMessageFilter((c) => HandleKeyPress(c));
-        }
-
-        private List<IKeyboardHandler> HandlerStack = new List<IKeyboardHandler>();
-        private IKeyboardHandler KeyboardHandler { get { return HandlerStack.LastOrDefault(); } }
-        public void PushKeyboardHandler(IKeyboardHandler Handler) { HandlerStack.Add(Handler); }
-        public void PopKeyboardHandler() { HandlerStack.RemoveAt(HandlerStack.Count - 1); }
-
-        private void HandleKeyPress(System.Windows.Forms.Message Msg)
-        {
-            switch ((WindowMessage)Msg.Msg)
-            {
-                case WindowMessage.WM_CHAR:
-                    var args = new System.Windows.Forms.KeyPressEventArgs((char)Msg.WParam);
-                    for (var i = HandlerStack.Count - 1; i >= 0; --i)
-                    {
-                        HandlerStack[i].KeyPress(args);
-                        if (args.Handled) break;
-                    }
-                    break;
-                case WindowMessage.WM_KEYDOWN:
-                    if (KeyboardHandler != null) KeyboardHandler.KeyDown(new System.Windows.Forms.KeyEventArgs((System.Windows.Forms.Keys)Msg.WParam));
-                    break;
-                case WindowMessage.WM_KEYUP:
-                    if (KeyboardHandler != null) KeyboardHandler.KeyUp(new System.Windows.Forms.KeyEventArgs((System.Windows.Forms.Keys)Msg.WParam));
-                    break;
-            }
-        }
 
         public void AddBinding(String actionName, InputBinding binding) { bindings.Add(actionName, binding); }
         public void AddAxis(String axisName, AxisBinding binding) { axisBindings.Add(axisName, binding); }
@@ -216,7 +154,10 @@ namespace Gem
 
         }
 
-
+        public void ClearBinding(String Name)
+        {
+            bindings.Remove(Name);
+        }
 
         public void ClearBindings()
         {
