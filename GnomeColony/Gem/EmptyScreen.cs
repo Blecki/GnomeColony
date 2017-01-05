@@ -10,7 +10,6 @@ namespace Gem
 {
     public class EmptyScreen : IScreen
     {
-        public Input Input { get; set; }
         public Main Main { get; set; }
 
         public EmptyScreen()
@@ -32,6 +31,18 @@ namespace Gem
         public void Draw(float elapsedSeconds)
         {
           
+        }
+
+
+        public void HandleInput(Gum.InputEvents Event, Gum.InputEventArgs Args)
+        {
+
+        }
+
+
+        public void BeforeInput()
+        {
+            throw new NotImplementedException();
         }
     }
 }

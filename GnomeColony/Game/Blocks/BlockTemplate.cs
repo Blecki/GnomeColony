@@ -10,9 +10,9 @@ namespace Game
     {
         Normal,
         Combined,
-        Decal
     }
 
+    // Make 'Combined' a shape.
     public enum BlockShape
     {
         Cube,
@@ -21,6 +21,7 @@ namespace Game
         UpperSlab,
         HalfSlopeLow,
         HalfSlopeHigh,
+        Decal
     }
     
     public class SubBlock
@@ -54,11 +55,10 @@ namespace Game
         {
             while (Steps > 0)
             {
-                Offset = new Coordinate(-Offset.Y, Offset.X, Offset.Z);
+                Offset = new Coordinate(Offset.Y, -Offset.X, Offset.Z);
                 Steps -= 1;
+                Orientation = CellLink.Rotate(Orientation);
             }
-
-            Orientation = (CellLink.Directions)Steps;
         }
     }
 
@@ -80,8 +80,23 @@ namespace Game
 
         public List<SubBlock> CompositeBlocks;
 
-        public virtual bool CanComposite(BlockTemplate Onto) { return false; }
-        public virtual BlockTemplate Compose(BlockTemplate With, BlockSet TemplateSet) { return this; }
+        public virtual bool CanComposite(Generate.OrientatedBlock Onto, CellLink.Directions MyOrientation) 
+        { 
+            return false; 
+        }
+
+        public virtual Generate.OrientatedBlock Compose(
+            Generate.OrientatedBlock With, 
+            CellLink.Directions MyOrientation,
+            BlockSet TemplateSet) 
+        {
+            return new Generate.OrientatedBlock
+                {
+                    Block = this,
+                    Orientation = MyOrientation
+                };
+        }
+
         public virtual void Initialize(BlockSet BlockSet) { }
     }
 }

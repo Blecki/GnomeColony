@@ -58,8 +58,14 @@
     <ApplicationIcon>Icon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Game\Blocks\Templates\GrassHalfSlopeHigh.cs" />
+    <Compile Include="Game\Blocks\Templates\GrassHalfSlopeLow.cs" />
+    <Compile Include="Game\Blocks\Templates\GrassSlope.cs" />
+    <Compile Include="Game\Blocks\Templates\Track\TrackSmallJunction.cs" />
+    <Compile Include="Game\Blocks\Templates\Track\TrackSmallCurve.cs" />
+    <Compile Include="Game\Blocks\Templates\Track\TrackMediumCurve.cs" />
     <Compile Include="Game\Blocks\Templates\MultiDirt.cs" />
-    <Compile Include="Game\Blocks\Templates\Track.cs" />
+    <Compile Include="Game\Blocks\Templates\Track\Track.cs" />
     <Compile Include="Game\Blocks\Templates\Dirt.cs" />
     <Compile Include="Game\Blocks\Templates\GrassHighSlab.cs" />
     <Compile Include="Game\Blocks\Templates\GrassLowSlab.cs" />
@@ -79,6 +85,7 @@
     <Compile Include="Gem\Common\AnimationTimer.cs" />
     <Compile Include="Gem\Common\GumInputMapper.cs" />
     <Compile Include="Gem\Common\MessageFilter.cs" />
+    <Compile Include="Gem\Common\NewInput.cs" />
     <Compile Include="Gem\Geo\CoincidentEdgeWithTransforms.cs" />
     <Compile Include="Gem\Render\MeshNode.cs" />
     <Compile Include="Gem\PropertyBag.cs" />

@@ -12,12 +12,13 @@ namespace Game
 {
     public class Game : IScreen
     {
-        public Gem.Input Input { get; set; }
+        public Gem.NewInput Input { get { return Main.Input; } }
         public Main Main { get; set; }
 
         protected EpisodeContentManager Content;
         public RenderContext RenderContext { get; private set; }
         public SceneNode HoverNode { get; private set; }
+        private Vector2 MousePosition;
 
         public Gem.Render.FreeCamera Camera;
         public Gem.Render.SceneNode SceneGraph;
@@ -39,26 +40,35 @@ namespace Game
         {
         }
 
-        public void Update(float elapsedSeconds)
+        public void HandleInput(Gum.InputEvents Event, Gum.InputEventArgs Args)
         {
-            this.ElapsedSeconds = elapsedSeconds;
-
-            HoverNode = null;
-            var hoverItems = new List<HoverItem>();
-
-            var mousePosition = Main.Input.QueryAxis("MAIN-AXIS");
-            var pickRay = Camera.GetPickRay(mousePosition);
-
-            SceneGraph.CalculateLocalMouse(pickRay, (node, distance) => hoverItems.Add(new HoverItem { Node = node, Distance = distance }));
-
-            if (hoverItems.Count > 0)
+            if (Event == Gum.InputEvents.MouseClick || Event == Gum.InputEvents.MouseMove)
             {
-                var nearestDistance = float.PositiveInfinity;
-                foreach (var hoverItem in hoverItems)
-                    if (hoverItem.Distance < nearestDistance) nearestDistance = hoverItem.Distance;
-                HoverNode = hoverItems.First(item => item.Distance <= nearestDistance).Node;
+                MousePosition = new Vector2(Args.X, Args.Y);
             }
+        }
+        
+        public void Update(float ElapsedSeconds)
+        {
+            HoverNode = null;
 
+            if (Main.GuiRoot.RootItem.FindWidgetAt((int)MousePosition.X, (int)MousePosition.Y) == null)
+            {
+                var hoverItems = new List<HoverItem>();
+                var pickRay = Camera.GetPickRay(MousePosition);
+
+                SceneGraph.CalculateLocalMouse(pickRay, (node, distance) => hoverItems.Add(new HoverItem { Node = node, Distance = distance }));
+
+                if (hoverItems.Count > 0)
+                {
+                    var nearestDistance = float.PositiveInfinity;
+                    foreach (var hoverItem in hoverItems)
+                        if (hoverItem.Distance < nearestDistance) nearestDistance = hoverItem.Distance;
+                    HoverNode = hoverItems.First(item => item.Distance <= nearestDistance).Node;
+                }
+            }         
+
+            this.ElapsedSeconds = ElapsedSeconds;
             SceneGraph.UpdateWorldTransform(Matrix.Identity);
         }
 
@@ -106,6 +116,12 @@ namespace Game
             RenderContext.Ambient = Vector4.Zero;
             RenderContext.World = Matrix.Identity;
             RenderContext.Texture = RenderContext.White;
+        }
+
+
+        public void BeforeInput()
+        {
+            throw new NotImplementedException();
         }
     }
 }

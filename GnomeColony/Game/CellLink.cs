@@ -44,5 +44,11 @@ namespace Game
                     return BaseOrientation;
             }
         }
+
+        internal static Directions Add(Directions A, Directions B)
+        {
+            var r = (int)A + (int)B;
+            return (Directions)(r % 4);
+        }
     }
 }

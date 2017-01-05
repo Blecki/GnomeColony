@@ -20,10 +20,15 @@ namespace Game.Creative
             this.SelectedBlock = SelectedBlock;
         }
 
-        public override void Update(Game Game)
+        public override void OnSelected(SimulationGame Game)
         {
-            if (Game.Input.Check("ROTATE_BLOCK"))
-                BaseOrientation = CellLink.Rotate(BaseOrientation);
+            Game.Input.BindAction("ROTATE-BLOCK", () => 
+                BaseOrientation = CellLink.Rotate(BaseOrientation));
+        }
+
+        public override void OnDeselected(SimulationGame Game)
+        {
+            Game.Input.ClearAction("ROTATE-BLOCK");
         }
 
         public override void Apply(Simulation Sim, WorldSceneNode WorldNode)
@@ -33,17 +38,9 @@ namespace Game.Creative
 
             foreach (var placement in Placements)
             {
-                if (placement.Block.Type == BlockType.Decal)
-                {
-                    placement.TargetCell.Decal = placement.Block;
-                    Sim.SetUpdateFlag(placement.FinalPosition);
-                }
-                else
-                {
-                    placement.TargetCell.Block = placement.FinalBlock;
-                    Sim.SetUpdateFlag(placement.FinalPosition);
-                    placement.TargetCell.BlockOrientation = placement.Orientation;
-                }
+                placement.TargetCell.Block = placement.FinalBlock;
+                Sim.SetUpdateFlag(placement.FinalPosition);
+                placement.TargetCell.BlockOrientation = placement.Orientation;
             }
 
             Placements = null;
@@ -51,28 +48,24 @@ namespace Game.Creative
         
         private void CheckPlacement(PhantomBlock Block, Simulation Sim, WorldSceneNode WorldNode)
         {
+            // Todo: Lining a decal pattern up with a decal that already exists is okay.
             // Check for combination.
             var actualHover = WorldNode.HoverBlock + Block.Offset;
             if (Sim.World.Check(actualHover))
             {
                 var underBlock = Sim.World.CellAt(actualHover);
-
-                if (Block.Block.Type == BlockType.Decal)
-                {
-                    Block.PlacementAllowed = true;
-                    Block.WillCombine = false;
-                    Block.FinalPosition = actualHover;
-                    Block.TargetCell = underBlock;
-                    Block.FinalBlock = Block.Block;
-                    return;
-                }
-                
-                if (Block.Block.CanComposite(underBlock.Block))
+                if (Block.Block.CanComposite(
+                    new Generate.OrientatedBlock(underBlock.Block, underBlock.BlockOrientation),
+                    Block.Orientation))
                 {
                     Block.PlacementAllowed = true;
                     Block.WillCombine = true;
                     Block.FinalPosition = actualHover;
-                    Block.FinalBlock = Block.Block.Compose(underBlock.Block, Sim.Blocks);
+                    var composedBlock = Block.Block.Compose(
+                        new Generate.OrientatedBlock(underBlock.Block, underBlock.BlockOrientation),
+                        Block.Orientation, Sim.Blocks);
+                    Block.FinalBlock = composedBlock.Block;
+                    Block.Orientation = composedBlock.Orientation;
                     Block.TargetCell = underBlock;
                     return;
                 }

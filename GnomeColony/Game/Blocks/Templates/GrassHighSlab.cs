@@ -18,23 +18,5 @@ namespace Game.Templates
             //Hanging = "HangingVines";
         }
 
-        public override bool CanComposite(BlockTemplate Onto)
-        {
-            if (Onto is GrassLowSlab) return true;
-            return false;
-        }
-
-        public override BlockTemplate Compose(BlockTemplate With, BlockSet TemplateSet)
-        {
-            if (With is GrassLowSlab) return TemplateSet.Templates["Grass"];
-
-            return new BlockTemplate
-            {
-                Type = BlockType.Combined,
-                CompositeBlocks = HelperExtensions.MakeList(
-                    new SubBlock { Block = TemplateSet.Templates["GrassLowSlab"] }, 
-                    new SubBlock { Block = this })
-            };
-        }
     }
 }

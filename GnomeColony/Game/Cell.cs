@@ -9,7 +9,6 @@ namespace Game
     public class Cell
     {
         public BlockTemplate Block;
-        public BlockTemplate Decal;
         public CellLink.Directions BlockOrientation = CellLink.Directions.North;
         public Coordinate Location;
     }

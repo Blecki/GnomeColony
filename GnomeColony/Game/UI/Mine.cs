@@ -19,7 +19,6 @@ namespace Game.Creative
             {
                 var cell = Sim.World.CellAt(WorldNode.HoverBlock);
                 cell.Block = null;
-                cell.Decal = null;
                 Sim.SetUpdateFlag(WorldNode.HoverBlock);
             }
         }

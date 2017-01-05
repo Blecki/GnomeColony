@@ -24,7 +24,7 @@ namespace Game
         public Simulation(EpisodeContentManager Content)
         {
             Blocks = BlockSet.FromReflection();
-            Blocks.Tiles = new TileSheet(Content.Load<Texture2D>("tiles"), 16, 16);
+            Blocks.Tiles = new TileSheet(Content.Load<Texture2D>("gnome_colony_skin/tiles"), 16, 16);
 
             World = new CellGrid(64, 64, 64);
 

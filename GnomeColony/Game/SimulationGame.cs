@@ -32,30 +32,48 @@ namespace Game
 
             #region Prepare Input
 
-            Main.Input.ClearBindings();
-            Main.Input.AddAxis("MAIN-AXIS", new MouseAxisBinding());
-            Main.Input.AddBinding("RIGHT", new KeyboardBinding(Keys.Right, KeyBindingType.Held));
-            Main.Input.AddBinding("LEFT", new KeyboardBinding(Keys.Left, KeyBindingType.Held));
-            Main.Input.AddBinding("UP", new KeyboardBinding(Keys.Up, KeyBindingType.Held));
-            Main.Input.AddBinding("DOWN", new KeyboardBinding(Keys.Down, KeyBindingType.Held));
-            Main.Input.AddBinding("PAN-LEFT", new KeyboardBinding(Keys.A, KeyBindingType.Held));
-            Main.Input.AddBinding("PAN-FORWARD", new KeyboardBinding(Keys.W, KeyBindingType.Held));
-            Main.Input.AddBinding("PAN-RIGHT", new KeyboardBinding(Keys.D, KeyBindingType.Held));
-            Main.Input.AddBinding("PAN-BACK", new KeyboardBinding(Keys.S, KeyBindingType.Held));
-            Main.Input.AddBinding("PAN-UP", new KeyboardBinding(Keys.E, KeyBindingType.Held));
-            Main.Input.AddBinding("PAN-DOWN", new KeyboardBinding(Keys.Q, KeyBindingType.Held));
-            Main.Input.AddBinding("LEFT-CLICK", new MouseButtonBinding("LeftButton", KeyBindingType.Pressed));
-            Main.Input.AddBinding("RIGHT-CLICK", new MouseButtonBinding("RightButton", KeyBindingType.Pressed));
+            Input.BindKeyAction(Keys.Right, "RIGHT", KeyBindingType.Held, () => CameraYaw += ElapsedSeconds);
+            Input.BindKeyAction(Keys.Left, "LEFT", KeyBindingType.Held, () => CameraYaw -= ElapsedSeconds);
+            Input.BindKeyAction(Keys.Up, "UP", KeyBindingType.Held, () => CameraPitch += ElapsedSeconds);
+            Input.BindKeyAction(Keys.Down, "DOWN", KeyBindingType.Held, () => CameraPitch -= ElapsedSeconds);
 
-            Main.Input.AddBinding("CAMERA-DISTANCE-TOGGLE", new KeyboardBinding(Keys.R, KeyBindingType.Held));
-            Main.Input.AddBinding("SUPER-CAM-TOGGLE", new KeyboardBinding(Keys.T, KeyBindingType.Held));
-            Main.Input.AddBinding("WIREFRAME-TOGGLE", new KeyboardBinding(Keys.Y, KeyBindingType.Held));
+            Input.BindKeyAction(Keys.A, "PAN-LEFT", KeyBindingType.Held, () =>
+                {
+                    CameraFocus -= Vector3.Normalize(new Vector3(Camera.GetEyeVector().Y, -Camera.GetEyeVector().X, 0)) * ElapsedSeconds * 10.0f;
+                });
 
-            Main.ScriptBuilder.DeriveScriptsFrom("Gnome.ScriptBase");
+            Input.BindKeyAction(Keys.D, "PAN-RIGHT", KeyBindingType.Held, () =>
+            {
+                CameraFocus += Vector3.Normalize(new Vector3(Camera.GetEyeVector().Y, -Camera.GetEyeVector().X, 0)) * ElapsedSeconds * 10.0f;
+            });
 
+            Input.BindKeyAction(Keys.W, "PAN-FORWARD", KeyBindingType.Held, () =>
+            {
+                CameraFocus += Vector3.Normalize(new Vector3(Camera.GetEyeVector().X, Camera.GetEyeVector().Y, 0)) * ElapsedSeconds * 10.9f;
+            });
+
+            Input.BindKeyAction(Keys.S, "PAN-BACK", KeyBindingType.Held, () =>
+            {
+                CameraFocus -= Vector3.Normalize(new Vector3(Camera.GetEyeVector().X, Camera.GetEyeVector().Y, 0)) * ElapsedSeconds * 10.9f;
+            });
+
+            Input.BindKeyAction(Keys.E, "PAN-UP", KeyBindingType.Held, () =>
+            {
+                CameraFocus += Vector3.UnitZ * ElapsedSeconds * 10.0f;
+            });
+
+            Input.BindKeyAction(Keys.Q, "PAN-DOWN", KeyBindingType.Held, () =>
+            {
+                CameraFocus -= Vector3.UnitZ * ElapsedSeconds * 10.0f;
+            });
+
+            Input.BindKeyAction(Keys.R, "CAMERA-DISTANCE-FAR", KeyBindingType.Held, () => CameraDistance = -24.0f);
+            Input.BindKeyAction(Keys.T, "CAMERA-DISTANCE-SUPER", KeyBindingType.Held, () => CameraDistance = -128.0f);
+            Input.BindKeyAction(Keys.Y, "WIREFRAME", KeyBindingType.Held, () => RenderModule.WorldSceneNode.WireFrameMode = true);
+            
+            Main.Input.BindKeyAction(Keys.F, "ROTATE-BLOCK", KeyBindingType.Pressed);
 
             #endregion
-
 
             Main.GuiRoot.RootItem.AddChild(
                 new Gum.Widget
@@ -75,11 +93,16 @@ namespace Game
                         if (BlockChooser != null)
                             Main.GuiRoot.RootItem.RemoveChild(BlockChooser);
                         BlockChooser = null;
-                        SelectedTool = new Creative.Mine();
+                        SelectTool(new Creative.Mine());
                     }
                 });
+        }
 
-            Main.Input.AddBinding("ROTATE_BLOCK", new Gem.KeyboardBinding(Microsoft.Xna.Framework.Input.Keys.F, Gem.KeyBindingType.Pressed));
+        private void SelectTool(GuiTool NewTool)
+        {
+            if (SelectedTool != null) SelectedTool.OnDeselected(this);
+            SelectedTool = NewTool;
+            if (SelectedTool != null) SelectedTool.OnSelected(this);
         }
 
         private void SetupBlockChooser(Gum.Widget _sender, Gum.InputEventArgs _args)
@@ -104,7 +127,7 @@ namespace Game
                         {
                             Main.GuiRoot.RootItem.RemoveChild(BlockChooser);
                             BlockChooser = null;
-                            SelectedTool = new Creative.Build(lambdaTemplate.Value);
+                            SelectTool(new Creative.Build(lambdaTemplate.Value));
                         }
                 });
 
@@ -117,34 +140,27 @@ namespace Game
         {
         }
 
+        void IScreen.HandleInput(Gum.InputEvents Event, Gum.InputEventArgs Args)
+        {
+            base.HandleInput(Event, Args);
+
+            if (Event == Gum.InputEvents.MouseClick && 
+                HoverNode is RenderModule.WorldSceneNode &&
+                SelectedTool != null)
+            {
+                SelectedTool.Apply(Sim, HoverNode as RenderModule.WorldSceneNode);
+            }
+        }
+
+        void IScreen.BeforeInput()
+        {
+            RenderModule.WorldSceneNode.WireFrameMode = false;
+            CameraDistance = -6.0f;
+        }
+
         void IScreen.Update(float elapsedSeconds)
         {
             base.Update(elapsedSeconds);
-
-            if (Main.Input.Check("RIGHT")) CameraYaw += elapsedSeconds;
-            if (Main.Input.Check("LEFT")) CameraYaw -= elapsedSeconds;
-            if (Main.Input.Check("UP")) CameraPitch += elapsedSeconds;
-            if (Main.Input.Check("DOWN")) CameraPitch -= elapsedSeconds;
-
-            if (Main.Input.Check("PAN-FORWARD"))
-                CameraFocus += Vector3.Normalize(new Vector3(Camera.GetEyeVector().X, Camera.GetEyeVector().Y, 0)) * elapsedSeconds * 10;
-            if (Main.Input.Check("PAN-BACK"))
-                CameraFocus -= Vector3.Normalize(new Vector3(Camera.GetEyeVector().X, Camera.GetEyeVector().Y, 0)) * elapsedSeconds * 10;
-            if (Main.Input.Check("PAN-LEFT"))
-                CameraFocus -= Vector3.Normalize(new Vector3(Camera.GetEyeVector().Y, -Camera.GetEyeVector().X, 0)) * elapsedSeconds * 10;
-            if (Main.Input.Check("PAN-RIGHT"))
-                CameraFocus += Vector3.Normalize(new Vector3(Camera.GetEyeVector().Y, -Camera.GetEyeVector().X, 0)) * elapsedSeconds * 10;
-            if (Main.Input.Check("PAN-UP"))
-                CameraFocus += Vector3.UnitZ * elapsedSeconds * 10;
-            if (Main.Input.Check("PAN-DOWN"))
-                CameraFocus -= Vector3.UnitZ * elapsedSeconds * 10;
-
-            if (Main.Input.Check("SUPER-CAM-TOGGLE"))
-                CameraDistance = -128.0f;
-            else if (Main.Input.Check("CAMERA-DISTANCE-TOGGLE"))
-                CameraDistance = -24.0f;
-            else 
-                CameraDistance = -6.0f;
 
             if (CameraPitch < 0.5f) CameraPitch = 0.5f;
             if (CameraPitch > 1.5f) CameraPitch = 1.5f;
@@ -154,10 +170,6 @@ namespace Game
                 Vector3.Transform(new Vector3(0, -CameraDistance, 0),
                     Matrix.CreateRotationX(CameraPitch) * Matrix.CreateRotationZ(CameraYaw));
             Camera.LookAt(CameraFocus, Vector3.UnitZ);
-
-            RenderModule.WorldSceneNode.WireFrameMode = Main.Input.Check("WIREFRAME-TOGGLE");
-
-            if (SelectedTool != null) SelectedTool.Update(this);
 
             if (HoverNode is RenderModule.WorldSceneNode)
             {
@@ -172,12 +184,9 @@ namespace Game
                     {
                         HoverNode.SetHover();
                         SelectedTool.Hover(Sim, HoverNode as RenderModule.WorldSceneNode);
-                        if (Input.Check("LEFT-CLICK"))
-                            SelectedTool.Apply(Sim, HoverNode as RenderModule.WorldSceneNode);
                     }
                 }
             }
         }
-
     }
 }

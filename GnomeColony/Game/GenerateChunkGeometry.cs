@@ -136,6 +136,7 @@ namespace Game
                     Direction = ClassifyNormal(NormalOfFirstFace(f))
                 }).ToList();
 
+                // Todo: Recalculate top face. Need every face with non-negative Z normal.
                 r.TopFace = Gem.Geo.Gen.Merge(r.Faces.Where(f => f.Direction == BlockFaceDirection.Up).Select(f => f.Mesh).ToArray());
 
                 l.Add(r);
@@ -152,6 +153,12 @@ namespace Game
 
                 InitializeShapeTemplate(BlockShape.Cube,
                     Gem.Geo.Gen.CreateTexturedFacetedCube());
+
+                InitializeShapeTemplate(BlockShape.Decal,
+                    Gem.Geo.Gen.TextureAndFacetAsCube(
+                        Gem.Geo.Gen.TransformCopy(
+                            Gem.Geo.Gen.CreateQuad(),
+                            Matrix.CreateTranslation(0, 0, -0.5f))));
 
                 InitializeShapeTemplate(BlockShape.LowerSlab,
                     Gem.Geo.Gen.TextureAndFacetAsCube(
@@ -229,63 +236,124 @@ namespace Game
             return result;
         }
 
-        private static void GenerateCellGeometry(List<Gem.Geo.Mesh> Into, CellGrid Grid, BlockSet Blocks, Cell cell, int x, int y, int z)
+        private static void GenerateCellGeometry(List<Gem.Geo.Mesh> Into, CellGrid Grid, BlockSet Blocks, Cell cell, int X, int Y, int Z)
         {
             if (cell.Block != null)
             {
                 if (cell.Block.Type == BlockType.Combined)
-                    foreach (var subBlock in cell.Block.CompositeBlocks)
-                        GenerateBlockGeometry(Into, Grid, Blocks, subBlock.Block, cell.BlockOrientation, 
-                            x + subBlock.Offset.X, 
-                            y + subBlock.Offset.Y, 
-                            z + subBlock.Offset.Z);
-                else
-                    GenerateBlockGeometry(Into, Grid, Blocks, cell.Block, cell.BlockOrientation, x, y, z);                
-            }
+                {
+                    var decalTarget = new OrientatedBlock
+                    {
+                        Block = cell.Block.CompositeBlocks[0].Block,
+                        Orientation = CellLink.Add(cell.BlockOrientation, cell.Block.CompositeBlocks[0].Orientation)
+                    };
 
-            if (cell.Decal != null)
-                GenerateDecalGeometry(Into, Blocks, cell, x, y, z);
+                    foreach (var subBlock in cell.Block.CompositeBlocks)
+                        GenerateSubCellGeometry(Into, Grid, Blocks, new OrientatedBlock
+                            {
+                                Block = subBlock.Block,
+                                Orientation = CellLink.Add(cell.BlockOrientation, subBlock.Orientation)
+                            },
+                            decalTarget, new Coordinate(X, Y, Z));
+                }
+                else
+                {
+                    GenerateSubCellGeometry(Into, Grid, Blocks, new OrientatedBlock(cell.Block, cell.BlockOrientation), null, new Coordinate(X, Y, Z));
+                }
+            }
         }
 
-        public static void GenerateDecalGeometry(List<Gem.Geo.Mesh> Into, BlockSet Blocks, Cell cell, int x, int y, int z)
+        public static void GenerateCellGeometry(
+            List<Gem.Geo.Mesh> Into, 
+            CellGrid Grid, 
+            BlockSet Blocks, 
+            OrientatedBlock Block,
+            Coordinate Location)
         {
-            var navMesh = cell.Block == null ?
-                ShapeTemplates[cell.Decal.Shape][(int)cell.BlockOrientation].TopFace :
-                ShapeTemplates[cell.Block.Shape][(int)cell.BlockOrientation].TopFace;
-
-            var copy = Gem.Geo.Gen.Copy(navMesh);
-            Gem.Geo.Gen.MorphEx(copy, (inV) =>
+            if (Block.Block != null)
             {
-                var r = inV;
-                r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Blocks.Tiles.TileMatrix(cell.Decal.Top));
-                return r;
+                if (Block.Block.Type == BlockType.Combined)
+                {
+                    var decalTarget = new OrientatedBlock
+                    {
+                        Block = Block.Block.CompositeBlocks[0].Block,
+                        Orientation = CellLink.Add(Block.Orientation, Block.Block.CompositeBlocks[0].Orientation)
+                    };
+
+                    foreach (var subBlock in Block.Block.CompositeBlocks)
+                        GenerateSubCellGeometry(Into, Grid, Blocks, new OrientatedBlock
+                        {
+                            Block = subBlock.Block,
+                            Orientation = CellLink.Add(Block.Orientation, subBlock.Orientation)
+                        },
+                            decalTarget, Location);
+                }
+                else
+                {
+                    GenerateSubCellGeometry(Into, Grid, Blocks, Block, null, Location);
+                }
+            }
+        }
+
+        private static void GenerateSubCellGeometry(List<Gem.Geo.Mesh> Into, CellGrid Grid, BlockSet Blocks, OrientatedBlock SubBlock, OrientatedBlock UnderBlock, Coordinate Position)
+        {
+            if (SubBlock.Block.Type == BlockType.Combined) throw new InvalidOperationException();
+
+            if (SubBlock.Block.Shape == BlockShape.Decal)
+                GenerateDecalGeometry(Into, SubBlock, UnderBlock, Position, Blocks.Tiles);
+            else
+                GenerateBlockGeometry(Into, Grid, Blocks, SubBlock.Block, SubBlock.Orientation,
+                    Position.X, Position.Y, Position.Z);
+        }
+
+        public class OrientatedBlock
+        {
+            public BlockTemplate Block;
+            public CellLink.Directions Orientation;
+
+            public OrientatedBlock() { }
+            public OrientatedBlock(BlockTemplate Block, CellLink.Directions Orientation)
+            {
+                this.Block = Block;
+                this.Orientation = Orientation;
+            }
+        }
+
+        private static Gem.Geo.Mesh GetTopFace(OrientatedBlock Of)
+        {
+            if (Of == null) return ShapeTemplates[BlockShape.Decal][0].TopFace;
+            return ShapeTemplates[Of.Block.Shape][(int)Of.Orientation].TopFace;
+        }
+
+        public static void GenerateDecalGeometry(
+            List<Gem.Geo.Mesh> Into,
+            OrientatedBlock Decal,
+            OrientatedBlock Onto,
+            Coordinate OntoPosition,
+            TileSheet Tiles)
+        {
+            var topMesh = GetTopFace(Onto);
+
+            var copy = Gem.Geo.Gen.Copy(topMesh);
+
+            var orientationMatrix = Matrix.CreateRotationZ(((float)Math.PI / 2) * (int)Decal.Orientation);
+
+            Gem.Geo.Gen.MorphEx(copy, (v) =>
+            {
+                var tcoord = v.TextureCoordinate - new Vector2(0.5f, 0.5f);
+                tcoord = Vector2.Transform(tcoord, orientationMatrix);
+                tcoord += new Vector2(0.5f, 0.5f);
+                tcoord = Vector2.Transform(tcoord, Tiles.TileMatrix(Decal.Block.Top));
+                v.TextureCoordinate = tcoord;
+                return v;
             });
-            Gem.Geo.Gen.Transform(copy, Matrix.CreateTranslation(x + 0.5f, y + 0.5f, z + 0.5f));
+
+            // Move it just a little higher than the surface it's going on.
+            Gem.Geo.Gen.Transform(copy, 
+                Matrix.CreateTranslation(OntoPosition.X + 0.5f, OntoPosition.Y + 0.5f, OntoPosition.Z + 0.55f));
 
             Into.Add(copy);
-        }
-
-        public static Gem.Geo.Mesh GenerateDecalPreviewGeometry(
-            BlockTemplate Decal, 
-            BlockSet Blocks, 
-            Cell cell,
-            int x, int y, int z)
-        {
-            var navMesh = cell.Block == null ?
-                ShapeTemplates[cell.Decal.Shape][(int)cell.BlockOrientation].TopFace :
-                ShapeTemplates[cell.Block.Shape][(int)cell.BlockOrientation].TopFace;
-
-            var copy = Gem.Geo.Gen.Copy(navMesh);
-            Gem.Geo.Gen.MorphEx(copy, (inV) =>
-            {
-                var r = inV;
-                r.TextureCoordinate = Vector2.Transform(r.TextureCoordinate, Blocks.Tiles.TileMatrix(Decal.Top));
-                return r;
-            });
-            Gem.Geo.Gen.Transform(copy, Matrix.CreateTranslation(x + 0.5f, y + 0.5f, z + 0.5f));
-
-            return copy;
-        }
+        }        
 
         private static void GenerateBlockGeometry(List<Gem.Geo.Mesh> Into, CellGrid Grid, BlockSet Blocks, BlockTemplate Block, CellLink.Directions BlockOrientation, int x, int y, int z)
         {
@@ -380,29 +448,6 @@ namespace Game
                 Gem.Geo.Gen.Transform(mesh, Matrix.CreateTranslation(x + 0.5f, y + 0.5f, z - 0.5f));
                 Into.Add(mesh);
             }
-        }
-
-        public static List<Gem.Geo.Mesh> CreatePreviewBlockMesh(
-            TileSheet Tiles, BlockTemplate Template, int Orientation,
-            int x, int y, int z)
-        {
-            if (Template.Type == BlockType.Combined)
-            {
-                var r = new List<Gem.Geo.Mesh>();
-
-                foreach (var subBlock in Template.CompositeBlocks)
-                    r.AddRange(CreatePreviewBlockMesh(Tiles, subBlock.Block, Orientation,
-                        subBlock.Offset.X, subBlock.Offset.Y, subBlock.Offset.Z));
-
-                return r.Select(m => Gem.Geo.Gen.TransformCopy(m, Matrix.CreateTranslation(x + 0.5f, y + 0.5f, z + 0.5f))).ToList();
-            }
-            else
-                return ShapeTemplates[Template.Shape][Orientation].Faces.Select(f =>
-                {
-                    var mesh = Gem.Geo.Gen.Copy(f.Mesh);
-                    MorphBlockTextureCoordinates(Tiles, Template, mesh, Orientation);
-                    return Gem.Geo.Gen.TransformCopy(mesh, Matrix.CreateTranslation(x + 0.5f, y + 0.5f, z + 0.5f));
-                }).ToList();
         }
 
         public static void MorphBlockTextureCoordinates(TileSheet Tiles, BlockTemplate Template, Gem.Geo.Mesh Mesh, int Orientation)

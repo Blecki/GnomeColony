@@ -20,8 +20,10 @@ namespace Game
         }
 
         public HiliteFace HiliteFaces = HiliteFace.Top | HiliteFace.Sides;
+
+        public virtual void OnSelected(SimulationGame Game) { }
+        public virtual void OnDeselected(SimulationGame Game) { }
         public virtual void Apply(Simulation Sim, RenderModule.WorldSceneNode WorldNode) { }
         public virtual void Hover(Simulation Sim, RenderModule.WorldSceneNode WorldNode) { }
-        public virtual void Update(Game Game) { }
     }
 }

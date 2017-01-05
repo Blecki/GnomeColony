@@ -34,15 +34,16 @@ namespace Game.RenderModule
             PhantomPlacementMesh = Gem.Geo.Gen.Merge(
                 Phantoms.Select(p =>
                 {
-                    if (p.Block.Type == BlockType.Decal)
-                        return Generate.GenerateDecalPreviewGeometry(p.Block, Blocks, p.TargetCell,
-                            p.FinalPosition.X, p.FinalPosition.Y, p.FinalPosition.Z);
-                    else
-                        return Gem.Geo.Gen.Merge(Generate.CreatePreviewBlockMesh(Blocks.Tiles,
-                            p.FinalBlock,
-                            (int)p.Orientation,
-                            p.FinalPosition.X, p.FinalPosition.Y, p.FinalPosition.Z).ToArray());
-                    
+                    var meshList = new List<Gem.Geo.Mesh>();
+                    Generate.GenerateCellGeometry(meshList, World, Blocks,
+                        new Generate.OrientatedBlock(p.FinalBlock, p.Orientation), p.FinalPosition);
+                    var r = Gem.Geo.Gen.Merge(meshList.ToArray());
+                    Gem.Geo.Gen.MorphEx(r, (v) =>
+                        {
+                            // Todo: Color non placeable bits.
+                            return v;
+                        });
+                    return r;
                 }).ToArray());
         }
         
