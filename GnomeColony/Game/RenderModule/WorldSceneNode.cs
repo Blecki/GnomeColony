@@ -36,7 +36,7 @@ namespace Game.RenderModule
                 {
                     var meshList = new List<Gem.Geo.Mesh>();
                     Generate.GenerateCellGeometry(meshList, World, Blocks,
-                        new Generate.OrientatedBlock(p.FinalBlock, p.Orientation), p.FinalPosition);
+                        new OrientedBlock(p.FinalBlock, p.Orientation), p.FinalPosition);
                     var r = Gem.Geo.Gen.Merge(meshList.ToArray());
                     Gem.Geo.Gen.MorphEx(r, (v) =>
                         {
@@ -143,7 +143,7 @@ namespace Game.RenderModule
             GridTraversal.Raycast(localMouse.Position, localMouse.Direction, PickRadius, (x, y, z, normal) =>
             {
                 if (!World.check(x, y, z)) return false;
-                if (World.CellAt(x, y, z).Block == null) return false;
+                if (World.CellAt(x, y, z).Template == null) return false;
 
                 HiliteQuad = Gem.Geo.Gen.CreateQuad();
 

@@ -6,13 +6,6 @@ using System.Threading.Tasks;
 
 namespace Game
 {
-    public enum BlockType
-    {
-        Normal,
-        Combined,
-    }
-
-    // Make 'Combined' a shape.
     public enum BlockShape
     {
         Cube,
@@ -21,16 +14,10 @@ namespace Game
         UpperSlab,
         HalfSlopeLow,
         HalfSlopeHigh,
-        Decal
+        Decal,
+        Combined
     }
     
-    public class SubBlock
-    {
-        public BlockTemplate Block;
-        public Coordinate Offset = new Coordinate(0, 0, 0);
-        public CellLink.Directions Orientation = CellLink.Directions.North;
-    }
-
     public class PhantomBlock
     {
         public BlockTemplate Block;
@@ -39,14 +26,14 @@ namespace Game
         public bool PlacementAllowed = false;
         public bool WillCombine = false;
         public Coordinate FinalPosition;
-        public Cell TargetCell;
+        public OrientedBlock TargetCell;
         public BlockTemplate FinalBlock;
 
         public PhantomBlock() { }
 
-        public PhantomBlock(SubBlock Source)
+        public PhantomBlock(OrientedBlock Source)
         {
-            this.Block = Source.Block;
+            this.Block = Source.Template;
             this.Offset = Source.Offset;
             this.Orientation = Source.Orientation;
         }
@@ -64,7 +51,6 @@ namespace Game
 
     public class BlockTemplate
     {
-        public BlockType Type = BlockType.Normal;
         public String Name;
         public int Preview = 1;
         public int Top = 1;
@@ -78,25 +64,96 @@ namespace Game
 
         public bool Orientable = false;
 
-        public List<SubBlock> CompositeBlocks;
+        public List<OrientedBlock> CompositeBlocks;
 
-        public virtual bool CanComposite(Generate.OrientatedBlock Onto, CellLink.Directions MyOrientation) 
+        public bool ShowInEditor = true;
+
+        public virtual bool CanComposite(OrientedBlock Onto, CellLink.Directions MyOrientation) 
         { 
             return false; 
         }
 
-        public virtual Generate.OrientatedBlock Compose(
-            Generate.OrientatedBlock With, 
+        public virtual OrientedBlock Compose(
+            OrientedBlock With, 
             CellLink.Directions MyOrientation,
             BlockSet TemplateSet) 
         {
-            return new Generate.OrientatedBlock
+            return new OrientedBlock
                 {
-                    Block = this,
+                    Template = this,
                     Orientation = MyOrientation
                 };
         }
 
         public virtual void Initialize(BlockSet BlockSet) { }
+
+        public OrientedBlock GetTopOfComposite()
+        {
+            if (Shape == BlockShape.Combined)
+                return CompositeBlocks[CompositeBlocks.Count - 1];
+            else
+                return new OrientedBlock
+                {
+                    Template = this,
+                    Offset = new Coordinate(0, 0, 0),
+                    Orientation = CellLink.Directions.North
+                };
+        }
+
+        public OrientedBlock SansTopOfComposite()
+        {
+            if (Shape == BlockShape.Combined)
+            {
+                if (CompositeBlocks.Count == 2)
+                    return new OrientedBlock { Template = CompositeBlocks[0].Template, Orientation = CompositeBlocks[0].Orientation };
+                else
+                {
+                    var r = new OrientedBlock
+                    {
+                        Template = new BlockTemplate
+                            {
+                                Shape = BlockShape.Combined
+                            },
+                        Orientation = CellLink.Directions.North
+                    };
+                    r.Template.CompositeBlocks.AddRange(CompositeBlocks.Take(CompositeBlocks.Count - 1));
+                    return r;
+                }
+            }
+            else
+                return new OrientedBlock { Template = this, Orientation = CellLink.Directions.North };
+        }
+
+        public BlockTemplate ComposeWith(CellLink.Directions MyOrientation, OrientedBlock NewTop)
+        {
+            if (Shape == BlockShape.Combined)
+            {
+                var r = new BlockTemplate
+                {
+                    Shape = BlockShape.Combined
+                };
+
+                r.CompositeBlocks.AddRange(CompositeBlocks);
+                foreach (var sub in r.CompositeBlocks)
+                    sub.Orientation = CellLink.Add(MyOrientation, sub.Orientation);
+                r.CompositeBlocks.Add(new OrientedBlock
+                    {
+                        Template = NewTop.Template,
+                        Orientation = NewTop.Orientation
+                    });
+                return r;
+            }
+            else
+            {
+                return new BlockTemplate
+                {
+                    Shape = BlockShape.Combined,
+                    CompositeBlocks = HelperExtensions.MakeList(
+                        new OrientedBlock { Template = this, Orientation = MyOrientation },
+                        new OrientedBlock { Template = NewTop.Template, Orientation = NewTop.Orientation }
+                        )
+                };
+            }
+        }
     }
 }

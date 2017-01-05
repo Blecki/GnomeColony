@@ -116,7 +116,7 @@ namespace Game
             });
 
             var x = 96 + 8;
-            foreach (var template in Sim.Blocks.Templates)
+            foreach (var template in Sim.Blocks.Templates.Where(t => t.Value.ShowInEditor))
             {
                 var lambdaTemplate = template;
                 BlockChooser.AddChild(new Gum.Widget

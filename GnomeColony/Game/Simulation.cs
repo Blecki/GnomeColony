@@ -30,9 +30,9 @@ namespace Game
 
             World.forAll((t, x, y, z) =>
                 {
-                    if (z == 2) t.Block = Blocks.Templates["Grass"];
-                    else if (z < 2) t.Block = Blocks.Templates["Dirt"];
-                    else t.Block = null;
+                    if (z == 2) t.Template = Blocks.Templates["Grass"];
+                    else if (z < 2) t.Template = Blocks.Templates["Dirt"];
+                    else t.Template = null;
                 });
 
             RenderModule = new RenderModule.RenderModule();

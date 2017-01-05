@@ -18,7 +18,7 @@ namespace Game.Creative
             if (Sim.World.Check(WorldNode.HoverBlock))
             {
                 var cell = Sim.World.CellAt(WorldNode.HoverBlock);
-                cell.Block = null;
+                cell.Template = null;
                 Sim.SetUpdateFlag(WorldNode.HoverBlock);
             }
         }

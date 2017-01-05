@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Game.Templates
 {
-    public class TrackSmallCurve : BlockTemplate
+    public class TrackSmallCurve : TrackBase
     {
         public TrackSmallCurve()
         {
@@ -14,6 +14,7 @@ namespace Game.Templates
             Top = 160;
             Shape = BlockShape.Decal;
             Orientable = true;
+            ShowInEditor = true;
         }
     }
 }

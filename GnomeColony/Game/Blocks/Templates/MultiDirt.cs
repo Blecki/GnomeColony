@@ -11,15 +11,15 @@ namespace Game.Templates
         public MultiDirt()
         {
             Preview = 34;
-            Type = BlockType.Combined;
+            Shape = BlockShape.Combined;
         }
 
         public override void Initialize(BlockSet BlockSet)
         {
-            CompositeBlocks = new List<SubBlock>();
-            CompositeBlocks.Add(new SubBlock { Block = BlockSet.Templates["Dirt"], Offset = new Coordinate(1, 1, 0) });
-            CompositeBlocks.Add(new SubBlock { Block = BlockSet.Templates["Dirt"], Offset = new Coordinate(-1, -1, 0) });
-            CompositeBlocks.Add(new SubBlock { Block = BlockSet.Templates["Dirt"], Offset = new Coordinate(0, 0, 0) });
+            CompositeBlocks = new List<OrientedBlock>();
+            CompositeBlocks.Add(new OrientedBlock { Template = BlockSet.Templates["Dirt"], Offset = new Coordinate(1, 1, 0) });
+            CompositeBlocks.Add(new OrientedBlock { Template = BlockSet.Templates["Dirt"], Offset = new Coordinate(-1, -1, 0) });
+            CompositeBlocks.Add(new OrientedBlock { Template = BlockSet.Templates["Dirt"], Offset = new Coordinate(0, 0, 0) });
         }
     }
 }

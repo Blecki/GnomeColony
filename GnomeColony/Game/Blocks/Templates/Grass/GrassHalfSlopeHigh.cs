@@ -10,9 +10,9 @@ namespace Game.Templates
     {
         public GrassHalfSlopeHigh()
         {
-            Preview = 35;
+            Preview = 39;
             Top = 33;
-            NorthSide = 32;
+            NorthSide = 40;
             SouthSide = 32;
             EastSide = 39;
             WestSide = 39;

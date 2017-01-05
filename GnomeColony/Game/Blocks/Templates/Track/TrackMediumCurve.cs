@@ -11,16 +11,17 @@ namespace Game.Templates
         public TrackMediumCurve()
         {
             Preview = 129;
-            Type = BlockType.Combined;
+            Shape = BlockShape.Combined;
+            ShowInEditor = true;
         }
 
         public override void Initialize(BlockSet BlockSet)
         {
-            CompositeBlocks = new List<SubBlock>();
+            CompositeBlocks = new List<OrientedBlock>();
 
-            CompositeBlocks.Add(new SubBlock
+            CompositeBlocks.Add(new OrientedBlock
             {
-                Block = new BlockTemplate
+                Template = new TrackBase
                     {
                         Shape = BlockShape.Decal,
                         Top = 129,
@@ -29,9 +30,9 @@ namespace Game.Templates
                 Offset = new Coordinate(0, 0, 0)
             });
 
-            CompositeBlocks.Add(new SubBlock
+            CompositeBlocks.Add(new OrientedBlock
             {
-                Block = new BlockTemplate
+                Template = new TrackBase
                     {
                         Shape = BlockShape.Decal,
                         Top = 130,
@@ -40,9 +41,9 @@ namespace Game.Templates
                 Offset = new Coordinate(1, 0, 0)
             });
 
-            CompositeBlocks.Add(new SubBlock
+            CompositeBlocks.Add(new OrientedBlock
             {
-                Block = new BlockTemplate
+                Template = new TrackBase
                 {
                     Shape = BlockShape.Decal,
                     Top = 161,
@@ -51,9 +52,9 @@ namespace Game.Templates
                 Offset = new Coordinate(0, 1, 0)
             });
 
-            CompositeBlocks.Add(new SubBlock
+            CompositeBlocks.Add(new OrientedBlock
             {
-                Block = new BlockTemplate
+                Template = new TrackBase
                 {
                     Shape = BlockShape.Decal,
                     Top = 162,

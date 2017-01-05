@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Game.Templates
 {
-    public class Track : BlockTemplate
+    public class Track : TrackBase
     {
         public Track()
         {
@@ -14,41 +14,37 @@ namespace Game.Templates
             Top = 128;
             Shape = BlockShape.Decal;
             Orientable = true;
+            ShowInEditor = true;
         }
 
-        public override bool CanComposite(Generate.OrientatedBlock Onto, CellLink.Directions MyOrientation)
+        public override bool CanComposite(OrientedBlock Onto, CellLink.Directions MyOrientation)
         {
-            if (Onto.Block.Shape == BlockShape.HalfSlopeLow) return true;
-            if (Onto.Block is Track)
+            if (Onto.Template.GetTopOfComposite().Template is Track)
             {
                 if (Onto.Orientation != MyOrientation && CellLink.Rotate(CellLink.Rotate(Onto.Orientation)) != MyOrientation)
                     return true;
             }
-            return false;
+
+
+            return base.CanComposite(Onto, MyOrientation);
         }
 
-        public override Generate.OrientatedBlock Compose(Generate.OrientatedBlock With, CellLink.Directions MyOrientation, BlockSet TemplateSet)
+        public override OrientedBlock Compose(OrientedBlock With, CellLink.Directions MyOrientation, BlockSet TemplateSet)
         {
-            if (With.Block.Shape == BlockShape.HalfSlopeLow)
-                return new Generate.OrientatedBlock
+            if (With.Template.GetTopOfComposite().Template is Track)
+            {
+                var sansTop = With.Template.SansTopOfComposite();
+                With.Orientation = CellLink.Add(With.Orientation, sansTop.Orientation);
+                return new OrientedBlock
                 {
-                    Block = new BlockTemplate
+                    Template = sansTop.Template.ComposeWith(With.Orientation, new OrientedBlock
                     {
-                        Type = BlockType.Combined,
-                        CompositeBlocks = HelperExtensions.MakeList(
-                            new SubBlock { Block = With.Block, Orientation = With.Orientation },
-                            new SubBlock { Block = this, Orientation = MyOrientation }
-                        )
-                    },
+                        Template = TemplateSet.Templates["TrackSmallJunction"],
+                        Orientation = CellLink.Directions.North
+                    }),
                     Orientation = CellLink.Directions.North
                 };
-
-            if (With.Block is Track)
-                return new Generate.OrientatedBlock
-                {
-                    Block = TemplateSet.Templates["TrackSmallJunction"],
-                    Orientation = CellLink.Directions.North
-                };
+            }
 
             return base.Compose(With, MyOrientation, TemplateSet);
         }

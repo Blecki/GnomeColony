@@ -6,17 +6,17 @@ using Microsoft.Xna.Framework;
 
 namespace Game
 {
-    public partial class CellGrid : Gem.Common.Grid3D<Cell>
+    public partial class CellGrid : Gem.Common.Grid3D<OrientedBlock>
     {
-        private Cell CellProxy = new Cell();
+        private OrientedBlock CellProxy = new OrientedBlock();
         public List<Coordinate> DirtyChunks = new List<Coordinate>();
         
         public CellGrid(int width, int height, int depth)
-            : base(width, height, depth, (x, y, z) => new Cell { Location = new Coordinate(x, y, z) })
+            : base(width, height, depth, (x, y, z) => new OrientedBlock { Offset = new Coordinate(x, y, z) })
         {
         }
 
-        public Cell CellAt(int X, int Y, int Z)
+        public OrientedBlock CellAt(int X, int Y, int Z)
         {
             if (check(X, Y, Z)) return this[X, Y, Z];
             else return CellProxy;
@@ -34,7 +34,7 @@ namespace Game
             return check(C.X, C.Y, C.Z);
         }
 
-        public Cell CellAt(Coordinate C)
+        public OrientedBlock CellAt(Coordinate C)
         {
             return CellAt(C.X, C.Y, C.Z);
         }

@@ -38,9 +38,9 @@ namespace Game.Creative
 
             foreach (var placement in Placements)
             {
-                placement.TargetCell.Block = placement.FinalBlock;
+                placement.TargetCell.Template = placement.FinalBlock;
                 Sim.SetUpdateFlag(placement.FinalPosition);
-                placement.TargetCell.BlockOrientation = placement.Orientation;
+                placement.TargetCell.Orientation = placement.Orientation;
             }
 
             Placements = null;
@@ -49,22 +49,23 @@ namespace Game.Creative
         private void CheckPlacement(PhantomBlock Block, Simulation Sim, WorldSceneNode WorldNode)
         {
             // Todo: Lining a decal pattern up with a decal that already exists is okay.
+            // Todo: Prevent 'floating' decals.
             // Check for combination.
             var actualHover = WorldNode.HoverBlock + Block.Offset;
             if (Sim.World.Check(actualHover))
             {
                 var underBlock = Sim.World.CellAt(actualHover);
                 if (Block.Block.CanComposite(
-                    new Generate.OrientatedBlock(underBlock.Block, underBlock.BlockOrientation),
+                    new OrientedBlock(underBlock.Template, underBlock.Orientation),
                     Block.Orientation))
                 {
                     Block.PlacementAllowed = true;
                     Block.WillCombine = true;
                     Block.FinalPosition = actualHover;
                     var composedBlock = Block.Block.Compose(
-                        new Generate.OrientatedBlock(underBlock.Block, underBlock.BlockOrientation),
+                        new OrientedBlock(underBlock.Template, underBlock.Orientation),
                         Block.Orientation, Sim.Blocks);
-                    Block.FinalBlock = composedBlock.Block;
+                    Block.FinalBlock = composedBlock.Template;
                     Block.Orientation = composedBlock.Orientation;
                     Block.TargetCell = underBlock;
                     return;
@@ -75,7 +76,7 @@ namespace Game.Creative
             if (Sim.World.Check(actualPlacement))
             {
                 var destinationCell = Sim.World.CellAt(actualPlacement);
-                if (destinationCell.Block == null)
+                if (destinationCell.Template == null)
                 {
                     Block.PlacementAllowed = true;
                     Block.WillCombine = false;
@@ -95,7 +96,7 @@ namespace Game.Creative
 
             // Normalize into a list of block placements (even single blocks become a list of one) and check all pieces.
             Placements = new List<PhantomBlock>();
-            if (SelectedBlock.Type == BlockType.Combined)
+            if (SelectedBlock.Shape == BlockShape.Combined)
                 Placements.AddRange(SelectedBlock.CompositeBlocks.Select(b => new PhantomBlock(b)));
             else
                 Placements.Add(new PhantomBlock { Block = SelectedBlock });

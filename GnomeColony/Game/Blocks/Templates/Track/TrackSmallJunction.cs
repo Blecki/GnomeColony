@@ -14,6 +14,7 @@ namespace Game.Templates
             Top = 192;
             Shape = BlockShape.Decal;
             Orientable = true;
+            ShowInEditor = true;
         }
     }
 }
