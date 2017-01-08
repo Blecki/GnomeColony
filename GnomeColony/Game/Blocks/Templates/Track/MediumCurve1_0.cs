@@ -6,46 +6,42 @@ using System.Threading.Tasks;
 
 namespace Game.Templates.Track
 {
-    public class Track : TrackBase
+    public class MediumCurve1_0 : TrackBase
     {
-        public Track()
+        public MediumCurve1_0()
         {
-            PreviewTiles = HelperExtensions.MakeList(new OrientedTile(128, Direction.North));
-            Top = 128;
+            Top = 130;
             Shape = BlockShape.Decal;
             Orientable = true;
-            ShowInEditor = true;
+            ShowInEditor = false;
         }
 
         public override bool CanCompose(OrientedBlock Onto, Direction MyOrientation)
         {
             var top = Onto.Template.GetTopOfComposite(Onto.Orientation);
-           
-            if (top.Template is Track)
+            if (Object.ReferenceEquals(top.Template, this) && top.Orientation ==
+                Directions.Rotate(Directions.Rotate(MyOrientation)))
                 return true;
-    
+
             return base.CanCompose(Onto, MyOrientation);
         }
 
         public override OrientedBlock Compose(OrientedBlock With, Direction MyOrientation, BlockSet TemplateSet)
         {
             var top = With.Template.GetTopOfComposite(With.Orientation);
-
-            if (top.Template is Track)
+            if (Object.ReferenceEquals(top.Template, this) && top.Orientation ==
+                Directions.Rotate(Directions.Rotate(MyOrientation)))
             {
                 var sansTop = With.Template.SansTopOfComposite(With.Orientation);
-                if (top.Orientation != MyOrientation && top.Orientation != Directions.Rotate(Directions.Rotate(MyOrientation)))
-                    return new OrientedBlock
+                return new OrientedBlock
+                {
+                    Template = sansTop.Template.ComposeWith(sansTop.Orientation, new OrientedBlock
                     {
-                        Template = sansTop.Template.ComposeWith(sansTop.Orientation, new OrientedBlock
-                        {
-                            Template = TemplateSet.Templates["Junction"],
-                            Orientation = Direction.North
-                        }),
-                        Orientation = Direction.North
-                    };
-                else
-                    return With;
+                        Template = TemplateSet.Templates["DualOuterMediumCurve"],
+                        Orientation = MyOrientation
+                    }),
+                    Orientation = Direction.North
+                };
             }
 
             return base.Compose(With, MyOrientation, TemplateSet);

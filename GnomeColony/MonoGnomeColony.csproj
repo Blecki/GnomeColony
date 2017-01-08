@@ -58,15 +58,28 @@
     <ApplicationIcon>Icon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Game\Blocks\BlockButton.cs" />
     <Compile Include="Game\Blocks\OrientedBlock.cs" />
     <Compile Include="Game\Blocks\Templates\Grass\GrassHalfSlopeHigh.cs" />
     <Compile Include="Game\Blocks\Templates\Grass\GrassSlope.cs" />
     <Compile Include="Game\Blocks\Templates\Grass\GrassHalfSlopeLow.cs" />
+    <Compile Include="Game\Blocks\Templates\Track\DualOuterMediumCurve.cs" />
+    <Compile Include="Game\Blocks\Templates\Track\DualSmallCurve0_1.cs" />
+    <Compile Include="Game\Blocks\Templates\Track\RightSwitchParallel.cs" />
+    <Compile Include="Game\Blocks\Templates\Track\LeftSwitchParallel.cs" />
+    <Compile Include="Game\Blocks\Templates\Track\LeftGentleDivert.cs" />
+    <Compile Include="Game\Blocks\Templates\Track\RightGentleDivert.cs" />
+    <Compile Include="Game\Blocks\Templates\Track\RightSwitchOpen1.cs" />
+    <Compile Include="Game\Blocks\Templates\Track\RightSwitchOpen0.cs" />
+    <Compile Include="Game\Blocks\Templates\Track\LeftSwitchOpen1.cs" />
+    <Compile Include="Game\Blocks\Templates\Track\MediumCurve0_0.cs" />
+    <Compile Include="Game\Blocks\Templates\Track\MediumCurve1_0.cs" />
+    <Compile Include="Game\Blocks\Templates\Track\LeftSwitchOpen0.cs" />
+    <Compile Include="Game\Blocks\Templates\Track\MediumCurve1_1.cs" />
     <Compile Include="Game\Blocks\Templates\Track\TrackBase.cs" />
-    <Compile Include="Game\Blocks\Templates\Track\TrackSmallJunction.cs" />
-    <Compile Include="Game\Blocks\Templates\Track\TrackSmallCurve.cs" />
-    <Compile Include="Game\Blocks\Templates\Track\TrackMediumCurve.cs" />
-    <Compile Include="Game\Blocks\Templates\MultiDirt.cs" />
+    <Compile Include="Game\Blocks\Templates\Track\Junction.cs" />
+    <Compile Include="Game\Blocks\Templates\Track\SmallCurve.cs" />
+    <Compile Include="Game\Blocks\Templates\Track\MediumCurve.cs" />
     <Compile Include="Game\Blocks\Templates\Track\Track.cs" />
     <Compile Include="Game\Blocks\Templates\Dirt.cs" />
     <Compile Include="Game\Blocks\Templates\Grass\GrassHighSlab.cs" />
@@ -144,7 +157,7 @@
     <Compile Include="Gem\Render\RenderContext.cs" />
     <Compile Include="Game\TileNames.cs" />
     <Compile Include="Game\Blocks\BlockTemplate.cs" />
-    <Compile Include="Game\CellLink.cs" />
+    <Compile Include="Game\Directions.cs" />
     <Compile Include="Game\Coordinate.cs" />
     <Compile Include="Game\TileSheet.cs" />
     <Compile Include="Game\CellGrid.cs" />

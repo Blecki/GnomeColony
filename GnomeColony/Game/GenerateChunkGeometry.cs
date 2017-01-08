@@ -9,7 +9,7 @@ namespace Game
 {
     public static partial class Generate
     {
-        private enum BlockFaceDirection
+        public enum BlockFaceDirection
         {
             Nonspecific,
             Up,
@@ -59,14 +59,14 @@ namespace Game
             }
         }
 
-        private class BlockFace
+        public class BlockFace
         {
             public BlockFaceDirection Direction;
             public Vector3 Normal;
             public Gem.Geo.Mesh Mesh;
         }
 
-        private class BlockShapeTemplate
+        public class BlockShapeTemplate
         {
             public Gem.Geo.Mesh TopFace;
             public List<BlockFace> Faces;
@@ -138,6 +138,12 @@ namespace Game
 
                 r.TopFace = Gem.Geo.Gen.Merge(r.Faces.Where(f => NormalOfFirstFace(f.Mesh).Z > 0.25f).Select(f => f.Mesh).ToArray());
 
+                Gem.Geo.Gen.MorphEx(r.TopFace, (v) =>
+                {
+                    v.TextureCoordinate = new Vector2(v.Position.X + 0.5f, v.Position.Y + 0.5f);
+                    return v;
+                });
+
                 l.Add(r);
             }
 
@@ -194,10 +200,36 @@ namespace Game
             }
         }
 
-        private static BlockShapeTemplate GetShapeTemplate(BlockShape Shape, int Orientation)
+        public static BlockShapeTemplate GetShapeTemplate(BlockShape Shape, int Orientation)
         {
             InitializeStaticData();
             return ShapeTemplates[Shape][Orientation];
+        }
+
+        public static IEnumerable<Gem.Geo.Mesh> EnumerateFaceMeshes(OrientedBlock Block)
+        {
+            if (Block.Template.Shape == BlockShape.Combined)
+            {
+                var decalTarget = Block.Template.CompositeBlocks[0];
+                foreach (var mesh in Block.Template.CompositeBlocks.SelectMany(c => EnumerateFaceMeshes(c, decalTarget)))
+                    yield return mesh;
+            }
+            else
+                foreach (var mesh in EnumerateFaceMeshes(Block, null))
+                    yield return mesh;
+        }
+
+        public static IEnumerable<Gem.Geo.Mesh> EnumerateFaceMeshes(OrientedBlock Block, OrientedBlock DecalTarget)
+        {
+            if (Block.Template.Shape == BlockShape.Combined) throw new InvalidOperationException();
+            if (Block.Template.Shape == BlockShape.Decal)
+            {
+                yield return Gem.Geo.Gen.TransformCopy(GetTopFace(DecalTarget),
+                    Matrix.CreateTranslation(0.0f, 0.0f, 0.05f));
+            }
+            else
+                foreach (var mesh in GetShapeTemplate(Block.Template.Shape, (int)Block.Orientation).Faces.Select(f => f.Mesh))
+                    yield return mesh;
         }
                 
         private static bool CoincidentVertex(Gem.Geo.Mesh M, Vector3 V)
@@ -237,21 +269,25 @@ namespace Game
 
         private static void GenerateCellGeometry(List<Gem.Geo.Mesh> Into, CellGrid Grid, BlockSet Blocks, OrientedBlock cell, int X, int Y, int Z)
         {
+            if (cell.Offset.X != X || cell.Offset.Y != Y || cell.Offset.Z != Z) throw new InvalidOperationException();
+
             if (cell.Template != null)
             {
                 if (cell.Template.Shape == BlockShape.Combined)
                 {
+                    if (cell.Orientation != Direction.North) throw new InvalidOperationException();
+
                     var decalTarget = new OrientedBlock
                     {
                         Template = cell.Template.CompositeBlocks[0].Template,
-                        Orientation = CellLink.Add(cell.Orientation, cell.Template.CompositeBlocks[0].Orientation)
+                        Orientation = Directions.Add(cell.Orientation, cell.Template.CompositeBlocks[0].Orientation)
                     };
 
                     foreach (var subBlock in cell.Template.CompositeBlocks)
                         GenerateSubCellGeometry(Into, Grid, Blocks, new OrientedBlock
                             {
                                 Template = subBlock.Template,
-                                Orientation = CellLink.Add(cell.Orientation, subBlock.Orientation)
+                                Orientation = Directions.Add(cell.Orientation, subBlock.Orientation)
                             },
                             decalTarget, new Coordinate(X, Y, Z));
                 }
@@ -266,8 +302,7 @@ namespace Game
             List<Gem.Geo.Mesh> Into, 
             CellGrid Grid, 
             BlockSet Blocks, 
-            OrientedBlock Block,
-            Coordinate Location)
+            OrientedBlock Block)
         {
             if (Block.Template != null)
             {
@@ -276,20 +311,20 @@ namespace Game
                     var decalTarget = new OrientedBlock
                     {
                         Template = Block.Template.CompositeBlocks[0].Template,
-                        Orientation = CellLink.Add(Block.Orientation, Block.Template.CompositeBlocks[0].Orientation)
+                        Orientation = Directions.Add(Block.Orientation, Block.Template.CompositeBlocks[0].Orientation)
                     };
 
                     foreach (var subBlock in Block.Template.CompositeBlocks)
                         GenerateSubCellGeometry(Into, Grid, Blocks, new OrientedBlock
                         {
                             Template = subBlock.Template,
-                            Orientation = CellLink.Add(Block.Orientation, subBlock.Orientation)
+                            Orientation = Directions.Add(Block.Orientation, subBlock.Orientation)
                         },
-                            decalTarget, Location);
+                            decalTarget, Block.Offset);
                 }
                 else
                 {
-                    GenerateSubCellGeometry(Into, Grid, Blocks, Block, null, Location);
+                    GenerateSubCellGeometry(Into, Grid, Blocks, Block, null, Block.Offset);
                 }
             }
         }
@@ -322,7 +357,7 @@ namespace Game
 
             var copy = Gem.Geo.Gen.Copy(topMesh);
 
-            var orientationMatrix = Matrix.CreateRotationZ(((float)Math.PI / 2) * (int)Decal.Orientation);
+            var orientationMatrix = Matrix.CreateRotationZ(((float)-Math.PI / 2) * (int)Decal.Orientation);
 
             Gem.Geo.Gen.MorphEx(copy, (v) =>
             {
@@ -339,9 +374,9 @@ namespace Game
                 Matrix.CreateTranslation(OntoPosition.X + 0.5f, OntoPosition.Y + 0.5f, OntoPosition.Z + 0.55f));
 
             Into.Add(copy);
-        }        
+        }
 
-        private static void GenerateBlockGeometry(List<Gem.Geo.Mesh> Into, CellGrid Grid, BlockSet Blocks, BlockTemplate Block, CellLink.Directions BlockOrientation, int x, int y, int z)
+        private static void GenerateBlockGeometry(List<Gem.Geo.Mesh> Into, CellGrid Grid, BlockSet Blocks, BlockTemplate Block, Direction BlockOrientation, int x, int y, int z)
         {
             var shapeTemplate = GetShapeTemplate(Block.Shape, (int)BlockOrientation);
 
@@ -397,7 +432,7 @@ namespace Game
                 GenerateHangingGeometry(Into, Grid, Blocks, Block, BlockOrientation, x, y, z);
         }
 
-        private static void GenerateHangingGeometry(List<Gem.Geo.Mesh> Into, CellGrid Grid, BlockSet Blocks, BlockTemplate Block, CellLink.Directions BlockOrientation, int x, int y, int z)
+        private static void GenerateHangingGeometry(List<Gem.Geo.Mesh> Into, CellGrid Grid, BlockSet Blocks, BlockTemplate Block, Direction BlockOrientation, int x, int y, int z)
         {
             var hangingBlockTemplate = Blocks.Templates[Block.Hanging];
             var shapeTemplate = GetShapeTemplate(hangingBlockTemplate.Shape, (int)BlockOrientation);

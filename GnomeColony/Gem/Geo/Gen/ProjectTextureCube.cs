@@ -51,8 +51,8 @@ namespace Gem.Geo
                 {
                     origin = Vector3.Zero,
                     normal = new Vector3(0, 0, -1),
-                    uAxis = new Vector3(1, 0, 0),
-                    vAxis = new Vector3(0, 1, 0)
+                    uAxis = new Vector3(-1, 0, 0),
+                    vAxis = new Vector3(0, -1, 0)
                 };
 
                 cubePlanes[1] = new TexturePlane

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Xna.Framework;
 
 namespace Game
 {
@@ -20,39 +21,44 @@ namespace Game
     
     public class PhantomBlock
     {
-        public BlockTemplate Block;
-        public Coordinate Offset = new Coordinate(0, 0, 0);
-        public CellLink.Directions Orientation = CellLink.Directions.North;
+        public OrientedBlock Block;
         public bool PlacementAllowed = false;
         public bool WillCombine = false;
-        public Coordinate FinalPosition;
         public OrientedBlock TargetCell;
-        public BlockTemplate FinalBlock;
+        public Gem.Geo.Mesh PreviewMesh;
 
         public PhantomBlock() { }
 
         public PhantomBlock(OrientedBlock Source)
         {
-            this.Block = Source.Template;
-            this.Offset = Source.Offset;
-            this.Orientation = Source.Orientation;
+            this.Block = new OrientedBlock(Source);
         }
+    }
 
-        public void Rotate(int Steps)
+    public struct OrientedTile
+    {
+        public int Tile;
+        public Direction Orientation;
+
+        public OrientedTile(int Tile, Direction Orientation = Direction.North)
         {
-            while (Steps > 0)
-            {
-                Offset = new Coordinate(Offset.Y, -Offset.X, Offset.Z);
-                Steps -= 1;
-                Orientation = CellLink.Rotate(Orientation);
-            }
+            this.Tile = Tile;
+            this.Orientation = Orientation;
         }
+    }
+
+    [Flags]
+    public enum BlockPlacementType
+    {
+        OrientToHoverFace = 1,
+        Combine = 2
     }
 
     public class BlockTemplate
     {
         public String Name;
-        public int Preview = 1;
+        public List<OrientedTile> PreviewTiles;
+        public Point PreviewDimensions = new Point(1, 1);
         public int Top = 1;
         public int NorthSide = -1;
         public int SouthSide = -1;
@@ -63,68 +69,87 @@ namespace Game
         public BlockShape Shape;
 
         public bool Orientable = false;
+        public BlockPlacementType PlacementType = BlockPlacementType.OrientToHoverFace;
 
         public List<OrientedBlock> CompositeBlocks;
 
         public bool ShowInEditor = true;
 
-        public virtual bool CanComposite(OrientedBlock Onto, CellLink.Directions MyOrientation) 
+        public virtual bool CanCompose(OrientedBlock Onto, Direction MyOrientation) 
         { 
             return false; 
         }
 
         public virtual OrientedBlock Compose(
-            OrientedBlock With, 
-            CellLink.Directions MyOrientation,
+            OrientedBlock With,
+            Direction MyOrientation,
             BlockSet TemplateSet) 
         {
-            return new OrientedBlock
-                {
-                    Template = this,
-                    Orientation = MyOrientation
-                };
+            throw new InvalidOperationException();
         }
 
         public virtual void Initialize(BlockSet BlockSet) { }
 
-        public OrientedBlock GetTopOfComposite()
+        public OrientedBlock GetTopOfComposite(Direction BaseOrientation)
         {
             if (Shape == BlockShape.Combined)
+            {
+                if (BaseOrientation != Direction.North) throw new InvalidOperationException();
                 return CompositeBlocks[CompositeBlocks.Count - 1];
+            }
             else
                 return new OrientedBlock
                 {
                     Template = this,
                     Offset = new Coordinate(0, 0, 0),
-                    Orientation = CellLink.Directions.North
+                    Orientation = BaseOrientation
                 };
         }
 
-        public OrientedBlock SansTopOfComposite()
+        public OrientedBlock GetBottomOfComposite(Direction BaseOrientation)
         {
             if (Shape == BlockShape.Combined)
             {
-                if (CompositeBlocks.Count == 2)
-                    return new OrientedBlock { Template = CompositeBlocks[0].Template, Orientation = CompositeBlocks[0].Orientation };
-                else
+                if (BaseOrientation != Direction.North) throw new InvalidOperationException();
+                return CompositeBlocks[0];
+            }
+            else
+                return new OrientedBlock
                 {
-                    var r = new OrientedBlock
+                    Template = this,
+                    Offset = new Coordinate(0, 0, 0),
+                    Orientation = BaseOrientation
+                };
+        }
+
+        public OrientedBlock SansTopOfComposite(Direction BaseOrientation)
+        {
+            if (Shape == BlockShape.Combined)
+            {
+                if (BaseOrientation != Direction.North) throw new InvalidOperationException();
+
+                if (CompositeBlocks.Count == 2)
+                    return new OrientedBlock 
+                    { 
+                        Template = CompositeBlocks[0].Template,
+                        Orientation = CompositeBlocks[0].Orientation
+                    };
+                else
+                    return new OrientedBlock
                     {
                         Template = new BlockTemplate
                             {
-                                Shape = BlockShape.Combined
+                                Shape = BlockShape.Combined,
+                                CompositeBlocks = CompositeBlocks.Take(CompositeBlocks.Count - 1).ToList()
                             },
-                        Orientation = CellLink.Directions.North
+                        Orientation = Direction.North
                     };
-                    r.Template.CompositeBlocks.AddRange(CompositeBlocks.Take(CompositeBlocks.Count - 1));
-                    return r;
-                }
             }
             else
-                return new OrientedBlock { Template = this, Orientation = CellLink.Directions.North };
+                return new OrientedBlock { Template = this, Orientation = BaseOrientation };
         }
 
-        public BlockTemplate ComposeWith(CellLink.Directions MyOrientation, OrientedBlock NewTop)
+        public BlockTemplate ComposeWith(Direction MyOrientation, OrientedBlock NewTop)
         {
             if (Shape == BlockShape.Combined)
             {
@@ -134,8 +159,6 @@ namespace Game
                 };
 
                 r.CompositeBlocks.AddRange(CompositeBlocks);
-                foreach (var sub in r.CompositeBlocks)
-                    sub.Orientation = CellLink.Add(MyOrientation, sub.Orientation);
                 r.CompositeBlocks.Add(new OrientedBlock
                     {
                         Template = NewTop.Template,

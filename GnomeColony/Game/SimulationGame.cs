@@ -119,10 +119,10 @@ namespace Game
             foreach (var template in Sim.Blocks.Templates.Where(t => t.Value.ShowInEditor))
             {
                 var lambdaTemplate = template;
-                BlockChooser.AddChild(new Gum.Widget
+                BlockChooser.AddChild(new BlockButton
                 {
                     Rect = new Rectangle(x, 16, 32, 32),
-                    Background = new Gum.TileReference("tiles", template.Value.Preview),
+                    Template = template.Value,
                     OnClick = (sender, args) =>
                         {
                             Main.GuiRoot.RootItem.RemoveChild(BlockChooser);
@@ -184,6 +184,10 @@ namespace Game
                     {
                         HoverNode.SetHover();
                         SelectedTool.Hover(Sim, HoverNode as RenderModule.WorldSceneNode);
+                    }
+                    else
+                    {
+                        SelectedTool.UnHover();
                     }
                 }
             }

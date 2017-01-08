@@ -10,31 +10,28 @@ namespace Game.Templates
     {
         public GrassHighSlab()
         {
-            Preview = 40;
+            PreviewTiles = HelperExtensions.MakeList(new OrientedTile(40, Direction.North));
             Top = 33;
             NorthSide = 40;
             Bottom = 34;
             Shape = BlockShape.UpperSlab;
             //Hanging = "HangingVines";
+            PlacementType = BlockPlacementType.Combine | BlockPlacementType.OrientToHoverFace;
         }
 
-        public override bool CanComposite(OrientedBlock Onto, CellLink.Directions MyOrientation)
+        public override bool CanCompose(OrientedBlock Onto, Direction MyOrientation)
         {
             if (Onto.Template.Shape == BlockShape.LowerSlab)
                 return true;
             return false;
         }
 
-        public override OrientedBlock Compose(OrientedBlock With, CellLink.Directions MyOrientation, BlockSet TemplateSet)
+        public override OrientedBlock Compose(OrientedBlock With, Direction MyOrientation, BlockSet TemplateSet)
         {
             return new OrientedBlock
             {
-                Template = With.Template.ComposeWith(With.Orientation, new OrientedBlock
-                {
-                    Template = this,
-                    Orientation = MyOrientation
-                }),
-                Orientation = CellLink.Directions.North
+                Template = TemplateSet.Templates["Grass"],
+                Orientation = Direction.North
             };
         }
     }

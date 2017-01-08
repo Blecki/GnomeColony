@@ -10,7 +10,7 @@ namespace Game.Templates
     {
         public Dirt()
         {
-            Preview = 34;
+            PreviewTiles = HelperExtensions.MakeList(new OrientedTile(34, Direction.North));
             Top = 34;
             NorthSide = 34;
             Bottom = 34;

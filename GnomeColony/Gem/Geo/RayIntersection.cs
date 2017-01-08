@@ -80,5 +80,43 @@ namespace Gem.Geo
 
             return closestIntersection;
         }
+
+        public RayIntersectionResult RayIntersection(Ray ray, Vector3 Offset)
+        {
+            var closestIntersection = new RayIntersectionResult { Distance = float.PositiveInfinity, Intersects = false };
+
+            for (int vindex = 0; vindex < indicies.Length; vindex += 3)
+            {
+                var p = indicies.Skip(vindex).Take(3).Select(i => verticies[i].Position + Offset).ToArray();
+                var plane = new Plane(p[0], p[1], p[2]);
+                var intersectionDistance = ray.Intersects(plane);
+                if (intersectionDistance.HasValue && intersectionDistance.Value < closestIntersection.Distance)
+                {
+                    var intersectionPoint = ray.Position + (ray.Direction * intersectionDistance.Value);
+                    if (IsPointOnFace(intersectionPoint, p))
+                    {
+                        closestIntersection.Distance = intersectionDistance.Value;
+                        closestIntersection.Intersects = true;
+
+                        var tc = indicies.Skip(vindex).Take(3).Select(i => verticies[i].TextureCoordinate).ToArray();
+
+                        var bv = p.Select(v => v - intersectionPoint).ToArray();
+                        var area = Vector3.Cross(p[0] - p[1], p[0] - p[2]).Length();
+                        var baryArea = new float[] {
+                            Vector3.Cross(bv[1], bv[2]).Length() / area,
+                            Vector3.Cross(bv[2], bv[0]).Length() / area,
+                            Vector3.Cross(bv[0], bv[1]).Length() / area
+                        };
+
+                        var uv = (tc[0] * baryArea[0]) + (tc[1] * baryArea[1]) + (tc[2] * baryArea[2]);
+
+                        closestIntersection.UV = uv;
+                    }
+                }
+            }
+
+            return closestIntersection;
+        }
+
     }
 }

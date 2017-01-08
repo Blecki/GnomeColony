@@ -13,17 +13,23 @@ namespace Game.Creative
     {
         public BlockTemplate SelectedBlock = null;
         public List<PhantomBlock> Placements = null;
-        public CellLink.Directions BaseOrientation = CellLink.Directions.North;
+        public Direction BaseOrientation = Direction.North;
         
         public Build(BlockTemplate SelectedBlock)
         {
             this.SelectedBlock = SelectedBlock;
+
+            this.HiliteFaces = 0;
+            if (SelectedBlock.PlacementType.HasFlag(BlockPlacementType.OrientToHoverFace))
+                this.HiliteFaces = HiliteFace.Sides | HiliteFace.Top;
+            else if (SelectedBlock.PlacementType.HasFlag(BlockPlacementType.Combine))
+                this.HiliteFaces |= HiliteFace.Top;
         }
 
         public override void OnSelected(SimulationGame Game)
         {
             Game.Input.BindAction("ROTATE-BLOCK", () => 
-                BaseOrientation = CellLink.Rotate(BaseOrientation));
+                BaseOrientation = Directions.Rotate(BaseOrientation));
         }
 
         public override void OnDeselected(SimulationGame Game)
@@ -38,56 +44,92 @@ namespace Game.Creative
 
             foreach (var placement in Placements)
             {
-                placement.TargetCell.Template = placement.FinalBlock;
-                Sim.SetUpdateFlag(placement.FinalPosition);
-                placement.TargetCell.Orientation = placement.Orientation;
+                placement.TargetCell.CopyFrom(placement.Block);
+                Sim.SetUpdateFlag(placement.Block.Offset);
             }
 
             Placements = null;
         }
-        
-        private void CheckPlacement(PhantomBlock Block, Simulation Sim, WorldSceneNode WorldNode)
+
+        private enum PlacementAttemptResult
         {
-            // Todo: Lining a decal pattern up with a decal that already exists is okay.
-            // Todo: Prevent 'floating' decals.
-            // Check for combination.
-            var actualHover = WorldNode.HoverBlock + Block.Offset;
-            if (Sim.World.Check(actualHover))
+            Success,
+            TriedToCombineWithNull,
+            BlockedFromAbove,
+            Failure
+        }
+
+        private PlacementAttemptResult AttemptCombinedPlacement(PhantomBlock Phantom, Coordinate At, Simulation Sim)
+        {
+            if (!Sim.World.Check(At)) return PlacementAttemptResult.Failure;
+
+            var underBlock = Sim.World.CellAt(At);
+            if (underBlock.Template == null) return PlacementAttemptResult.TriedToCombineWithNull;
+            if (!Phantom.Block.Template.CanCompose(underBlock, Phantom.Block.Orientation))
+                return PlacementAttemptResult.Failure;
+
+            var overBlockCoord = At + new Coordinate(0, 0, 1);
+            if (Sim.World.Check(overBlockCoord))
             {
-                var underBlock = Sim.World.CellAt(actualHover);
-                if (Block.Block.CanComposite(
-                    new OrientedBlock(underBlock.Template, underBlock.Orientation),
-                    Block.Orientation))
+                var underShape = underBlock.Template.GetBottomOfComposite(underBlock.Orientation).Template.Shape;
+                if (underShape == BlockShape.Cube || underShape == BlockShape.UpperSlab)
                 {
-                    Block.PlacementAllowed = true;
-                    Block.WillCombine = true;
-                    Block.FinalPosition = actualHover;
-                    var composedBlock = Block.Block.Compose(
-                        new OrientedBlock(underBlock.Template, underBlock.Orientation),
-                        Block.Orientation, Sim.Blocks);
-                    Block.FinalBlock = composedBlock.Template;
-                    Block.Orientation = composedBlock.Orientation;
-                    Block.TargetCell = underBlock;
-                    return;
+                    var overBlock = Sim.World.CellAt(overBlockCoord);
+                    if (overBlock.Template != null && overBlock.Template.GetBottomOfComposite(overBlock.Orientation).Template.Shape != BlockShape.UpperSlab)
+                        return PlacementAttemptResult.BlockedFromAbove;
                 }
             }
 
-            var actualPlacement = WorldNode.AdjacentHoverBlock + Block.Offset;
-            if (Sim.World.Check(actualPlacement))
+            Phantom.PlacementAllowed = true;
+            Phantom.WillCombine = true;
+            var composedBlock = Phantom.Block.Template.Compose(
+                underBlock,
+                Phantom.Block.Orientation, Sim.Blocks);
+            Phantom.Block = composedBlock;
+            Phantom.Block.Offset = At;
+            Phantom.TargetCell = underBlock;
+
+            return PlacementAttemptResult.Success;
+        }
+
+        private void CheckPlacement(PhantomBlock Phantom, Simulation Sim, WorldSceneNode WorldNode)
+        {
+            Phantom.PlacementAllowed = false;
+            
+
+            if (Phantom.Block.Template.PlacementType.HasFlag(BlockPlacementType.Combine))
             {
-                var destinationCell = Sim.World.CellAt(actualPlacement);
-                if (destinationCell.Template == null)
+                // Todo: Lining a decal pattern up with a decal that already exists is okay.
+                // Todo: Check connectivity of decal patterns.
+                var attemptResult = AttemptCombinedPlacement(Phantom, WorldNode.HoverBlock + Phantom.Block.Offset, Sim);
+                if (attemptResult == PlacementAttemptResult.BlockedFromAbove)
+                    AttemptCombinedPlacement(Phantom, WorldNode.HoverBlock + Phantom.Block.Offset + new Coordinate(0, 0, 1), Sim);
+                if (attemptResult == PlacementAttemptResult.TriedToCombineWithNull)
+                    AttemptCombinedPlacement(Phantom, WorldNode.HoverBlock + Phantom.Block.Offset + new Coordinate(0, 0, -1), Sim);
+
+                if (Phantom.PlacementAllowed) return;
+            }
+            
+            if (Phantom.Block.Template.PlacementType.HasFlag(BlockPlacementType.OrientToHoverFace))
+            {
+                // Todo: Can't place if below has a decal.
+                var actualPlacement = WorldNode.AdjacentHoverBlock + Phantom.Block.Offset;
+                if (Sim.World.Check(actualPlacement))
                 {
-                    Block.PlacementAllowed = true;
-                    Block.WillCombine = false;
-                    Block.FinalPosition = actualPlacement;
-                    Block.TargetCell = destinationCell;
-                    Block.FinalBlock = Block.Block;
-                    return;
+                    var destinationCell = Sim.World.CellAt(actualPlacement);
+                    if (destinationCell.Template == null)
+                    {
+                        Phantom.PlacementAllowed = true;
+                        Phantom.WillCombine = false;
+                        Phantom.Block.Offset = actualPlacement;
+                        Phantom.TargetCell = destinationCell;
+                        return;
+                    }
                 }
             }
 
-            Block.PlacementAllowed = false;
+            Phantom.Block.Offset = WorldNode.AdjacentHoverBlock + Phantom.Block.Offset;
+            Phantom.WillCombine = false;
         }
 
         public override void Hover(Simulation Sim, WorldSceneNode WorldNode)
@@ -99,26 +141,31 @@ namespace Game.Creative
             if (SelectedBlock.Shape == BlockShape.Combined)
                 Placements.AddRange(SelectedBlock.CompositeBlocks.Select(b => new PhantomBlock(b)));
             else
-                Placements.Add(new PhantomBlock { Block = SelectedBlock });
+                Placements.Add(new PhantomBlock { Block = new OrientedBlock(SelectedBlock, Direction.North) });
 
             // Orient placement to hover face if block is orientable.
-            if (SelectedBlock.Orientable)
+            if (SelectedBlock.PlacementType == BlockPlacementType.OrientToHoverFace && SelectedBlock.Orientable)
             {
-                var orientation = CellLink.DeriveDirectionFromNormal(WorldNode.HoverNormal);
+                var orientation = Directions.DeriveDirectionFromNormal(WorldNode.HoverNormal);
                 foreach (var subBlock in Placements)
-                    subBlock.Rotate((int)orientation);
+                    subBlock.Block.Rotate((int)orientation);
             }
 
             // Orient placement to hotkey orientation
             foreach (var subBlock in Placements)
-                subBlock.Rotate((int)BaseOrientation);
+                subBlock.Block.Rotate((int)BaseOrientation);
 
             // Try each placement. If they are all allowed, create preview.
             foreach (var subBlock in Placements)
                 CheckPlacement(subBlock, Sim, WorldNode);
 
-            if (Placements.Count(p => p.PlacementAllowed) == Placements.Count)
+            //if (Placements.Count(p => p.PlacementAllowed) == Placements.Count)
                 WorldNode.SetPhantomPlacements(Placements);
+        }
+
+        public override void UnHover()
+        {
+            Placements = null;
         }
     }
 }

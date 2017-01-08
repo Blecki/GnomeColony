@@ -4,17 +4,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Game.Templates
+namespace Game.Templates.Track
 {
-    public class TrackSmallCurve : TrackBase
+    public class DualOuterMediumCurve : TrackBase
     {
-        public TrackSmallCurve()
+        public DualOuterMediumCurve()
         {
-            Preview = 160;
-            Top = 160;
+            Top = 194;
             Shape = BlockShape.Decal;
             Orientable = true;
-            ShowInEditor = true;
+            ShowInEditor = false;
         }
     }
 }

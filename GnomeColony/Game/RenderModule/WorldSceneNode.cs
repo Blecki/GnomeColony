@@ -28,15 +28,20 @@ namespace Game.RenderModule
         private Gem.Geo.Mesh HiliteQuad;
 
         public Gem.Geo.Mesh PhantomPlacementMesh = null;
+        public Vector3 PhantomColor = new Vector3(1, 1, 1);
 
         public void SetPhantomPlacements(List<PhantomBlock> Phantoms)
         {
+            if (Phantoms.Count(p => p.PlacementAllowed) == Phantoms.Count)
+                PhantomColor = new Vector3(1, 1, 1);
+            else
+                PhantomColor = new Vector3(1, 0, 0);
+
             PhantomPlacementMesh = Gem.Geo.Gen.Merge(
                 Phantoms.Select(p =>
                 {
                     var meshList = new List<Gem.Geo.Mesh>();
-                    Generate.GenerateCellGeometry(meshList, World, Blocks,
-                        new OrientedBlock(p.FinalBlock, p.Orientation), p.FinalPosition);
+                    Generate.GenerateCellGeometry(meshList, World, Blocks, p.Block);
                     var r = Gem.Geo.Gen.Merge(meshList.ToArray());
                     Gem.Geo.Gen.MorphEx(r, (v) =>
                         {
@@ -55,6 +60,8 @@ namespace Game.RenderModule
         public Coordinate HoverBlock { get; private set; }
         public Coordinate AdjacentHoverBlock { get; private set; }
         public Vector3 HoverNormal { get; private set; }
+        public Vector3 RealHoverNormal { get; private set; }
+        public Vector3 HitLocation { get; private set; }
 
         private BlockSet Blocks;
 
@@ -101,6 +108,7 @@ namespace Game.RenderModule
 
         public override void Draw(Gem.Render.RenderContext Context)
         {
+            Context.Device.DepthStencilState = DepthStencilState.Default;
             Context.Color = Vector3.One;
             Context.Texture = Blocks.Tiles.Texture;
             Context.NormalMap = Context.NeutralNormals;
@@ -122,15 +130,45 @@ namespace Game.RenderModule
                 if (PhantomPlacementMesh != null)
                 {
                     Context.Alpha = 0.75f;
+                    Context.Color = PhantomColor;
                     Context.ApplyChanges();
                     Context.Draw(PhantomPlacementMesh);
                     PhantomPlacementMesh = null;
                 }
 
+                Context.Device.DepthStencilState = DepthStencilState.None;
                 Context.LightingEnabled = false;
                 Context.UVTransform = Blocks.Tiles.TileMatrix(HiliteTexture);
                 Context.ApplyChanges();
                 Context.Draw(HiliteQuad);
+
+                Context.Texture = Context.White;
+
+                Context.Color = new Vector3(1,0,0);
+                Context.ApplyChanges();
+                Context.Device.DrawUserPrimitives(PrimitiveType.LineStrip, new Gem.Geo.Vertex[]
+                {
+                    new Gem.Geo.Vertex {
+                        Position = HitLocation
+                    },
+
+                    new Gem.Geo.Vertex {
+                        Position = HitLocation + RealHoverNormal
+                    }
+                }, 0, 1);
+
+                Context.Color = new Vector3(1, 0, 0);
+                Context.ApplyChanges();
+                Context.Device.DrawUserPrimitives(PrimitiveType.LineStrip, new Gem.Geo.Vertex[]
+                {
+                    new Gem.Geo.Vertex {
+                        Position = HitLocation
+                    },
+
+                    new Gem.Geo.Vertex {
+                        Position = HitLocation + HoverNormal
+                    }
+                }, 0, 1);
             }
         }
 
@@ -145,29 +183,57 @@ namespace Game.RenderModule
                 if (!World.check(x, y, z)) return false;
                 if (World.CellAt(x, y, z).Template == null) return false;
 
-                HiliteQuad = Gem.Geo.Gen.CreateQuad();
+                // Ray intersect cell geometry.
+                var cell = World.CellAt(x, y, z);
+                Gem.Geo.Mesh.RayIntersectionResult closestIntersection = null;
+                Gem.Geo.Mesh hitFace = null;
 
-                // Align quad with correct face.
-                if (normal.Z < 0) // normal points down. 
-                    Gem.Geo.Gen.Transform(HiliteQuad, Matrix.CreateFromAxisAngle(Vector3.UnitX, Gem.Math.Angle.PI));
-                else if (normal.Z == 0)
-                    Gem.Geo.Gen.Transform(HiliteQuad, Matrix.CreateFromAxisAngle(
-                        Vector3.Cross(-Vector3.UnitZ, normal), -Gem.Math.Angle.PI / 2));
+                foreach (var face in Generate.EnumerateFaceMeshes(cell))
+                {
+                    var rayResult = face.RayIntersection(localMouse, new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
+                    if (rayResult.Intersects)
+                    {
+                        if (closestIntersection == null || (closestIntersection.Intersects && rayResult.Distance < closestIntersection.Distance))
+                        {
+                            hitFace = face;
+                            closestIntersection = rayResult;
+                            RealHoverNormal = -Gem.Geo.Gen.CalculateNormal(face, face.indicies[0], face.indicies[1], face.indicies[2]);
+                            HitLocation = localMouse.Position + (localMouse.Direction * closestIntersection.Distance);
+                        }
+                    }
+                }
+                 
+                if (closestIntersection == null) return false;
 
-                // Move quad to center of block.
+                // Must copy... because enumerating the faces did not.
+                HiliteQuad = Gem.Geo.Gen.Copy(hitFace);
                 Gem.Geo.Gen.Transform(HiliteQuad, Matrix.CreateTranslation(x + 0.5f, y + 0.5f, z + 0.5f));
 
-                // Move quad out to correct surface.
-                Gem.Geo.Gen.Transform(HiliteQuad, Matrix.CreateTranslation(normal * 0.52f));
+                //// Align quad with correct face.
+                //if (normal.Z < 0) // normal points down. 
+                //    Gem.Geo.Gen.Transform(HiliteQuad, Matrix.CreateFromAxisAngle(Vector3.UnitX, Gem.Math.Angle.PI));
+                //else if (normal.Z == 0)
+                //    Gem.Geo.Gen.Transform(HiliteQuad, Matrix.CreateFromAxisAngle(
+                //        Vector3.Cross(-Vector3.UnitZ, normal), -Gem.Math.Angle.PI / 2));
 
-                var faceIntersection = HiliteQuad.RayIntersection(localMouse);
-                //if (faceIntersection.Intersects == false) throw new InvalidProgramException();
+                //// Move quad to center of block.
+                //Gem.Geo.Gen.Transform(HiliteQuad, Matrix.CreateTranslation(x + 0.5f, y + 0.5f, z + 0.5f));
 
-                HoverCallback(this, faceIntersection.Distance);
+                //// Move quad out to correct surface.
+                //Gem.Geo.Gen.Transform(HiliteQuad, Matrix.CreateTranslation(normal * 0.52f));
+
+                //var faceIntersection = HiliteQuad.RayIntersection(localMouse);
+                ////if (faceIntersection.Intersects == false) throw new InvalidProgramException();
+
+                //HoverCallback(this, faceIntersection.Distance);
+                HoverCallback(this, closestIntersection.Distance);
 
                 HoverBlock = new Coordinate(x, y, z);
-                AdjacentHoverBlock = new Coordinate((int)(x + normal.X), (int)(y + normal.Y), (int)(z + normal.Z));
-                HoverNormal = normal;
+                HoverNormal = Vector3.Normalize(new Vector3(
+                    (float)Math.Round(RealHoverNormal.X),
+                    (float)Math.Round(RealHoverNormal.Y),
+                    (float)Math.Round(RealHoverNormal.Z)));
+                AdjacentHoverBlock = new Coordinate((int)(x + HoverNormal.X), (int)(y + HoverNormal.Y), (int)(z + HoverNormal.Z));                
 
                 return true;
             });

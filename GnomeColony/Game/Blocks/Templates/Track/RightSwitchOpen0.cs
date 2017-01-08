@@ -4,17 +4,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Game.Templates
+namespace Game.Templates.Track
 {
-    public class TrackSmallJunction : BlockTemplate
+    public class RightSwitchOpen0 : TrackBase
     {
-        public TrackSmallJunction()
+        public RightSwitchOpen0()
         {
-            Preview = 192;
-            Top = 192;
+            Top = 131;
             Shape = BlockShape.Decal;
             Orientable = true;
-            ShowInEditor = true;
+            ShowInEditor = false;
         }
     }
 }

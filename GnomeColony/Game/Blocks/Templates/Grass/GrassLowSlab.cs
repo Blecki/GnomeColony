@@ -10,7 +10,7 @@ namespace Game.Templates
     {
         public GrassLowSlab()
         {
-            Preview = 40;
+            PreviewTiles = HelperExtensions.MakeList(new OrientedTile(40, Direction.North));
             Top = 33;
             NorthSide = 40;
             Bottom = 34;
