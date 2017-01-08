@@ -60,11 +60,14 @@
   <ItemGroup>
     <Compile Include="Game\Blocks\BlockButton.cs" />
     <Compile Include="Game\Blocks\OrientedBlock.cs" />
+    <Compile Include="Game\Blocks\Templates\Grass\HangingVines.cs" />
     <Compile Include="Game\Blocks\Templates\Grass\GrassHalfSlopeHigh.cs" />
     <Compile Include="Game\Blocks\Templates\Grass\GrassSlope.cs" />
     <Compile Include="Game\Blocks\Templates\Grass\GrassHalfSlopeLow.cs" />
     <Compile Include="Game\Blocks\Templates\Track\DualOuterMediumCurve.cs" />
     <Compile Include="Game\Blocks\Templates\Track\DualSmallCurve0_1.cs" />
+    <Compile Include="Game\Blocks\Templates\Track\LeftSwitchCurve.cs" />
+    <Compile Include="Game\Blocks\Templates\Track\RightSwitchCurve.cs" />
     <Compile Include="Game\Blocks\Templates\Track\RightSwitchParallel.cs" />
     <Compile Include="Game\Blocks\Templates\Track\LeftSwitchParallel.cs" />
     <Compile Include="Game\Blocks\Templates\Track\LeftGentleDivert.cs" />

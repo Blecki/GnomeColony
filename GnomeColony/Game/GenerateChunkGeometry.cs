@@ -428,12 +428,20 @@ namespace Game
                 Into.Add(mesh);
             }
 
-            if (!String.IsNullOrEmpty(Block.Hanging) && Grid.check(x, y, z - 1))
+            if (!String.IsNullOrEmpty(Block.Hanging))
                 GenerateHangingGeometry(Into, Grid, Blocks, Block, BlockOrientation, x, y, z);
         }
 
         private static void GenerateHangingGeometry(List<Gem.Geo.Mesh> Into, CellGrid Grid, BlockSet Blocks, BlockTemplate Block, Direction BlockOrientation, int x, int y, int z)
         {
+            // Todo: Use bottom shape is composite.
+            var offset = Block.Shape == BlockShape.UpperSlab ? new Vector3(0, 0, 0.5f) : new Vector3(0, 0, 0);
+            var checkLower = Grid.Check(new Coordinate(x, y, z - 1));
+            if (Block.Shape == BlockShape.UpperSlab)
+                checkLower = false;
+            
+            if (checkLower && Grid.CellAt(x, y, z - 1).Template != null) return;
+
             var hangingBlockTemplate = Blocks.Templates[Block.Hanging];
             var shapeTemplate = GetShapeTemplate(hangingBlockTemplate.Shape, (int)BlockOrientation);
 
@@ -456,8 +464,11 @@ namespace Game
                 if (neighborCell.Template != null) return false;
 
                 // Don't draw fringe if the block next to the fringe is solid.
-                var lowerNeighborCell = Grid.CellAt(neighborCoordinate.X, neighborCoordinate.Y, z - 1);
-                if (lowerNeighborCell.Template != null) return false;
+                if (checkLower)
+                {
+                    var lowerNeighborCell = Grid.CellAt(neighborCoordinate.X, neighborCoordinate.Y, z - 1);
+                    if (lowerNeighborCell.Template != null) return false;
+                }
 
                 return true;
             });
@@ -467,6 +478,7 @@ namespace Game
                 var mesh = Gem.Geo.Gen.Copy(face.Mesh);
                 MorphBlockTextureCoordinates(Blocks.Tiles, hangingBlockTemplate, mesh, (int)BlockOrientation);
                 Gem.Geo.Gen.Transform(mesh, Matrix.CreateTranslation(x + 0.5f, y + 0.5f, z - 0.5f));
+                Gem.Geo.Gen.Transform(mesh, Matrix.CreateTranslation(offset));
                 Into.Add(mesh);
             }
         }

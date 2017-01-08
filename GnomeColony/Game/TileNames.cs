@@ -14,7 +14,7 @@ namespace Game
         public const int TaskMarkerMine = 2;
         public const int TaskMarkerPath = 3;
 
-        public const int HoverHilite = 4;
+        public const int HoverHilite = 2;
         public const int Storehouse = 5;
         public const int Blank = 6;
 

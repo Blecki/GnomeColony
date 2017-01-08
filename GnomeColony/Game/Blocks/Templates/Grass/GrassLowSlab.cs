@@ -15,7 +15,7 @@ namespace Game.Templates
             NorthSide = 40;
             Bottom = 34;
             Shape = BlockShape.LowerSlab;
-            //Hanging = "HangingVines";
+            Hanging = "HangingVines";
         }
     }
 }

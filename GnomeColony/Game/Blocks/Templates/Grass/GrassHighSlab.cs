@@ -10,12 +10,13 @@ namespace Game.Templates
     {
         public GrassHighSlab()
         {
-            PreviewTiles = HelperExtensions.MakeList(new OrientedTile(40, Direction.North));
+            PreviewTiles = HelperExtensions.MakeList(new OrientedTile(37, Direction.North));
             Top = 33;
-            NorthSide = 40;
+            NorthSide = 37;
             Bottom = 34;
             Shape = BlockShape.UpperSlab;
-            //Hanging = "HangingVines";
+
+            Hanging = "HangingVines";
             PlacementType = BlockPlacementType.Combine | BlockPlacementType.OrientToHoverFace;
         }
 
