@@ -16,7 +16,6 @@ namespace Game
         public Main Main { get; set; }
         public Gum.Root GuiRoot;
 
-        protected EpisodeContentManager Content;
         public RenderContext RenderContext { get; private set; }
         public SceneNode HoverNode { get; private set; }
         private Vector2 MousePosition;
@@ -32,8 +31,7 @@ namespace Game
 
         public void Begin()
         {
-            Content = new EpisodeContentManager(Main.EpisodeContent.ServiceProvider, "Content");
-            RenderContext = new RenderContext(Content.Load<Effect>("draw"), Main.GraphicsDevice);
+            RenderContext = new RenderContext(Main.Content.Load<Effect>("Content/draw"), Main.GraphicsDevice);
             Camera = new Gem.Render.FreeCamera(new Vector3(0, 0, 0), Vector3.UnitY, Vector3.UnitZ, Main.GraphicsDevice.Viewport);
             Input = new Input(Main.InputMapper);
             GuiRoot = new Gum.Root(new Point(640, 480), Main.GuiSkin);

@@ -5,7 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using Gem;
-using Game.RenderModule;
 
 namespace Game.Creative
 {

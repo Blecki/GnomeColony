@@ -15,7 +15,6 @@ namespace Gem
         private IScreen activeGame = null;
         private IScreen nextGame = null;
         public IScreen Game { get { return activeGame; } set { nextGame = value; } }
-		public EpisodeContentManager EpisodeContent;
 
         public Gum.RenderData GuiSkin;
         GraphicsDeviceManager graphics;
@@ -33,9 +32,7 @@ namespace Gem
 
         protected override void LoadContent()
         {
-			EpisodeContent = new EpisodeContentManager(Content.ServiceProvider, "");
-        
-            GuiSkin = new Gum.RenderData(GraphicsDevice, EpisodeContent, "Content/mono_draw",
+            GuiSkin = new Gum.RenderData(GraphicsDevice, Content, "Content/mono_draw",
                 "Content/gnome_colony_skin/sheets.txt");
 
             InputMapper = new GumInputMapper(Window.Handle);

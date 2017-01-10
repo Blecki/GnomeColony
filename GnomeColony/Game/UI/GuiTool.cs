@@ -23,8 +23,8 @@ namespace Game
 
         public virtual void OnSelected(SimulationGame Game) { }
         public virtual void OnDeselected(SimulationGame Game) { }
-        public virtual void Apply(Simulation Sim, RenderModule.WorldSceneNode WorldNode) { }
-        public virtual void Hover(Simulation Sim, RenderModule.WorldSceneNode WorldNode) { }
+        public virtual void Apply(Simulation Sim, WorldSceneNode WorldNode) { }
+        public virtual void Hover(Simulation Sim, WorldSceneNode WorldNode) { }
         public virtual void UnHover() { }
     }
 }

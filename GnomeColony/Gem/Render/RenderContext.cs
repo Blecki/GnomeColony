@@ -26,16 +26,6 @@ namespace Gem.Render
         public Texture2D Black { get; private set; }
         public Texture2D NeutralNormals { get; private set; }
 
-        private ImmediateMode2D _immediateMode;
-        public ImmediateMode2D ImmediateMode
-        {
-            get
-            {
-                ApplyChanges();
-                return _immediateMode;
-            }
-        }
-
         public RenderContext(Effect Effect, GraphicsDevice Device)
         {
             this.Effect = Effect;
@@ -51,8 +41,6 @@ namespace Gem.Render
 
             NeutralNormals = new Texture2D(Device, 1, 1, false, SurfaceFormat.Color);
             NeutralNormals.SetData(new Color[] { new Color(128, 128, 255, 255) });
-
-            _immediateMode = new ImmediateMode2D(Device);
         }
 
         public void SetLight(int Index, Vector3 Position, float Falloff, Vector3 Color)

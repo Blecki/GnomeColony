@@ -24,9 +24,19 @@ namespace Game
         void IScreen.Begin()
         {
             base.Begin();
-            Sim = new Simulation(Content);
 
-            SceneGraph = Sim.RenderModule.CreateSceneNode(Sim);
+            var blocks = BlockSet.FromReflection();
+            blocks.Tiles = new TileSheet(Main.Content.Load<Texture2D>("Content/gnome_colony_skin/tiles"), 16, 16);
+
+            Sim = new Simulation(blocks);
+
+            SceneGraph = new WorldSceneNode(Sim.World, new WorldSceneNodeProperties
+            {
+                HiliteTexture = 2,
+                BlockSet = Sim.Blocks
+            });
+            SceneGraph.UpdateWorldTransform(Matrix.Identity);
+            (SceneGraph as WorldSceneNode).UpdateGeometry();
 
             Camera.Position = CameraFocus + new Vector3(0, -4, 3);
 
@@ -69,7 +79,7 @@ namespace Game
 
             Input.BindKeyAction(Keys.R, "CAMERA-DISTANCE-FAR", KeyBindingType.Held, () => CameraDistance = -24.0f);
             Input.BindKeyAction(Keys.T, "CAMERA-DISTANCE-SUPER", KeyBindingType.Held, () => CameraDistance = -128.0f);
-            Input.BindKeyAction(Keys.Y, "WIREFRAME", KeyBindingType.Held, () => RenderModule.WorldSceneNode.WireFrameMode = true);
+            Input.BindKeyAction(Keys.Y, "WIREFRAME", KeyBindingType.Held, () => WorldSceneNode.WireFrameMode = true);
             
             Input.BindKeyAction(Keys.F, "ROTATE-BLOCK", KeyBindingType.Pressed);
 
@@ -79,7 +89,7 @@ namespace Game
                 new Gum.Widget
                 {
                     Rect = new Rectangle(8, 8, 64, 64),
-                    Background = new Gum.TileReference("tiles", TileNames.TaskIconBuild),
+                    Background = new Gum.TileReference("tiles", 482),
                     OnClick = SetupBlockChooser
                 });
 
@@ -87,7 +97,7 @@ namespace Game
                 new Gum.Widget
                 {
                     Rect = new Rectangle(8, 76, 64, 64),
-                    Background = new Gum.TileReference("tiles", TileNames.TaskIconMine),
+                    Background = new Gum.TileReference("tiles", 483),
                     OnClick = (sender, args) =>
                     {
                         if (BlockChooser != null)
@@ -143,7 +153,7 @@ namespace Game
         {
             base.Update(elapsedSeconds);
 
-            RenderModule.WorldSceneNode.WireFrameMode = false;
+            WorldSceneNode.WireFrameMode = false;
             CameraDistance = -6.0f;
 
             Input.FireActions(GuiRoot, (msg, args) =>
@@ -151,10 +161,10 @@ namespace Game
                     base.HandleInput(msg, args);
 
                     if (msg == Gum.InputEvents.MouseClick &&
-                        HoverNode is RenderModule.WorldSceneNode &&
+                        HoverNode is WorldSceneNode &&
                         SelectedTool != null)
                     {
-                        SelectedTool.Apply(Sim, HoverNode as RenderModule.WorldSceneNode);
+                        SelectedTool.Apply(Sim, HoverNode as WorldSceneNode);
                     }
                 });
 
@@ -167,11 +177,11 @@ namespace Game
                     Matrix.CreateRotationX(CameraPitch) * Matrix.CreateRotationZ(CameraYaw));
             Camera.LookAt(CameraFocus, Vector3.UnitZ);
 
-            if (HoverNode is RenderModule.WorldSceneNode)
+            if (HoverNode is WorldSceneNode)
             {
                 if (SelectedTool != null)
                 {
-                    var hoverNormal = (HoverNode as RenderModule.WorldSceneNode).HoverNormal;
+                    var hoverNormal = (HoverNode as WorldSceneNode).HoverNormal;
                     var hoverSide = GuiTool.HiliteFace.Sides;
                     if (hoverNormal.Z > 0)
                         hoverSide = GuiTool.HiliteFace.Top;
@@ -179,7 +189,7 @@ namespace Game
                     if ((SelectedTool.HiliteFaces & hoverSide) == hoverSide)
                     {
                         HoverNode.SetHover();
-                        SelectedTool.Hover(Sim, HoverNode as RenderModule.WorldSceneNode);
+                        SelectedTool.Hover(Sim, HoverNode as WorldSceneNode);
                     }
                     else
                     {

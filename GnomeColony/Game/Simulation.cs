@@ -14,17 +14,15 @@ namespace Game
     {
         public CellGrid World { get; private set; }
         public BlockSet Blocks;
-        public RenderModule.RenderModule RenderModule;
 
         public void SetUpdateFlag(Coordinate Coordinate)
         {
             World.MarkDirtyBlock(Coordinate);
         }
 
-        public Simulation(EpisodeContentManager Content)
+        public Simulation(BlockSet Blocks)
         {
-            Blocks = BlockSet.FromReflection();
-            Blocks.Tiles = new TileSheet(Content.Load<Texture2D>("gnome_colony_skin/tiles"), 16, 16);
+            this.Blocks = Blocks;
 
             World = new CellGrid(64, 64, 64);
 
@@ -34,8 +32,6 @@ namespace Game
                     else if (z < 2) t.Template = Blocks.Templates["Dirt"];
                     else t.Template = null;
                 });
-
-            RenderModule = new RenderModule.RenderModule();
         }
 
         public void End()
