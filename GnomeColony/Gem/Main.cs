@@ -17,10 +17,10 @@ namespace Gem
         public IScreen Game { get { return activeGame; } set { nextGame = value; } }
 		public EpisodeContentManager EpisodeContent;
 
-        public Gum.Root GuiRoot;
+        public Gum.RenderData GuiSkin;
         GraphicsDeviceManager graphics;
 
-        public NewInput Input { get; private set; }
+        public GumInputMapper InputMapper { get; private set; }
 
         public Main(String startupCommand)
         {
@@ -35,13 +35,10 @@ namespace Gem
         {
 			EpisodeContent = new EpisodeContentManager(Content.ServiceProvider, "");
         
-            GuiRoot = new Gum.Root(GraphicsDevice, new Point(640, 480), EpisodeContent, "Content/mono_draw",
+            GuiSkin = new Gum.RenderData(GraphicsDevice, EpisodeContent, "Content/mono_draw",
                 "Content/gnome_colony_skin/sheets.txt");
 
-            Input = new NewInput(Window.Handle, GuiRoot, (msg, args) =>
-            {
-                if (activeGame != null) activeGame.HandleInput(msg, args);
-            });
+            InputMapper = new GumInputMapper(Window.Handle);
         }
 
         protected override void UnloadContent()
@@ -66,10 +63,6 @@ namespace Gem
                     nextGame = null;
                 }
 
-                if (activeGame != null) activeGame.BeforeInput();
-
-                Input.FireActions();
-
                 if (activeGame != null) activeGame.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
             }
             else
@@ -84,9 +77,6 @@ namespace Gem
 
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
             if (activeGame != null) activeGame.Draw((float)gameTime.ElapsedGameTime.TotalSeconds);
-
-            GuiRoot.Draw();
-
             
             base.Draw(gameTime);
         }

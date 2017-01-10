@@ -16,6 +16,7 @@ namespace Game.Templates.Track
             PreviewDimensions = new Microsoft.Xna.Framework.Point(2, 2);
             Shape = BlockShape.Combined;
             ShowInEditor = true;
+            PlacementType = BlockPlacementType.Combine;
         }
 
         public override void Initialize(BlockSet BlockSet)

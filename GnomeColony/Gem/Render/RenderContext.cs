@@ -14,6 +14,7 @@ namespace Gem.Render
         public GraphicsDevice Device { get; private set; }
         public Gem.Render.ICamera Camera;
         public bool LightingEnabled = true;
+        public int MaximumLights { get { return 16; } }
 
 		private Gem.Geo.Vertex[] VertexBuffer = new Gem.Geo.Vertex[8];
 
@@ -40,7 +41,7 @@ namespace Gem.Render
             this.Effect = Effect;
             this.Device = Device;
 
-            for (var i = 0; i < 8; ++i) SetLight(i, Vector3.Zero, 0.0f, Vector3.Zero);
+            for (var i = 0; i < MaximumLights; ++i) SetLight(i, Vector3.Zero, 0.0f, Vector3.Zero);
 
             White = new Texture2D(Device, 1, 1, false, SurfaceFormat.Color);
             White.SetData(new Color[] { new Color(255, 255, 255, 255) }); 
@@ -56,7 +57,7 @@ namespace Gem.Render
 
         public void SetLight(int Index, Vector3 Position, float Falloff, Vector3 Color)
         {
-            if (Index < 0 || Index >= 8) throw new IndexOutOfRangeException();
+            if (Index < 0 || Index >= MaximumLights) throw new IndexOutOfRangeException();
             LightPosition[Index] = Position;
             LightFalloff[Index] = Falloff;
             LightColor[Index] = Color;

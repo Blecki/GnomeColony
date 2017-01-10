@@ -14,12 +14,18 @@ namespace Game.RenderModule
         public int HiliteTexture { set { Upsert("hilite-texture", value); } }
     }
 
+    public class CompiledChunk
+    {
+        public Gem.Geo.Mesh Mesh;
+        public List<OrientedBlock> Lights;
+    }
+
     public class WorldSceneNode : Gem.Render.SceneNode
     {
         public static bool WireFrameMode = false;
         
         private CellGrid World;
-        private Gem.Common.Grid3D<Gem.Geo.Mesh> ChunkMeshes;
+        private Gem.Common.Grid3D<CompiledChunk> Chunks;
         
         public int HiliteTexture;
         public float PickRadius = 100.0f;
@@ -42,13 +48,7 @@ namespace Game.RenderModule
                 {
                     var meshList = new List<Gem.Geo.Mesh>();
                     Generate.GenerateCellGeometry(meshList, World, Blocks, p.Block);
-                    var r = Gem.Geo.Gen.Merge(meshList.ToArray());
-                    Gem.Geo.Gen.MorphEx(r, (v) =>
-                        {
-                            // Todo: Color non placeable bits.
-                            return v;
-                        });
-                    return r;
+                    return Gem.Geo.Gen.Merge(meshList.ToArray());
                 }).ToArray());
         }
         
@@ -73,19 +73,29 @@ namespace Game.RenderModule
             this.Blocks = Properties.GetPropertyAsOrDefault<BlockSet>("block-set");
             this.HiliteTexture = Properties.GetPropertyAsOrDefault<int>("hilite-texture");
             this.Orientation = new Gem.Euler();
-            ChunkMeshes = new Gem.Common.Grid3D<Gem.Geo.Mesh>(World.width / 16, World.height / 16, World.depth / 16, (x,y,z) => null);
+            Chunks = new Gem.Common.Grid3D<CompiledChunk>(World.width / 16, World.height / 16, World.depth / 16, (x,y,z) => new CompiledChunk());
 
-            ChunkMeshes.forAll((m, x, y, z) => World.MarkDirtyBlock(new Coordinate(x * 16, y * 16, z * 16)));
+            Chunks.forAll((m, x, y, z) => World.MarkDirtyBlock(new Coordinate(x * 16, y * 16, z * 16)));
         }
 
         public void UpdateGeometry()
         {
             foreach (var chunkCoordinate in World.DirtyChunks)
             {
-                var chunkMesh = Generate.ChunkGeometry(World,
+                var chunk = Chunks[chunkCoordinate.X, chunkCoordinate.Y, chunkCoordinate.Z];
+
+                chunk.Mesh = Generate.ChunkGeometry(World,
                     chunkCoordinate.X * 16, chunkCoordinate.Y * 16, chunkCoordinate.Z * 16, 16, 16, 16, Blocks);
-                ChunkMeshes[chunkCoordinate.X, chunkCoordinate.Y, chunkCoordinate.Z] = chunkMesh;
-                if (chunkMesh != null) chunkMesh.PrepareLineIndicies();
+                if (chunk.Mesh != null) chunk.Mesh.PrepareLineIndicies();
+
+                // Todo: Need to look in neighboring chunks for lights and possibly update those neighboring chunks as well.
+                chunk.Lights = new List<OrientedBlock>();
+                World.forRect(chunkCoordinate.X * 16, chunkCoordinate.Y * 16, chunkCoordinate.Z * 16, 16, 16, 16,
+                    (cell, x, y, z) =>
+                    {
+                        if (cell.Template != null && cell.Template.EmitsLight)
+                            chunk.Lights.Add(cell);
+                    });                
             }
 
             World.DirtyChunks.Clear();
@@ -110,23 +120,46 @@ namespace Game.RenderModule
         {
             Context.Device.DepthStencilState = DepthStencilState.Default;
             Context.Color = Vector3.One;
-            Context.Texture = Blocks.Tiles.Texture;
             Context.NormalMap = Context.NeutralNormals;
             Context.World = WorldTransform;
-            Context.LightingEnabled = true;
 
-            Context.SetLight(0, SunPosition, float.PositiveInfinity, new Vector3(1.0f, 1.0f, 1.0f));
-            Context.ActiveLightCount = 1;
-
-            Context.ApplyChanges();
 
             if (WireFrameMode)
-                ChunkMeshes.forAll((m, x, y, z) => Context.DrawLines(m));
+            {
+                Context.Texture = Context.Black;
+                Context.LightingEnabled = false;
+                Context.ApplyChanges();
+                Chunks.forAll((m, x, y, z) => Context.DrawLines(m.Mesh));
+            }
             else
-                ChunkMeshes.forAll((m, x, y, z) => Context.Draw(m));
+            {
+                Context.Texture = Blocks.Tiles.Texture;
+                Context.LightingEnabled = true;
+                //Context.SetLight(0, SunPosition, float.PositiveInfinity, new Vector3(1.0f, 1.0f, 1.0f));
+                //Context.ActiveLightCount = 1;
+
+
+                // Todo: Frustrum cull chunks.
+                Chunks.forAll((m, x, y, z) =>
+                    {
+                        var lightCount = 0;
+                        for (int i = 0; i < m.Lights.Count && i < Context.MaximumLights; ++i)
+                        {
+                            Context.SetLight(lightCount, m.Lights[i].Offset.AsVector3() + new Vector3(0.5f, 0.5f, 0.5f), 8.0f, Vector3.One);
+                            lightCount += 1;
+                        }
+
+                        Context.ActiveLightCount = lightCount;
+                        Context.ApplyChanges();
+
+                            Context.Draw(m.Mesh);
+                    });
+            }
 
             if (MouseHover)
             {
+                Context.LightingEnabled = false;
+
                 if (PhantomPlacementMesh != null)
                 {
                     Context.Alpha = 0.75f;
@@ -137,38 +170,10 @@ namespace Game.RenderModule
                 }
 
                 Context.Device.DepthStencilState = DepthStencilState.None;
-                Context.LightingEnabled = false;
+
                 Context.UVTransform = Blocks.Tiles.TileMatrix(HiliteTexture);
                 Context.ApplyChanges();
                 Context.Draw(HiliteQuad);
-
-                Context.Texture = Context.White;
-
-                Context.Color = new Vector3(1,0,0);
-                Context.ApplyChanges();
-                Context.Device.DrawUserPrimitives(PrimitiveType.LineStrip, new Gem.Geo.Vertex[]
-                {
-                    new Gem.Geo.Vertex {
-                        Position = HitLocation
-                    },
-
-                    new Gem.Geo.Vertex {
-                        Position = HitLocation + RealHoverNormal
-                    }
-                }, 0, 1);
-
-                Context.Color = new Vector3(1, 0, 0);
-                Context.ApplyChanges();
-                Context.Device.DrawUserPrimitives(PrimitiveType.LineStrip, new Gem.Geo.Vertex[]
-                {
-                    new Gem.Geo.Vertex {
-                        Position = HitLocation
-                    },
-
-                    new Gem.Geo.Vertex {
-                        Position = HitLocation + HoverNormal
-                    }
-                }, 0, 1);
             }
         }
 

@@ -71,11 +71,11 @@ namespace Game
             Input.BindKeyAction(Keys.T, "CAMERA-DISTANCE-SUPER", KeyBindingType.Held, () => CameraDistance = -128.0f);
             Input.BindKeyAction(Keys.Y, "WIREFRAME", KeyBindingType.Held, () => RenderModule.WorldSceneNode.WireFrameMode = true);
             
-            Main.Input.BindKeyAction(Keys.F, "ROTATE-BLOCK", KeyBindingType.Pressed);
+            Input.BindKeyAction(Keys.F, "ROTATE-BLOCK", KeyBindingType.Pressed);
 
             #endregion
 
-            Main.GuiRoot.RootItem.AddChild(
+            GuiRoot.RootItem.AddChild(
                 new Gum.Widget
                 {
                     Rect = new Rectangle(8, 8, 64, 64),
@@ -83,7 +83,7 @@ namespace Game
                     OnClick = SetupBlockChooser
                 });
 
-            Main.GuiRoot.RootItem.AddChild(
+            GuiRoot.RootItem.AddChild(
                 new Gum.Widget
                 {
                     Rect = new Rectangle(8, 76, 64, 64),
@@ -91,7 +91,7 @@ namespace Game
                     OnClick = (sender, args) =>
                     {
                         if (BlockChooser != null)
-                            Main.GuiRoot.RootItem.RemoveChild(BlockChooser);
+                            GuiRoot.RootItem.RemoveChild(BlockChooser);
                         BlockChooser = null;
                         SelectTool(new Creative.Mine());
                     }
@@ -109,7 +109,7 @@ namespace Game
         {
             if (BlockChooser != null) return;
 
-            BlockChooser = Main.GuiRoot.RootItem.AddChild(new Gum.Widget
+            BlockChooser = GuiRoot.RootItem.AddChild(new Gum.Widget
             {
                 Rect = new Rectangle(96, 8, 512, 128),
                 Border = "border-one"
@@ -125,7 +125,7 @@ namespace Game
                     Template = template.Value,
                     OnClick = (sender, args) =>
                         {
-                            Main.GuiRoot.RootItem.RemoveChild(BlockChooser);
+                            GuiRoot.RootItem.RemoveChild(BlockChooser);
                             BlockChooser = null;
                             SelectTool(new Creative.Build(lambdaTemplate.Value));
                         }
@@ -135,32 +135,28 @@ namespace Game
             }
         }
 
-
         void IScreen.End()
         {
         }
-
-        void IScreen.HandleInput(Gum.InputEvents Event, Gum.InputEventArgs Args)
-        {
-            base.HandleInput(Event, Args);
-
-            if (Event == Gum.InputEvents.MouseClick && 
-                HoverNode is RenderModule.WorldSceneNode &&
-                SelectedTool != null)
-            {
-                SelectedTool.Apply(Sim, HoverNode as RenderModule.WorldSceneNode);
-            }
-        }
-
-        void IScreen.BeforeInput()
-        {
-            RenderModule.WorldSceneNode.WireFrameMode = false;
-            CameraDistance = -6.0f;
-        }
-
+        
         void IScreen.Update(float elapsedSeconds)
         {
             base.Update(elapsedSeconds);
+
+            RenderModule.WorldSceneNode.WireFrameMode = false;
+            CameraDistance = -6.0f;
+
+            Input.FireActions(GuiRoot, (msg, args) =>
+                {
+                    base.HandleInput(msg, args);
+
+                    if (msg == Gum.InputEvents.MouseClick &&
+                        HoverNode is RenderModule.WorldSceneNode &&
+                        SelectedTool != null)
+                    {
+                        SelectedTool.Apply(Sim, HoverNode as RenderModule.WorldSceneNode);
+                    }
+                });
 
             if (CameraPitch < 0.5f) CameraPitch = 0.5f;
             if (CameraPitch > 1.5f) CameraPitch = 1.5f;

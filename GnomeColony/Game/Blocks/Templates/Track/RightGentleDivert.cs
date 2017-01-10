@@ -11,11 +11,12 @@ namespace Game.Templates.Track
         public RightGentleDivert()
         {
             PreviewTiles = HelperExtensions.MakeList(
-                new OrientedTile(161, Direction.East), new OrientedTile(162, Direction.West),
-                new OrientedTile(162, Direction.East), new OrientedTile(161, Direction.West));
+                new OrientedTile(130, Direction.West), new OrientedTile(162, Direction.West),
+                new OrientedTile(162, Direction.East), new OrientedTile(130, Direction.East));
             PreviewDimensions = new Microsoft.Xna.Framework.Point(2, 2);
             Shape = BlockShape.Combined;
             ShowInEditor = true;
+            PlacementType = BlockPlacementType.Combine;
         }
 
         public override void Initialize(BlockSet BlockSet)

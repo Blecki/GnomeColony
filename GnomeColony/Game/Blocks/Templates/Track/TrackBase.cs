@@ -42,7 +42,6 @@ namespace Game.Templates.Track
             if (Onto.Template.Shape == BlockShape.Slope) return true;
             if (Onto.Template.Shape == BlockShape.Cube) return true;
 
-            // Todo: Check to see if the top decal is ourself.
             var top = Onto.Template.GetTopOfComposite(Onto.Orientation);
             if (Object.ReferenceEquals(top.Template, this) && top.Orientation == MyOrientation)
                 return true;

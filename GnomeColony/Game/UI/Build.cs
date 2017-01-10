@@ -82,10 +82,9 @@ namespace Game.Creative
 
             Phantom.PlacementAllowed = true;
             Phantom.WillCombine = true;
-            var composedBlock = Phantom.Block.Template.Compose(
+            Phantom.Block = Phantom.Block.Template.Compose(
                 underBlock,
                 Phantom.Block.Orientation, Sim.Blocks);
-            Phantom.Block = composedBlock;
             Phantom.Block.Offset = At;
             Phantom.TargetCell = underBlock;
 
@@ -99,15 +98,17 @@ namespace Game.Creative
 
             if (Phantom.Block.Template.PlacementType.HasFlag(BlockPlacementType.Combine))
             {
-                // Todo: Lining a decal pattern up with a decal that already exists is okay.
-                // Todo: Check connectivity of decal patterns.
                 var attemptResult = AttemptCombinedPlacement(Phantom, WorldNode.HoverBlock + Phantom.Block.Offset, Sim);
                 if (attemptResult == PlacementAttemptResult.BlockedFromAbove)
                     AttemptCombinedPlacement(Phantom, WorldNode.HoverBlock + Phantom.Block.Offset + new Coordinate(0, 0, 1), Sim);
                 if (attemptResult == PlacementAttemptResult.TriedToCombineWithNull)
                     AttemptCombinedPlacement(Phantom, WorldNode.HoverBlock + Phantom.Block.Offset + new Coordinate(0, 0, -1), Sim);
 
-                if (Phantom.PlacementAllowed) return;
+                if (Phantom.PlacementAllowed)
+                {
+                    Phantom.DecalMesh = Generate.GenerateDecalTestGeometry(Phantom.Block, Sim.Blocks.Tiles);
+                    return;
+                }
             }
             
             if (Phantom.Block.Template.PlacementType.HasFlag(BlockPlacementType.OrientToHoverFace))
@@ -141,7 +142,11 @@ namespace Game.Creative
             if (SelectedBlock.Shape == BlockShape.Combined)
                 Placements.AddRange(SelectedBlock.CompositeBlocks.Select(b => new PhantomBlock(b)));
             else
-                Placements.Add(new PhantomBlock { Block = new OrientedBlock(SelectedBlock, Direction.North) });
+                Placements.Add(new PhantomBlock
+                {
+                    Block = new OrientedBlock(SelectedBlock, Direction.North),
+                    OriginalOffset = new Coordinate(0, 0, 0)
+                });
 
             // Orient placement to hover face if block is orientable.
             if (SelectedBlock.PlacementType == BlockPlacementType.OrientToHoverFace && SelectedBlock.Orientable)
@@ -158,6 +163,22 @@ namespace Game.Creative
             // Try each placement. If they are all allowed, create preview.
             foreach (var subBlock in Placements)
                 CheckPlacement(subBlock, Sim, WorldNode);
+
+            // So far, they are allowed. We need to check any decals for coincident edges as well.
+            foreach (var a in Placements)
+                foreach (var b in Placements)
+                {
+                    if (Object.ReferenceEquals(a, b)) continue;
+                    if (!a.PlacementAllowed || !b.PlacementAllowed) continue;
+                    if (a.DecalMesh == null || b.DecalMesh == null) continue;
+                    if (!Coordinate.Adjacent(a.OriginalOffset, b.OriginalOffset)) continue;
+                    var coincidentEdge = Gem.Geo.Mesh.FindCoincidentEdge(a.DecalMesh, b.DecalMesh);
+                    if (!coincidentEdge.HasValue)
+                    {
+                        a.PlacementAllowed = false;
+                        b.PlacementAllowed = false;
+                    }
+                }
 
             //if (Placements.Count(p => p.PlacementAllowed) == Placements.Count)
                 WorldNode.SetPhantomPlacements(Placements);

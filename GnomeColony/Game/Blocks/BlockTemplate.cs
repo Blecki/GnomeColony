@@ -25,13 +25,15 @@ namespace Game
         public bool PlacementAllowed = false;
         public bool WillCombine = false;
         public OrientedBlock TargetCell;
-        public Gem.Geo.Mesh PreviewMesh;
+        public Gem.Geo.Mesh DecalMesh;
+        public Coordinate OriginalOffset;
 
         public PhantomBlock() { }
 
         public PhantomBlock(OrientedBlock Source)
         {
             this.Block = new OrientedBlock(Source);
+            OriginalOffset = Source.Offset;
         }
     }
 
@@ -67,6 +69,8 @@ namespace Game
         public int Bottom = -1;
         public String Hanging = null;
         public BlockShape Shape;
+        public bool Transparent = false;
+        public bool EmitsLight = false;
 
         public bool Orientable = false;
         public BlockPlacementType PlacementType = BlockPlacementType.OrientToHoverFace;

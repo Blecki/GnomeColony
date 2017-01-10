@@ -12,8 +12,9 @@ namespace Game
 {
     public class Game : IScreen
     {
-        public Gem.NewInput Input { get { return Main.Input; } }
+        public Gem.Input Input { get; private set; }
         public Main Main { get; set; }
+        public Gum.Root GuiRoot;
 
         protected EpisodeContentManager Content;
         public RenderContext RenderContext { get; private set; }
@@ -34,6 +35,8 @@ namespace Game
             Content = new EpisodeContentManager(Main.EpisodeContent.ServiceProvider, "Content");
             RenderContext = new RenderContext(Content.Load<Effect>("draw"), Main.GraphicsDevice);
             Camera = new Gem.Render.FreeCamera(new Vector3(0, 0, 0), Vector3.UnitY, Vector3.UnitZ, Main.GraphicsDevice.Viewport);
+            Input = new Input(Main.InputMapper);
+            GuiRoot = new Gum.Root(new Point(640, 480), Main.GuiSkin);
         }
 
         public void End()
@@ -52,7 +55,7 @@ namespace Game
         {
             HoverNode = null;
 
-            if (Main.GuiRoot.RootItem.FindWidgetAt((int)MousePosition.X, (int)MousePosition.Y) == null)
+            if (GuiRoot.RootItem.FindWidgetAt((int)MousePosition.X, (int)MousePosition.Y) == null)
             {
                 var hoverItems = new List<HoverItem>();
                 var pickRay = Camera.GetPickRay(MousePosition);
@@ -116,12 +119,8 @@ namespace Game
             RenderContext.Ambient = Vector4.Zero;
             RenderContext.World = Matrix.Identity;
             RenderContext.Texture = RenderContext.White;
-        }
 
-
-        public void BeforeInput()
-        {
-            throw new NotImplementedException();
+            GuiRoot.Draw();
         }
     }
 }

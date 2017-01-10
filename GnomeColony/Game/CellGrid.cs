@@ -8,6 +8,7 @@ namespace Game
 {
     public partial class CellGrid : Gem.Common.Grid3D<OrientedBlock>
     {
+        // TODO: Parameterize chunk size.
         private OrientedBlock CellProxy = new OrientedBlock();
         public List<Coordinate> DirtyChunks = new List<Coordinate>();
         

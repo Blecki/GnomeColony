@@ -42,5 +42,18 @@ namespace Game
             return new Coordinate(A.X + B.X, A.Y + B.Y, A.Z + B.Z);
         }
 
+        private static int __abs(int I)
+        {
+            if (I < 0) return I * -1;
+            return I;
+        }
+
+        public static bool Adjacent(Coordinate A, Coordinate B)
+        {
+            if (A.X == B.X && A.Y == B.Y && (__abs(A.Z - B.Z) == 1)) return true;
+            if (A.X == B.X && (__abs(A.Y - B.Y) == 1) && A.Z == B.Z) return true;
+            if ((__abs(A.X - B.X) == 1) && A.Y == B.Y && A.Z == B.Z) return true;
+            return false;
+        }
     }
 }

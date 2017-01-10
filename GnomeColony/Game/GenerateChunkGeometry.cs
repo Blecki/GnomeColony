@@ -256,7 +256,7 @@ namespace Game
 
             Grid.forRect(SX, SY, SZ, W, H, D, (cell, x, y, z) =>
                 {
-                    GenerateCellGeometry(models, Grid, Blocks, cell, x, y, z);
+                    GenerateCellGeometry(models, Grid, Blocks, cell);
 
                 });
 
@@ -266,38 +266,7 @@ namespace Game
 
             return result;
         }
-
-        private static void GenerateCellGeometry(List<Gem.Geo.Mesh> Into, CellGrid Grid, BlockSet Blocks, OrientedBlock cell, int X, int Y, int Z)
-        {
-            if (cell.Offset.X != X || cell.Offset.Y != Y || cell.Offset.Z != Z) throw new InvalidOperationException();
-
-            if (cell.Template != null)
-            {
-                if (cell.Template.Shape == BlockShape.Combined)
-                {
-                    if (cell.Orientation != Direction.North) throw new InvalidOperationException();
-
-                    var decalTarget = new OrientedBlock
-                    {
-                        Template = cell.Template.CompositeBlocks[0].Template,
-                        Orientation = Directions.Add(cell.Orientation, cell.Template.CompositeBlocks[0].Orientation)
-                    };
-
-                    foreach (var subBlock in cell.Template.CompositeBlocks)
-                        GenerateSubCellGeometry(Into, Grid, Blocks, new OrientedBlock
-                            {
-                                Template = subBlock.Template,
-                                Orientation = Directions.Add(cell.Orientation, subBlock.Orientation)
-                            },
-                            decalTarget, new Coordinate(X, Y, Z));
-                }
-                else
-                {
-                    GenerateSubCellGeometry(Into, Grid, Blocks, new OrientedBlock(cell.Template, cell.Orientation), null, new Coordinate(X, Y, Z));
-                }
-            }
-        }
-
+        
         public static void GenerateCellGeometry(
             List<Gem.Geo.Mesh> Into, 
             CellGrid Grid, 
@@ -311,33 +280,34 @@ namespace Game
                     var decalTarget = new OrientedBlock
                     {
                         Template = Block.Template.CompositeBlocks[0].Template,
-                        Orientation = Directions.Add(Block.Orientation, Block.Template.CompositeBlocks[0].Orientation)
+                        Orientation = Directions.Add(Block.Orientation, Block.Template.CompositeBlocks[0].Orientation),
+                        Offset = Block.Offset
                     };
 
                     foreach (var subBlock in Block.Template.CompositeBlocks)
                         GenerateSubCellGeometry(Into, Grid, Blocks, new OrientedBlock
                         {
                             Template = subBlock.Template,
-                            Orientation = Directions.Add(Block.Orientation, subBlock.Orientation)
+                            Orientation = Directions.Add(Block.Orientation, subBlock.Orientation),
+                            Offset = Block.Offset
                         },
-                            decalTarget, Block.Offset);
+                        decalTarget);
                 }
                 else
                 {
-                    GenerateSubCellGeometry(Into, Grid, Blocks, Block, null, Block.Offset);
+                    GenerateSubCellGeometry(Into, Grid, Blocks, Block, null);
                 }
             }
         }
 
-        private static void GenerateSubCellGeometry(List<Gem.Geo.Mesh> Into, CellGrid Grid, BlockSet Blocks, OrientedBlock SubBlock, OrientedBlock UnderBlock, Coordinate Position)
+        private static void GenerateSubCellGeometry(List<Gem.Geo.Mesh> Into, CellGrid Grid, BlockSet Blocks, OrientedBlock SubBlock, OrientedBlock UnderBlock)
         {
             if (SubBlock.Template.Shape == BlockShape.Combined) throw new InvalidOperationException();
 
             if (SubBlock.Template.Shape == BlockShape.Decal)
-                GenerateDecalGeometry(Into, SubBlock, UnderBlock, Position, Blocks.Tiles);
+                GenerateDecalGeometry(Into, SubBlock, UnderBlock, Blocks.Tiles);
             else
-                GenerateBlockGeometry(Into, Grid, Blocks, SubBlock.Template, SubBlock.Orientation,
-                    Position.X, Position.Y, Position.Z);
+                GenerateBlockGeometry(Into, Grid, Blocks, SubBlock);
         }
 
         private static Gem.Geo.Mesh GetTopFace(OrientedBlock Of)
@@ -346,11 +316,28 @@ namespace Game
             return ShapeTemplates[Of.Template.Shape][(int)Of.Orientation].TopFace;
         }
 
+        public static Gem.Geo.Mesh GenerateDecalTestGeometry(
+            OrientedBlock Block,
+            TileSheet Tiles)
+        {
+            var meshList = new List<Gem.Geo.Mesh>();
+            GenerateDecalGeometry(meshList,
+                new OrientedBlock(Block.Template.GetTopOfComposite(Block.Orientation))
+                {
+                    Offset = Block.Offset
+                },
+                new OrientedBlock(Block.Template.GetBottomOfComposite(Block.Orientation))
+                {
+                    Offset = Block.Offset
+                },
+                Tiles);
+            return Gem.Geo.Gen.Merge(meshList.ToArray());
+        }
+
         public static void GenerateDecalGeometry(
             List<Gem.Geo.Mesh> Into,
             OrientedBlock Decal,
             OrientedBlock Onto,
-            Coordinate OntoPosition,
             TileSheet Tiles)
         {
             var topMesh = GetTopFace(Onto);
@@ -370,25 +357,27 @@ namespace Game
             });
 
             // Move it just a little higher than the surface it's going on.
-            Gem.Geo.Gen.Transform(copy, 
-                Matrix.CreateTranslation(OntoPosition.X + 0.5f, OntoPosition.Y + 0.5f, OntoPosition.Z + 0.55f));
+            Gem.Geo.Gen.Transform(copy,
+                Matrix.CreateTranslation(Decal.Offset.X + 0.5f, Decal.Offset.Y + 0.5f, Decal.Offset.Z + 0.55f));
 
             Into.Add(copy);
         }
 
-        private static void GenerateBlockGeometry(List<Gem.Geo.Mesh> Into, CellGrid Grid, BlockSet Blocks, BlockTemplate Block, Direction BlockOrientation, int x, int y, int z)
+        private static void GenerateBlockGeometry(List<Gem.Geo.Mesh> Into, CellGrid Grid, BlockSet Blocks, OrientedBlock Block)
         {
-            var shapeTemplate = GetShapeTemplate(Block.Shape, (int)BlockOrientation);
+            var shapeTemplate = GetShapeTemplate(Block.Template.Shape, (int)Block.Orientation);
 
             var exposedFaces = shapeTemplate.Faces.Where(f =>
             {
+                if (Block.Template.Transparent) return true; // Always draw all faces of transparent blocks.
+
                 // The camera can't look up... so cull down faces.
                 if (f.Direction == BlockFaceDirection.Down) return false;
 
                 // If the face is not planar with a block side (eg, a slope) it will never be culled.
                 if (f.Direction == BlockFaceDirection.Nonspecific) return true;
 
-                var neighborCoordinate = Neighbor(new Coordinate(x, y, z), f.Direction);
+                var neighborCoordinate = Neighbor(Block.Offset, f.Direction);
 
                 // Faces on the very edge of the world should be drawn.
                 if (!Grid.Check(neighborCoordinate)) return true;
@@ -397,12 +386,11 @@ namespace Game
                 // Draw face if there is no neighbor block.
                 if (neighborCell.Template == null) return true;
 
-                //// Draw this face if this block is solid and the neighbor is not.
-                //if (cell.Block.MaterialType == BlockMaterialType.Solid && neighborCell.Block.MaterialType != BlockMaterialType.Solid) 
-                //    return true;
-
+                // Draw this face if the neighbor is transparent.
+                if (neighborCell.Template.Transparent) return true;
+                
                 // Don't draw this face if this is a cube on a cube - This lets us skip the expensive coincident face checks.
-                if (Block.Shape == BlockShape.Cube && neighborCell.Template.Shape == BlockShape.Cube)
+                if (Block.Template.Shape == BlockShape.Cube && neighborCell.Template.Shape == BlockShape.Cube)
                     return false;
 
                 // Find the neighboring face that could potentially overlap this face.
@@ -423,27 +411,28 @@ namespace Game
             foreach (var face in exposedFaces)
             {
                 var mesh = Gem.Geo.Gen.Copy(face.Mesh);
-                MorphBlockTextureCoordinates(Blocks.Tiles, Block, mesh, (int)BlockOrientation);
-                Gem.Geo.Gen.Transform(mesh, Matrix.CreateTranslation(x + 0.5f, y + 0.5f, z + 0.5f));
+                MorphBlockTextureCoordinates(Blocks.Tiles, Block.Template, mesh, (int)Block.Orientation);
+                Gem.Geo.Gen.Transform(mesh, Matrix.CreateTranslation(Block.Offset.AsVector3() + new Vector3(0.5f, 0.5f, 0.5f)));
                 Into.Add(mesh);
             }
 
-            if (!String.IsNullOrEmpty(Block.Hanging))
-                GenerateHangingGeometry(Into, Grid, Blocks, Block, BlockOrientation, x, y, z);
+            if (!String.IsNullOrEmpty(Block.Template.Hanging))
+                GenerateHangingGeometry(Into, Grid, Blocks, Block);
         }
 
-        private static void GenerateHangingGeometry(List<Gem.Geo.Mesh> Into, CellGrid Grid, BlockSet Blocks, BlockTemplate Block, Direction BlockOrientation, int x, int y, int z)
+        private static void GenerateHangingGeometry(List<Gem.Geo.Mesh> Into, CellGrid Grid, BlockSet Blocks, OrientedBlock Block)
         {
-            // Todo: Use bottom shape is composite.
-            var offset = Block.Shape == BlockShape.UpperSlab ? new Vector3(0, 0, 0.5f) : new Vector3(0, 0, 0);
-            var checkLower = Grid.Check(new Coordinate(x, y, z - 1));
-            if (Block.Shape == BlockShape.UpperSlab)
+            
+            // Todo: Use bottom shape if composite.
+            var offset = Block.Template.Shape == BlockShape.UpperSlab ? new Vector3(0, 0, 0.5f) : new Vector3(0, 0, 0);
+            var checkLower = Grid.Check(new Coordinate(Block.Offset.X, Block.Offset.Y, Block.Offset.Z - 1));
+            if (Block.Template.Shape == BlockShape.UpperSlab)
                 checkLower = false;
             
-            if (checkLower && Grid.CellAt(x, y, z - 1).Template != null) return;
+            if (checkLower && Grid.CellAt(Block.Offset.X, Block.Offset.Y, Block.Offset.Z - 1).Template != null) return;
 
-            var hangingBlockTemplate = Blocks.Templates[Block.Hanging];
-            var shapeTemplate = GetShapeTemplate(hangingBlockTemplate.Shape, (int)BlockOrientation);
+            var hangingBlockTemplate = Blocks.Templates[Block.Template.Hanging];
+            var shapeTemplate = GetShapeTemplate(hangingBlockTemplate.Shape, (int)Block.Orientation);
 
             var exposedFaces = shapeTemplate.Faces.Where(f =>
             {
@@ -454,7 +443,7 @@ namespace Game
                 // Draw this face because it's not planar to the sides.
                 if (f.Direction == BlockFaceDirection.Nonspecific) return true;
 
-                var neighborCoordinate = Neighbor(new Coordinate(x, y, z), f.Direction);
+                var neighborCoordinate = Neighbor(Block.Offset, f.Direction);
                 // Draw this face because it's on the edge of the world.
                 if (!Grid.Check(neighborCoordinate)) return true;
 
@@ -466,7 +455,7 @@ namespace Game
                 // Don't draw fringe if the block next to the fringe is solid.
                 if (checkLower)
                 {
-                    var lowerNeighborCell = Grid.CellAt(neighborCoordinate.X, neighborCoordinate.Y, z - 1);
+                    var lowerNeighborCell = Grid.CellAt(neighborCoordinate.X, neighborCoordinate.Y, Block.Offset.Z - 1);
                     if (lowerNeighborCell.Template != null) return false;
                 }
 
@@ -476,8 +465,8 @@ namespace Game
             foreach (var face in exposedFaces)
             {
                 var mesh = Gem.Geo.Gen.Copy(face.Mesh);
-                MorphBlockTextureCoordinates(Blocks.Tiles, hangingBlockTemplate, mesh, (int)BlockOrientation);
-                Gem.Geo.Gen.Transform(mesh, Matrix.CreateTranslation(x + 0.5f, y + 0.5f, z - 0.5f));
+                MorphBlockTextureCoordinates(Blocks.Tiles, hangingBlockTemplate, mesh, (int)Block.Orientation);
+                Gem.Geo.Gen.Transform(mesh, Matrix.CreateTranslation(Block.Offset.AsVector3() + new Vector3(0.5f, 0.5f, 0.5f)));
                 Gem.Geo.Gen.Transform(mesh, Matrix.CreateTranslation(offset));
                 Into.Add(mesh);
             }

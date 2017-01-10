@@ -7,11 +7,6 @@ using Microsoft.Xna.Framework;
 
 namespace Gem
 {
-    public interface IGumInputHandler
-    {
-        void HandleInput(Gum.InputEvents Event, Gum.InputEventArgs Args);
-    }
-
     /// <summary>
     /// Translates windows keyboard messages into a form consumable by the GUI.
     /// </summary>
