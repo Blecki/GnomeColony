@@ -20,7 +20,7 @@ namespace Gem
         {
             using (var game = new Gem.Main(""))
             {
-                game.Game = new Game.SimulationGame();
+                game.Game = new Game.Game();
                 game.Window.Position = new Microsoft.Xna.Framework.Point(50, 50);
                 game.Run();
             }

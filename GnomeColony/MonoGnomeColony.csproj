@@ -90,10 +90,9 @@
     <Compile Include="Game\Blocks\Templates\Grass\GrassLowSlab.cs" />
     <Compile Include="Game\Blocks\Templates\Grass\Grass.cs" />
     <Compile Include="Game\Game.cs" />
-    <Compile Include="Game\SimulationGame.cs" />
     <Compile Include="Game\Blocks\BlockSet.cs" />
     <Compile Include="Game\Simulation.cs" />
-    <Compile Include="Game\WorldSceneNode.cs" />
+    <Compile Include="Game\WorldRenderer.cs" />
     <Compile Include="Game\UI\Build.cs" />
     <Compile Include="Game\UI\GuiTool.cs" />
     <Compile Include="Game\UI\Mine.cs" />
@@ -103,8 +102,6 @@
     <Compile Include="Gem\Common\MessageFilter.cs" />
     <Compile Include="Gem\Common\Input.cs" />
     <Compile Include="Gem\Geo\CoincidentEdgeWithTransforms.cs" />
-    <Compile Include="Gem\Render\MeshNode.cs" />
-    <Compile Include="Gem\PropertyBag.cs" />
     <Compile Include="Gem\Common\Euler.cs" />
     <Compile Include="Gem\Common\MultiDictionary.cs" />
     <Compile Include="Gem\Common\ScriptBuilder.cs" />
@@ -116,7 +113,7 @@
     <Compile Include="Gem\Geo\EdgeMesh\SimplifyEdgeMesh.cs" />
     <Compile Include="Gem\Geo\EdgeMesh\TangentTrace.cs" />
     <Compile Include="Gem\HelperExtensions.cs" />
-    <Compile Include="Gem\PathFindingResult.cs" />
+    <Compile Include="Gem\Common\PathFindingResult.cs" />
     <Compile Include="Gem\Common\Grid3D.cs" />
     <Compile Include="Gem\EmptyScreen.cs" />
     <Compile Include="Gem\Common\AddMany.cs" />
@@ -165,8 +162,6 @@
     <Compile Include="Gem\Render\FreeCamera.cs" />
     <Compile Include="Gem\Render\OrthographicCamera.cs" />
     <Compile Include="Gem\Render\ICamera.cs" />
-    <Compile Include="Gem\Render\BranchNode.cs" />
-    <Compile Include="Gem\Render\SceneNode.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Ancora, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">

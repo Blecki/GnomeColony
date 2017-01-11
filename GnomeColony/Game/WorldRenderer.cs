@@ -8,21 +8,17 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Game
 {
-    public class WorldSceneNodeProperties : Gem.PropertyBag
-    {
-        public BlockSet BlockSet { set { Upsert("block-set", value); } }
-        public int HiliteTexture { set { Upsert("hilite-texture", value); } }
-    }
+    
 
-    public class CompiledChunk
+    public class WorldRenderer
     {
-        public Gem.Geo.Mesh Mesh;
-        public List<OrientedBlock> Lights;
-    }
+        public class CompiledChunk
+        {
+            public Gem.Geo.Mesh Mesh;
+            public List<OrientedBlock> Lights;
+        }
 
-    public class WorldSceneNode : Gem.Render.SceneNode
-    {
-        public static bool WireFrameMode = false;
+        public bool WireFrameMode = false;
         
         private CellGrid World;
         private Gem.Common.Grid3D<CompiledChunk> Chunks;
@@ -30,7 +26,7 @@ namespace Game
         public int HiliteTexture;
         public float PickRadius = 100.0f;
 
-        private bool MouseHover = false;
+        public bool MouseHover { get; private set; }
         private Gem.Geo.Mesh HiliteQuad;
 
         public Gem.Geo.Mesh PhantomPlacementMesh = null;
@@ -67,15 +63,16 @@ namespace Game
 
         public Vector3 SunPosition = new Vector3(0, 100.0f, 1000.0f);
 
-        public WorldSceneNode(CellGrid World, Gem.PropertyBag Properties)
+        public WorldRenderer(CellGrid World, BlockSet Blocks, int HiliteTexture)
         {
             this.World = World;
-            this.Blocks = Properties.GetPropertyAsOrDefault<BlockSet>("block-set");
-            this.HiliteTexture = Properties.GetPropertyAsOrDefault<int>("hilite-texture");
-            this.Orientation = new Gem.Euler();
+            this.Blocks = Blocks;
+            this.HiliteTexture = HiliteTexture;
             Chunks = new Gem.Common.Grid3D<CompiledChunk>(World.width / 16, World.height / 16, World.depth / 16, (x,y,z) => new CompiledChunk());
 
             Chunks.forAll((m, x, y, z) => World.MarkDirtyBlock(new Coordinate(x * 16, y * 16, z * 16)));
+
+            MouseHover = false;
         }
 
         public void UpdateGeometry()
@@ -101,29 +98,13 @@ namespace Game
             World.DirtyChunks.Clear();
         }
 
-        public override void UpdateWorldTransform(Microsoft.Xna.Framework.Matrix M)
-        {
-            WorldTransform = M * Orientation.Transform;
-        }
-
-        public override void PreDraw(float ElapsedSeconds, Gem.Render.RenderContext Context)
-        {
-            UpdateGeometry();
-        }
-
-        public override void SetHover()
-        {
-            MouseHover = true;
-        }
-
-        public override void Draw(Gem.Render.RenderContext Context)
+        public void Draw(Gem.Render.RenderContext Context)
         {
             Context.Device.DepthStencilState = DepthStencilState.Default;
             Context.Color = Vector3.One;
             Context.NormalMap = Context.NeutralNormals;
-            Context.World = WorldTransform;
-
-
+            Context.World = Matrix.Identity;
+            
             if (WireFrameMode)
             {
                 Context.Texture = Context.Black;
@@ -177,13 +158,11 @@ namespace Game
             }
         }
 
-        public override void CalculateLocalMouse(Microsoft.Xna.Framework.Ray MouseRay, Action<Gem.Render.SceneNode, float> HoverCallback)
+        public void CalculateLocalMouse(Microsoft.Xna.Framework.Ray MouseRay, GuiTool.HiliteFace HiliteFaces)
         {
             MouseHover = false;
 
-            var localMouse = GetLocalMouseRay(MouseRay);
-
-            GridTraversal.Raycast(localMouse.Position, localMouse.Direction, PickRadius, (x, y, z, normal) =>
+            GridTraversal.Raycast(MouseRay.Position, MouseRay.Direction, PickRadius, (x, y, z, normal) =>
             {
                 if (!World.check(x, y, z)) return false;
                 if (World.CellAt(x, y, z).Template == null) return false;
@@ -195,7 +174,7 @@ namespace Game
 
                 foreach (var face in Generate.EnumerateFaceMeshes(cell))
                 {
-                    var rayResult = face.RayIntersection(localMouse, new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
+                    var rayResult = face.RayIntersection(MouseRay, new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
                     if (rayResult.Intersects)
                     {
                         if (closestIntersection == null || (closestIntersection.Intersects && rayResult.Distance < closestIntersection.Distance))
@@ -203,42 +182,30 @@ namespace Game
                             hitFace = face;
                             closestIntersection = rayResult;
                             RealHoverNormal = -Gem.Geo.Gen.CalculateNormal(face, face.indicies[0], face.indicies[1], face.indicies[2]);
-                            HitLocation = localMouse.Position + (localMouse.Direction * closestIntersection.Distance);
+                            HitLocation = MouseRay.Position + (MouseRay.Direction * closestIntersection.Distance);
                         }
                     }
                 }
-                 
+
                 if (closestIntersection == null) return false;
 
                 // Must copy... because enumerating the faces did not.
                 HiliteQuad = Gem.Geo.Gen.Copy(hitFace);
                 Gem.Geo.Gen.Transform(HiliteQuad, Matrix.CreateTranslation(x + 0.5f, y + 0.5f, z + 0.5f));
 
-                //// Align quad with correct face.
-                //if (normal.Z < 0) // normal points down. 
-                //    Gem.Geo.Gen.Transform(HiliteQuad, Matrix.CreateFromAxisAngle(Vector3.UnitX, Gem.Math.Angle.PI));
-                //else if (normal.Z == 0)
-                //    Gem.Geo.Gen.Transform(HiliteQuad, Matrix.CreateFromAxisAngle(
-                //        Vector3.Cross(-Vector3.UnitZ, normal), -Gem.Math.Angle.PI / 2));
-
-                //// Move quad to center of block.
-                //Gem.Geo.Gen.Transform(HiliteQuad, Matrix.CreateTranslation(x + 0.5f, y + 0.5f, z + 0.5f));
-
-                //// Move quad out to correct surface.
-                //Gem.Geo.Gen.Transform(HiliteQuad, Matrix.CreateTranslation(normal * 0.52f));
-
-                //var faceIntersection = HiliteQuad.RayIntersection(localMouse);
-                ////if (faceIntersection.Intersects == false) throw new InvalidProgramException();
-
-                //HoverCallback(this, faceIntersection.Distance);
-                HoverCallback(this, closestIntersection.Distance);
-
                 HoverBlock = new Coordinate(x, y, z);
                 HoverNormal = Vector3.Normalize(new Vector3(
                     (float)Math.Round(RealHoverNormal.X),
                     (float)Math.Round(RealHoverNormal.Y),
                     (float)Math.Round(RealHoverNormal.Z)));
-                AdjacentHoverBlock = new Coordinate((int)(x + HoverNormal.X), (int)(y + HoverNormal.Y), (int)(z + HoverNormal.Z));                
+                AdjacentHoverBlock = new Coordinate((int)(x + HoverNormal.X), (int)(y + HoverNormal.Y), (int)(z + HoverNormal.Z));
+
+                var hoverSide = GuiTool.HiliteFace.Sides;
+                if (HoverNormal.Z > 0)
+                    hoverSide = GuiTool.HiliteFace.Top;
+
+                if ((HiliteFaces & hoverSide) == hoverSide)
+                    MouseHover = true;
 
                 return true;
             });

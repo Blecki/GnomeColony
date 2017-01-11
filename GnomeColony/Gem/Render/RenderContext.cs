@@ -113,68 +113,6 @@ namespace Gem.Render
             Mesh.Render(Device);
         }
 
-        //public void Draw(Gem.Geo.CompiledModel model)
-        //{
-        //    ApplyChanges();
-
-        //    Device.SetVertexBuffer(model.verticies);
-        //    Device.Indices = model.indicies;
-        //    Device.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, model.verticies.VertexCount,
-        //        0, System.Math.Min(model.primitiveCount, 65535));
-        //}
-
-        //public void Draw(Gem.Geo.Mesh mesh)
-        //{
-        //    if (mesh.verticies.Length > 0)
-        //    {
-        //        ApplyChanges();
-
-        //        Device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, mesh.verticies, 0, mesh.verticies.Length,
-        //            mesh.indicies, 0, mesh.indicies.Length / 3);
-        //    }
-        //}
-
-        //public void DrawLine(Vector3 v0, Vector3 v1, float width, Vector3 n)
-        //{
-        //    var tangent = v1 - v0;
-        //    tangent.Normalize();
-        //    var offset = Vector3.Transform(tangent, Matrix.CreateFromAxisAngle(n, (float)(System.Math.PI / 2)));
-        //    offset.Normalize();
-        //    offset *= width / 2;
-
-        //    VertexBuffer[0].Position = v0 + offset;
-        //    VertexBuffer[1].Position = v1 + offset;
-        //    VertexBuffer[2].Position = v0 - offset;
-        //    VertexBuffer[3].Position = v1 + offset;
-        //    VertexBuffer[4].Position = v1 - offset;
-        //    VertexBuffer[5].Position = v0 - offset;
-
-        //    for (int i = 0; i < 6; ++i) VertexBuffer[i].Normal = n;
-
-        //    device.DrawUserPrimitives(PrimitiveType.TriangleList, VertexBuffer, 0, 2);
-        //}
-
-        //public void DrawPoint()
-        //{
-        //    VertexBuffer[0].Position = new Vector3(-0.5f, -0.5f, 0);
-        //    VertexBuffer[1].Position = new Vector3(-0.5f, 0.5f, 0);
-        //    VertexBuffer[2].Position = new Vector3(0.5f, -0.5f, 0);
-        //    VertexBuffer[3].Position = new Vector3(0.5f, 0.5f, 0);
-        //    for (int i = 0; i < 6; ++i) VertexBuffer[i].Normal = Vector3.UnitZ;
-
-        //    device.DrawUserPrimitives(PrimitiveType.TriangleStrip, VertexBuffer, 0, 2);
-        //}
-
-        //public void DrawSprite(Geo.Mesh mesh)
-        //{
-        //    if (mesh.verticies.Length > 0)
-        //    {
-        //        //spriteEffect.CurrentTechnique.Passes[0].Apply();
-        //        device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, mesh.verticies, 0, mesh.verticies.Length,
-        //            mesh.indicies, 0, mesh.indicies.Length / 3);
-        //    }
-        //}
-
         public void DrawLineIM(Vector3 v0, Vector3 v1)
         {
             VertexBuffer[0].Position = v0;
@@ -193,26 +131,7 @@ namespace Gem.Render
             if (mesh.lineIndicies != null && mesh.verticies.Length > 0)
                 Device.DrawUserIndexedPrimitives(PrimitiveType.LineList, mesh.verticies, 0, mesh.verticies.Length,
                     mesh.lineIndicies, 0, mesh.lineIndicies.Length / 2);
-        }
-
-        //public void Draw(Gem.Geo.WireframeMesh Mesh)
-        //{
-        //    ApplyChanges();
-        //    Device.DrawUserIndexedPrimitives(PrimitiveType.LineList, Mesh.verticies, 0, Mesh.verticies.Length, Mesh.indicies, 0, Mesh.indicies.Length / 2);
-        //}
-
-
-        //public void DrawHitbox(float X, float Y, float W, float H)
-        //{
-
-        //    VertexBuffer[0].Position = new Vector3(X, Y, 0);
-        //    VertexBuffer[1].Position = new Vector3(X, Y + H, 0);
-        //    VertexBuffer[2].Position = new Vector3(X + W, Y, 0);
-        //    VertexBuffer[3].Position = new Vector3(X + W, Y + H, 0);
-        //    for (int i = 0; i < 4; ++i) VertexBuffer[i].Normal = Vector3.UnitZ;
-
-        //    device.DrawUserPrimitives(PrimitiveType.TriangleStrip, VertexBuffer, 0, 2);
-        //}
+        }        
 	}
 
 }

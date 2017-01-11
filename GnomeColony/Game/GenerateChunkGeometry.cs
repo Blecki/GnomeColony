@@ -466,7 +466,7 @@ namespace Game
             {
                 var mesh = Gem.Geo.Gen.Copy(face.Mesh);
                 MorphBlockTextureCoordinates(Blocks.Tiles, hangingBlockTemplate, mesh, (int)Block.Orientation);
-                Gem.Geo.Gen.Transform(mesh, Matrix.CreateTranslation(Block.Offset.AsVector3() + new Vector3(0.5f, 0.5f, 0.5f)));
+                Gem.Geo.Gen.Transform(mesh, Matrix.CreateTranslation(Block.Offset.AsVector3() + new Vector3(0.5f, 0.5f, -0.5f)));
                 Gem.Geo.Gen.Transform(mesh, Matrix.CreateTranslation(offset));
                 Into.Add(mesh);
             }

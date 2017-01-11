@@ -12,7 +12,7 @@ namespace Game.Creative
         {
         }
 
-        public override void Apply(Simulation Sim, WorldSceneNode WorldNode)
+        public override void Apply(Simulation Sim, WorldRenderer WorldNode)
         {
             if (Sim.World.Check(WorldNode.HoverBlock))
             {

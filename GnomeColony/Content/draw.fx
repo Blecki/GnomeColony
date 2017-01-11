@@ -52,6 +52,7 @@ struct TexturedVertexShaderOutput
 {
 	float4 Position : SV_Position0;
 	float2 Texcoord : TEXCOORD0;
+	float Depth : TEXCOORD1;
 	float3 Normal : TEXCOORD2;
 	float3 WorldPos : TEXCOORD3;
 	float3 Tangent : TEXCOORD4;
@@ -76,6 +77,8 @@ TexturedVertexShaderOutput TexturedVertexShaderFunction(TexturedVertexShaderInpu
 	tTexcoord = mul(tTexcoord, UVTransform);
 
 	output.Texcoord = float2(tTexcoord[0], tTexcoord[1]);
+
+	output.Depth = 1.0 - (output.Position.z / 32.0);
     return output;
 }
 
@@ -129,6 +132,13 @@ PixelShaderOutput PSTexturedColorNoLight(TexturedVertexShaderOutput input) : COL
     return output;
 }
 
+PixelShaderOutput PSDepthOnly(TexturedVertexShaderOutput input) : COLOR0
+{
+	PixelShaderOutput output;
+	output.Color = float4(input.Depth, 0.0, 0.0, 1.0);
+	return output;
+}
+
 technique DrawTextured
 {
     pass Pass1
@@ -149,6 +159,15 @@ technique DrawNoLight
 	{
 		VertexShader = compile vs_4_0 TexturedVertexShaderFunction();
 		PixelShader = compile ps_4_0 PSTexturedColorNoLight();
+	}
+}
+
+technique DrawDepth
+{
+	pass Pass1
+	{
+		VertexShader = compile vs_4_0 TexturedVertexShaderFunction();
+		PixelShader = compile ps_4_0 PSDepthOnly();
 	}
 }
 

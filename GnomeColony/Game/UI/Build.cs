@@ -25,18 +25,18 @@ namespace Game.Creative
                 this.HiliteFaces |= HiliteFace.Top;
         }
 
-        public override void OnSelected(SimulationGame Game)
+        public override void OnSelected(Game Game)
         {
             Game.Input.BindAction("ROTATE-BLOCK", () => 
                 BaseOrientation = Directions.Rotate(BaseOrientation));
         }
 
-        public override void OnDeselected(SimulationGame Game)
+        public override void OnDeselected(Game Game)
         {
             Game.Input.ClearAction("ROTATE-BLOCK");
         }
 
-        public override void Apply(Simulation Sim, WorldSceneNode WorldNode)
+        public override void Apply(Simulation Sim, WorldRenderer WorldNode)
         {
             if (Placements == null) return;
             if (Placements.Count(p => p.PlacementAllowed) != Placements.Count) return;
@@ -90,7 +90,7 @@ namespace Game.Creative
             return PlacementAttemptResult.Success;
         }
 
-        private void CheckPlacement(PhantomBlock Phantom, Simulation Sim, WorldSceneNode WorldNode)
+        private void CheckPlacement(PhantomBlock Phantom, Simulation Sim, WorldRenderer WorldNode)
         {
             Phantom.PlacementAllowed = false;
             
@@ -132,7 +132,7 @@ namespace Game.Creative
             Phantom.WillCombine = false;
         }
 
-        public override void Hover(Simulation Sim, WorldSceneNode WorldNode)
+        public override void Hover(Simulation Sim, WorldRenderer WorldNode)
         {
             if (SelectedBlock == null) return;
 

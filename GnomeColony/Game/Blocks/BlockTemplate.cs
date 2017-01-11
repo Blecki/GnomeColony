@@ -94,6 +94,7 @@ namespace Game
 
         public virtual void Initialize(BlockSet BlockSet) { }
 
+        // Todo: Move to OrientedBlock type, since the data is all over there anyway.
         public OrientedBlock GetTopOfComposite(Direction BaseOrientation)
         {
             if (Shape == BlockShape.Combined)
