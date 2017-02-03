@@ -18,7 +18,7 @@ namespace Game.Templates.Track
 
         public override bool CanCompose(OrientedBlock Onto, Direction MyOrientation)
         {
-            var top = Onto.Template.GetTopOfComposite(Onto.Orientation);
+            var top = Onto.GetTopOfComposite();
             if (Object.ReferenceEquals(top.Template, this) && top.Orientation ==
                 Directions.Rotate(Directions.Rotate(MyOrientation)))
                 return true;
@@ -28,20 +28,16 @@ namespace Game.Templates.Track
 
         public override OrientedBlock Compose(OrientedBlock With, Direction MyOrientation, BlockSet TemplateSet)
         {
-            var top = With.Template.GetTopOfComposite(With.Orientation);
+            var top = With.GetTopOfComposite();
             if (Object.ReferenceEquals(top.Template, this) && top.Orientation ==
                 Directions.Rotate(Directions.Rotate(MyOrientation)))
             {
-                var sansTop = With.Template.SansTopOfComposite(With.Orientation);
-                return new OrientedBlock
-                {
-                    Template = sansTop.Template.ComposeWith(sansTop.Orientation, new OrientedBlock
+                var sansTop = With.SansTopOfComposite();
+                return sansTop.ComposeWith(new OrientedBlock
                     {
                         Template = TemplateSet.Templates["DualOuterMediumCurve"],
                         Orientation = MyOrientation
-                    }),
-                    Orientation = Direction.North
-                };
+                    });
             }
 
             return base.Compose(With, MyOrientation, TemplateSet);

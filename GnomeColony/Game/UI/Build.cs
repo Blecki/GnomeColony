@@ -70,11 +70,11 @@ namespace Game.Creative
             var overBlockCoord = At + new Coordinate(0, 0, 1);
             if (Sim.World.Check(overBlockCoord))
             {
-                var underShape = underBlock.Template.GetBottomOfComposite(underBlock.Orientation).Template.Shape;
+                var underShape = underBlock.GetBottomOfComposite().Template.Shape;
                 if (underShape == BlockShape.Cube || underShape == BlockShape.UpperSlab)
                 {
                     var overBlock = Sim.World.CellAt(overBlockCoord);
-                    if (overBlock.Template != null && overBlock.Template.GetBottomOfComposite(overBlock.Orientation).Template.Shape != BlockShape.UpperSlab)
+                    if (overBlock.Template != null && overBlock.GetBottomOfComposite().Template.Shape != BlockShape.UpperSlab)
                         return PlacementAttemptResult.BlockedFromAbove;
                 }
             }

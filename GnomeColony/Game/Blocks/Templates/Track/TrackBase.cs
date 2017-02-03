@@ -42,7 +42,7 @@ namespace Game.Templates.Track
             if (Onto.Template.Shape == BlockShape.Slope) return true;
             if (Onto.Template.Shape == BlockShape.Cube) return true;
 
-            var top = Onto.Template.GetTopOfComposite(Onto.Orientation);
+            var top = Onto.GetTopOfComposite();
             if (Object.ReferenceEquals(top.Template, this) && top.Orientation == MyOrientation)
                 return true;
 
@@ -58,7 +58,7 @@ namespace Game.Templates.Track
                 return With;
             }
 
-            var top = With.Template.GetTopOfComposite(With.Orientation);
+            var top = With.GetTopOfComposite();
             if (Object.ReferenceEquals(this, top.Template) && top.Orientation == MyOrientation)
                 return With;
 

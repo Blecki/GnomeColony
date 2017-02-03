@@ -42,5 +42,105 @@ namespace Game
             this.Offset = Other.Offset;
             this.Orientation = Other.Orientation;
         }
+
+        public OrientedBlock GetTopOfComposite()
+        {
+            if (Template.Shape == BlockShape.Combined)
+            {
+                if (Orientation != Direction.North) throw new InvalidOperationException();
+                return Template.CompositeBlocks[Template.CompositeBlocks.Count - 1];
+            }
+            else
+                return new OrientedBlock
+                {
+                    Template = Template,
+                    Offset = new Coordinate(0, 0, 0),
+                    Orientation = Orientation
+                };
+        }
+
+        public OrientedBlock GetBottomOfComposite()
+        {
+            if (Template.Shape == BlockShape.Combined)
+            {
+                if (Orientation != Direction.North) throw new InvalidOperationException();
+                return Template.CompositeBlocks[0];
+            }
+            else
+                return new OrientedBlock
+                {
+                    Template = Template,
+                    Offset = new Coordinate(0, 0, 0),
+                    Orientation = Orientation
+                };
+        }
+
+        public OrientedBlock SansTopOfComposite()
+        {
+            if (Template.Shape == BlockShape.Combined)
+            {
+                if (Orientation != Direction.North) throw new InvalidOperationException();
+
+                if (Template.CompositeBlocks.Count == 2)
+                    return new OrientedBlock 
+                    { 
+                        Template = Template.CompositeBlocks[0].Template,
+                        Orientation = Template.CompositeBlocks[0].Orientation
+                    };
+                else
+                    return new OrientedBlock
+                    {
+                        Template = new BlockTemplate
+                            {
+                                Shape = BlockShape.Combined,
+                                CompositeBlocks = Template.CompositeBlocks.Take(Template.CompositeBlocks.Count - 1).ToList()
+                            },
+                        Orientation = Direction.North
+                    };
+            }
+            else
+                return new OrientedBlock { Template = Template, Orientation = Orientation };
+        }
+
+        public OrientedBlock ComposeWith(OrientedBlock NewTop)
+        {
+            if (Template.Shape == BlockShape.Combined)
+            {
+                if (Orientation != Direction.North) throw new InvalidOperationException();
+
+                var r = new BlockTemplate
+                {
+                    Shape = BlockShape.Combined
+                };
+
+                r.CompositeBlocks.AddRange(Template.CompositeBlocks);
+                r.CompositeBlocks.Add(new OrientedBlock
+                    {
+                        Template = NewTop.Template,
+                        Orientation = NewTop.Orientation
+                    });
+
+                return new OrientedBlock
+                {
+                    Template = r,
+                    Orientation = Direction.North
+                };
+            }
+            else
+            {
+                return new OrientedBlock
+                {
+                    Template = new BlockTemplate
+                    {
+                        Shape = BlockShape.Combined,
+                        CompositeBlocks = HelperExtensions.MakeList(
+                            new OrientedBlock { Template = Template, Orientation = Orientation },
+                            new OrientedBlock { Template = NewTop.Template, Orientation = NewTop.Orientation }
+                            )
+                    },
+                    Orientation = Direction.North
+                };
+            }
+        }
     }
 }

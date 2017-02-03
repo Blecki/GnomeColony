@@ -322,11 +322,11 @@ namespace Game
         {
             var meshList = new List<Gem.Geo.Mesh>();
             GenerateDecalGeometry(meshList,
-                new OrientedBlock(Block.Template.GetTopOfComposite(Block.Orientation))
+                new OrientedBlock(Block.GetTopOfComposite())
                 {
                     Offset = Block.Offset
                 },
-                new OrientedBlock(Block.Template.GetBottomOfComposite(Block.Orientation))
+                new OrientedBlock(Block.GetBottomOfComposite())
                 {
                     Offset = Block.Offset
                 },
@@ -389,8 +389,8 @@ namespace Game
                 // Draw this face if the neighbor is transparent.
                 if (neighborCell.Template.Transparent) return true;
 
-                var neighborBottom = neighborCell.Template.GetBottomOfComposite(neighborCell.Orientation);
-                var myBottom = Block.Template.GetBottomOfComposite(Block.Orientation);
+                var neighborBottom = neighborCell.GetBottomOfComposite();
+                var myBottom = Block.GetBottomOfComposite();
 
                 // Don't draw this face if this is a cube on a cube - This lets us skip the expensive coincident face checks.
                 if (myBottom.Template.Shape == BlockShape.Cube && neighborBottom.Template.Shape == BlockShape.Cube)
