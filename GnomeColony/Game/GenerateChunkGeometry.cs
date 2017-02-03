@@ -388,9 +388,12 @@ namespace Game
 
                 // Draw this face if the neighbor is transparent.
                 if (neighborCell.Template.Transparent) return true;
-                
+
+                var neighborBottom = neighborCell.Template.GetBottomOfComposite(neighborCell.Orientation);
+                var myBottom = Block.Template.GetBottomOfComposite(Block.Orientation);
+
                 // Don't draw this face if this is a cube on a cube - This lets us skip the expensive coincident face checks.
-                if (Block.Template.Shape == BlockShape.Cube && neighborCell.Template.Shape == BlockShape.Cube)
+                if (myBottom.Template.Shape == BlockShape.Cube && neighborBottom.Template.Shape == BlockShape.Cube)
                     return false;
 
                 // Find the neighboring face that could potentially overlap this face.

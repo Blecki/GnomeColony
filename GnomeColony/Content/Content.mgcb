@@ -19,12 +19,6 @@
 /processorParam:DebugMode=Auto
 /build:draw.fx
 
-#begin mono_draw.fx
-/importer:EffectImporter
-/processor:EffectProcessor
-/processorParam:DebugMode=Auto
-/build:mono_draw.fx
-
 #begin gnome_colony_skin/basic.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -165,10 +159,58 @@
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
 /processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
+/processorParam:GenerateMipmaps=True
 /processorParam:PremultiplyAlpha=True
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:gnome_colony_skin/tiles.png
+
+#begin DirectionalLight.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:DirectionalLight.fx
+
+#begin draw_gui.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:draw_gui.fx
+
+#begin clear_gbuffer.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:clear_gbuffer.fx
+
+#begin combine_gbuffer.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:combine_gbuffer.fx
+
+#begin draw_point_light.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:draw_point_light.fx
+
+#begin draw_quick.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:draw_quick.fx
+
+#begin draw_voxels_gbuffer.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:draw_voxels_gbuffer.fx
+
+#begin draw_voxels_shadow.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:draw_voxels_shadow.fx
 

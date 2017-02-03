@@ -7,16 +7,16 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using Gem;
 using Gem.Render;
+using Gum.Input;
 
 namespace Game
 {
     public class Game : IScreen
     {
-        public Gem.Input Input { get; private set; }
+        public Gum.Input.Input Input { get; private set; }
         public Main Main { get; set; }
         public Gum.Root GuiRoot;
 
-        public RenderContext RenderContext { get; private set; }
         protected Vector2 MousePosition;
 
         public Gem.Render.FreeCamera Camera;
@@ -36,9 +36,8 @@ namespace Game
 
         void IScreen.Begin()
         {
-            RenderContext = new RenderContext(Main.Content.Load<Effect>("Content/draw"), Main.GraphicsDevice);
             Camera = new Gem.Render.FreeCamera(new Vector3(0, 0, 0), Vector3.UnitY, Vector3.UnitZ, Main.GraphicsDevice.Viewport);
-            Input = new Input(Main.InputMapper);
+            Input = new Gum.Input.Input(Main.InputMapper);
             GuiRoot = new Gum.Root(new Point(640, 480), Main.GuiSkin);
 
             var blocks = BlockSet.FromReflection();
@@ -46,53 +45,57 @@ namespace Game
 
             Sim = new Simulation(blocks);
 
-            SceneGraph = new WorldRenderer(Sim.World, blocks, 2);
+            SceneGraph = new WorldRenderer(Main.GraphicsDevice,
+               Main.Content,
+                Sim.World, blocks, 2);
             SceneGraph.UpdateGeometry();
 
             Camera.Position = CameraFocus + new Vector3(0, -4, 3);
 
             #region Prepare Input
 
-            Input.BindKeyAction(Keys.Right, "RIGHT", KeyBindingType.Held, () => CameraYaw += ElapsedSeconds);
-            Input.BindKeyAction(Keys.Left, "LEFT", KeyBindingType.Held, () => CameraYaw -= ElapsedSeconds);
-            Input.BindKeyAction(Keys.Up, "UP", KeyBindingType.Held, () => CameraPitch += ElapsedSeconds);
-            Input.BindKeyAction(Keys.Down, "DOWN", KeyBindingType.Held, () => CameraPitch -= ElapsedSeconds);
+            Input.AddAndBindAction(Keys.Right, "RIGHT", KeyBindingType.Held, () => CameraYaw += ElapsedSeconds);
+            Input.AddAndBindAction(Keys.Left, "LEFT", KeyBindingType.Held, () => CameraYaw -= ElapsedSeconds);
+            Input.AddAndBindAction(Keys.Up, "UP", KeyBindingType.Held, () => CameraPitch += ElapsedSeconds);
+            Input.AddAndBindAction(Keys.Down, "DOWN", KeyBindingType.Held, () => CameraPitch -= ElapsedSeconds);
 
-            Input.BindKeyAction(Keys.A, "PAN-LEFT", KeyBindingType.Held, () =>
+            Input.AddAndBindAction(Keys.A, "PAN-LEFT", KeyBindingType.Held, () =>
                 {
                     CameraFocus -= Vector3.Normalize(new Vector3(Camera.GetEyeVector().Y, -Camera.GetEyeVector().X, 0)) * ElapsedSeconds * 10.0f;
                 });
 
-            Input.BindKeyAction(Keys.D, "PAN-RIGHT", KeyBindingType.Held, () =>
+            Input.AddAndBindAction(Keys.D, "PAN-RIGHT", KeyBindingType.Held, () =>
             {
                 CameraFocus += Vector3.Normalize(new Vector3(Camera.GetEyeVector().Y, -Camera.GetEyeVector().X, 0)) * ElapsedSeconds * 10.0f;
             });
 
-            Input.BindKeyAction(Keys.W, "PAN-FORWARD", KeyBindingType.Held, () =>
+            Input.AddAndBindAction(Keys.W, "PAN-FORWARD", KeyBindingType.Held, () =>
             {
                 CameraFocus += Vector3.Normalize(new Vector3(Camera.GetEyeVector().X, Camera.GetEyeVector().Y, 0)) * ElapsedSeconds * 10.9f;
             });
 
-            Input.BindKeyAction(Keys.S, "PAN-BACK", KeyBindingType.Held, () =>
+            Input.AddAndBindAction(Keys.S, "PAN-BACK", KeyBindingType.Held, () =>
             {
                 CameraFocus -= Vector3.Normalize(new Vector3(Camera.GetEyeVector().X, Camera.GetEyeVector().Y, 0)) * ElapsedSeconds * 10.9f;
             });
 
-            Input.BindKeyAction(Keys.E, "PAN-UP", KeyBindingType.Held, () =>
+            Input.AddAndBindAction(Keys.E, "PAN-UP", KeyBindingType.Held, () =>
             {
                 CameraFocus += Vector3.UnitZ * ElapsedSeconds * 10.0f;
             });
 
-            Input.BindKeyAction(Keys.Q, "PAN-DOWN", KeyBindingType.Held, () =>
+            Input.AddAndBindAction(Keys.Q, "PAN-DOWN", KeyBindingType.Held, () =>
             {
                 CameraFocus -= Vector3.UnitZ * ElapsedSeconds * 10.0f;
             });
 
-            Input.BindKeyAction(Keys.R, "CAMERA-DISTANCE-FAR", KeyBindingType.Held, () => CameraDistance = -24.0f);
-            Input.BindKeyAction(Keys.T, "CAMERA-DISTANCE-SUPER", KeyBindingType.Held, () => CameraDistance = -128.0f);
-            Input.BindKeyAction(Keys.Y, "WIREFRAME", KeyBindingType.Held, () => SceneGraph.WireFrameMode = true);
-            
-            Input.BindKeyAction(Keys.F, "ROTATE-BLOCK", KeyBindingType.Pressed);
+            Input.AddAndBindAction(Keys.R, "CAMERA-DISTANCE-FAR", KeyBindingType.Held, () => CameraDistance = -24.0f);
+            Input.AddAndBindAction(Keys.T, "CAMERA-DISTANCE-SUPER", KeyBindingType.Held, () => CameraDistance = -128.0f);
+            Input.AddAndBindAction(Keys.Y, "WIREFRAME", KeyBindingType.Pressed, () => SceneGraph.WireFrameMode = !SceneGraph.WireFrameMode);
+            Input.AddAndBindAction(Keys.H, "DEBUG-GBUFFER", KeyBindingType.Pressed, () => SceneGraph.DebugShadersMode = !SceneGraph.DebugShadersMode);
+            Input.AddAndBindAction(Keys.J, "DEBUG-CUBEMAP", KeyBindingType.Pressed, () => SceneGraph.DebugCubeMapMode = !SceneGraph.DebugCubeMapMode);
+
+            Input.AddAndBindAction(Keys.F, "ROTATE-BLOCK", KeyBindingType.Pressed, () => { });
 
             #endregion
 
@@ -171,7 +174,6 @@ namespace Game
                 SceneGraph.CalculateLocalMouse(pickRay, SelectedTool.HiliteFaces);
             }
 
-            SceneGraph.WireFrameMode = false;
             CameraDistance = -6.0f;
 
             Input.FireActions(GuiRoot, (msg, args) =>
@@ -189,7 +191,7 @@ namespace Game
                 }
             });
 
-            if (CameraPitch < 0.5f) CameraPitch = 0.5f;
+            if (CameraPitch < -1.5f) CameraPitch = -1.5f;
             if (CameraPitch > 1.5f) CameraPitch = 1.5f;
 
             Camera.Position =
@@ -209,29 +211,7 @@ namespace Game
 
         public void Draw(float elapsedSeconds)
         {
-            SceneGraph.UpdateGeometry();
-
-            Main.GraphicsDevice.SetRenderTarget(null);
-            Main.GraphicsDevice.BlendState = BlendState.NonPremultiplied;
-            Main.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
-            Main.GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
-            Main.GraphicsDevice.Clear(ClearOptions.Target, Color.CornflowerBlue, 0xFFFFFF, 0);
-
-            RenderContext.Camera = Camera;
-            RenderContext.Color = Vector3.One;
-            RenderContext.Alpha = 1.0f;
-            RenderContext.ClipAlpha = 0.2f;
-            RenderContext.LightingEnabled = true;
-            RenderContext.UVTransform = Matrix.Identity;
-            RenderContext.World = Matrix.Identity;
-            RenderContext.ActiveLightCount = 0;
-            RenderContext.Texture = RenderContext.White;
-            RenderContext.NormalMap = RenderContext.NeutralNormals;
-            RenderContext.Ambient = new Vector4(0.2f, 0.2f, 0.4f, 0);
-            RenderContext.ApplyChanges();
-
-            SceneGraph.Draw(RenderContext);
-
+            SceneGraph.Draw(Camera);
             GuiRoot.Draw();
         }
 

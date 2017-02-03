@@ -8,12 +8,13 @@ float4 DiffuseColor;
 float Alpha;
 float ClipAlpha;
 
+/*
 float4 Ambient;
 float3 LightPosition[16];
 float LightFalloff[16];
 float3 LightColor[16];
 float ActiveLights;
-
+*/
 texture Texture;
 texture NormalMap;
 float4x4 UVTransform;
@@ -34,14 +35,14 @@ sampler diffuseSampler = sampler_state
     MAGFILTER = POINT;
     MINFILTER = POINT;
     MIPFILTER = POINT;
-    AddressU = Wrap;
-    AddressV = Wrap;
+    AddressU = Clamp;
+    AddressV = Clamp;
 };
 
 
 struct TexturedVertexShaderInput
 {
-	float4 Position : SV_Position0;
+	float3 Position : SV_Position0;
 	float3 Normal : NORMAL0;
 	float2 Texcoord : TEXCOORD0;
 	float3 Tangent : TEXCOORD1;
@@ -63,8 +64,8 @@ struct TexturedVertexShaderOutput
 TexturedVertexShaderOutput TexturedVertexShaderFunction(TexturedVertexShaderInput input)
 {
     TexturedVertexShaderOutput output;
-    input.Position.w = 1.0f;
-    float4 worldPosition = mul(input.Position, World);
+    //input.Position.w = 1.0f;
+    float4 worldPosition = mul(float4(input.Position, 1), World);
     float4 viewPosition = mul(worldPosition, View);
     output.Position = mul(viewPosition, Projection);
 	output.WorldPos = worldPosition;
@@ -79,6 +80,7 @@ TexturedVertexShaderOutput TexturedVertexShaderFunction(TexturedVertexShaderInpu
 	output.Texcoord = float2(tTexcoord[0], tTexcoord[1]);
 
 	output.Depth = 1.0 - (output.Position.z / 32.0);
+
     return output;
 }
 
@@ -87,13 +89,14 @@ struct PixelShaderOutput
     float4 Color : COLOR0;
 };
 
-PixelShaderOutput PSTexturedColor(TexturedVertexShaderOutput input) : COLOR0
+PixelShaderOutput PSTexturedColor(TexturedVertexShaderOutput input)
 {
     PixelShaderOutput output;
 	float4 texColor = tex2D(diffuseSampler, input.Texcoord);
 	float4 normalMap = tex2D(normalMapSampler, input.Texcoord);
 	output.Color = float4(0,0,0,1);
 
+	/*
 	normalMap = (normalMap * 2.0f) - 1.0f;
 
     // Calculate the normal from the data in the bump map.
@@ -108,8 +111,9 @@ PixelShaderOutput PSTexturedColor(TexturedVertexShaderOutput input) : COLOR0
 		float lightIntensity = clamp(dot(bumpNormal, input.WorldPos - LightPosition[i]), 0, 1);
 		output.Color += saturate(texColor * DiffuseColor * float4(LightColor[i],1) * lightAttenuation * lightIntensity);
 	}
+	*/
 
-	output.Color += saturate(texColor * Ambient);
+		output.Color += saturate(texColor);// *Ambient);
 	output.Color.a = texColor.a * Alpha;
 	clip(texColor.a < ClipAlpha ? -1:1);
 
@@ -121,18 +125,18 @@ PixelShaderOutput PSTexturedColor(TexturedVertexShaderOutput input) : COLOR0
     return output;
 }
 
-PixelShaderOutput PSTexturedColorNoLight(TexturedVertexShaderOutput input) : COLOR0
+PixelShaderOutput PSTexturedColorNoLight(TexturedVertexShaderOutput input)
 {
     PixelShaderOutput output;
 	float4 texColor = tex2D(diffuseSampler, input.Texcoord);
-    output.Color = texColor * DiffuseColor;
-	output.Color.a = texColor.a * Alpha;
-	clip(texColor.a < 0.1f ? -1 : 1);
+		output.Color = texColor;// *DiffuseColor;
+	output.Color.a = 1.0;// texColor.a * Alpha;
+	//clip(texColor.a < 0.1f ? -1 : 1);
 
     return output;
 }
 
-PixelShaderOutput PSDepthOnly(TexturedVertexShaderOutput input) : COLOR0
+PixelShaderOutput PSDepthOnly(TexturedVertexShaderOutput input)
 {
 	PixelShaderOutput output;
 	output.Color = float4(input.Depth, 0.0, 0.0, 1.0);

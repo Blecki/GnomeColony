@@ -27,13 +27,13 @@ namespace Game.Creative
 
         public override void OnSelected(Game Game)
         {
-            Game.Input.BindAction("ROTATE-BLOCK", () => 
+            Game.Input.BindHandler("ROTATE-BLOCK", () => 
                 BaseOrientation = Directions.Rotate(BaseOrientation));
         }
 
         public override void OnDeselected(Game Game)
         {
-            Game.Input.ClearAction("ROTATE-BLOCK");
+            Game.Input.ClearHandlers("ROTATE-BLOCK");
         }
 
         public override void Apply(Simulation Sim, WorldRenderer WorldNode)

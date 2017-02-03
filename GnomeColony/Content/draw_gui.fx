@@ -16,14 +16,14 @@ sampler diffuseSampler = sampler_state
 
 struct TexturedVertexShaderInput
 {
-	float4 Position : SV_Position0;
+	float4 Position : POSITION0;
 	float2 Texcoord : TEXCOORD0;
 	float4 Color : COLOR0;
 };
 
 struct TexturedVertexShaderOutput
 {
-	float4 Position : SV_Position0;
+	float4 Position : POSITION0;
 	float2 Texcoord : TEXCOORD0;
 	float4 Color : COLOR0;
 };
@@ -47,7 +47,7 @@ struct PixelShaderOutput
     float4 Color : COLOR0;
 };
 
-PixelShaderOutput PSTexturedColor(TexturedVertexShaderOutput input) : COLOR0
+PixelShaderOutput PSTexturedColor(TexturedVertexShaderOutput input)
 {
     PixelShaderOutput output;
 

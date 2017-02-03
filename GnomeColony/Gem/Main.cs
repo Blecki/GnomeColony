@@ -19,7 +19,7 @@ namespace Gem
         public Gum.RenderData GuiSkin;
         GraphicsDeviceManager graphics;
 
-        public GumInputMapper InputMapper { get; private set; }
+        public Gum.Input.GumInputMapper InputMapper { get; private set; }
 
         public Main(String startupCommand)
         {
@@ -32,10 +32,10 @@ namespace Gem
 
         protected override void LoadContent()
         {
-            GuiSkin = new Gum.RenderData(GraphicsDevice, Content, "Content/mono_draw",
+            GuiSkin = new Gum.RenderData(GraphicsDevice, Content, "Content/draw_gui",
                 "Content/gnome_colony_skin/sheets.txt");
 
-            InputMapper = new GumInputMapper(Window.Handle);
+            InputMapper = new Gum.Input.GumInputMapper(Window.Handle);
         }
 
         protected override void UnloadContent()

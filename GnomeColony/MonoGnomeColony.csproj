@@ -57,6 +57,9 @@
   <PropertyGroup>
     <ApplicationIcon>Icon.ico</ApplicationIcon>
   </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject>Gem.Program</StartupObject>
+  </PropertyGroup>
   <ItemGroup>
     <Compile Include="Game\Blocks\BlockButton.cs" />
     <Compile Include="Game\Blocks\OrientedBlock.cs" />
@@ -98,9 +101,6 @@
     <Compile Include="Game\UI\Mine.cs" />
     <Compile Include="Gem\Common\Animation.cs" />
     <Compile Include="Gem\Common\AnimationTimer.cs" />
-    <Compile Include="Gem\Common\GumInputMapper.cs" />
-    <Compile Include="Gem\Common\MessageFilter.cs" />
-    <Compile Include="Gem\Common\Input.cs" />
     <Compile Include="Gem\Geo\CoincidentEdgeWithTransforms.cs" />
     <Compile Include="Gem\Common\Euler.cs" />
     <Compile Include="Gem\Common\MultiDictionary.cs" />
@@ -150,7 +150,6 @@
     <Compile Include="Gem\Common\Vector.cs" />
     <Compile Include="Gem\Common\Pathfinding.cs" />
     <Compile Include="Gem\Program.cs" />
-    <Compile Include="Gem\Render\RenderContext.cs" />
     <Compile Include="Game\Blocks\BlockTemplate.cs" />
     <Compile Include="Game\Directions.cs" />
     <Compile Include="Game\Coordinate.cs" />
@@ -167,6 +166,10 @@
     <Reference Include="Ancora, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Ancora.1.0.2\lib\net45\Ancora.dll</HintPath>
+    </Reference>
+    <Reference Include="Jitter, Version=0.1.7.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Jitter.Redpoint.0.3.0\lib\net45\Jitter.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="MonoGame.Framework">
       <HintPath>$(MSBuildProgramFiles32)\MonoGame\v3.0\Assemblies\Windows\MonoGame.Framework.dll</HintPath>
